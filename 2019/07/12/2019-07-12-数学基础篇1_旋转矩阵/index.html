@@ -76,7 +76,7 @@
 <meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/10.jpg">
 <meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/11a.jpg">
 <meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/12.jpg">
-<meta property="og:updated_time" content="2019-07-31T11:33:08.767Z">
+<meta property="og:updated_time" content="2019-07-31T11:37:23.267Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Shader入门精要读书笔记2-旋转矩阵">
 <meta name="twitter:description" content="系列前言自己在两年前就买了Shader入门精要这本书了，但是当时看了书却并没有很深入的了解，可谓浅尝辄止。学习了线性代数后终于可以开始重读这本书了。这本书应该还是算比较入门类的，在学习了大学计算机图形学以及线性代数后的，这本书作为后续读物是不错的选择。书的目录可以分为数学基础篇、初级篇、高级篇。其中数学基础篇和初级有一些关键的知识，比如后文的坐标系等等，这些知识如果没有彻底明白，会对后续学习造成很">
@@ -274,7 +274,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-07-31 19:33:08" itemprop="dateModified" datetime="2019-07-31T19:33:08+08:00">2019-07-31</time>
+                <time title="修改时间：2019-07-31 19:37:23" itemprop="dateModified" datetime="2019-07-31T19:37:23+08:00">2019-07-31</time>
               </span>
             
           
@@ -336,7 +336,9 @@
 
 <p>虽然文章讲的是2D图像的旋转，但是第一种思路也是三维降成二维，所以仍然可以从文章中得到启发。文章的思路是旋转矩阵并不是旋转坐标点，而是旋转坐标轴。我们以这种思路重新来求三个旋转矩阵。</p>
 <p>绕X轴的旋转矩阵：</p>
-<p>在旋转之前的三个坐标基底如下<br>$$<br>X =<br>\left [<br>\begin{matrix}<br> 1 \<br> 0 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>Y =<br>\left [<br>\begin{matrix}<br> 0 \<br> 1 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>Z =<br>\left [<br>\begin{matrix}<br> 0 \<br> 0 \<br> 1 \<br> 0 \<br>\end{matrix}<br>\right]<br>$$<br>那么假设存在点A，点A可以表示成$ (x_0,y_0,z_0) $，写成基底相加的形式如下，其中x、y、z表示最终的坐标位置。<br>$$<br>\left [<br>\begin{matrix}<br> x \<br> y \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>x_0<br>\left [<br>\begin{matrix}<br> 1 \<br> 0 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>+<br>y_0<br>\left [<br>\begin{matrix}<br> 0 \<br> 1 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>+<br>z_0<br>\left [<br>\begin{matrix}<br> 0 \<br> 0 \<br> 1 \<br> 0 \<br>\end{matrix}<br>\right]<br>$$<br>让坐标轴逆时针旋转β，得到新的坐标基底。新的YZ基底在原本的YZ两轴上都有了分量。</p>
+<p>在旋转之前的三个坐标基底如下</p>
+<p>$$<br>X =<br>\left [<br>\begin{matrix}<br> 1 \<br> 0 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>Y =<br>\left [<br>\begin{matrix}<br> 0 \<br> 1 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>Z =<br>\left [<br>\begin{matrix}<br> 0 \<br> 0 \<br> 1 \<br> 0 \<br>\end{matrix}<br>\right]<br>$$</p>
+<p>那么假设存在点A，点A可以表示成$ (x_0,y_0,z_0) $，写成基底相加的形式如下，其中x、y、z表示最终的坐标位置。<br>$$<br>\left [<br>\begin{matrix}<br> x \<br> y \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>x_0<br>\left [<br>\begin{matrix}<br> 1 \<br> 0 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>+<br>y_0<br>\left [<br>\begin{matrix}<br> 0 \<br> 1 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>+<br>z_0<br>\left [<br>\begin{matrix}<br> 0 \<br> 0 \<br> 1 \<br> 0 \<br>\end{matrix}<br>\right]<br>$$<br>让坐标轴逆时针旋转β，得到新的坐标基底。新的YZ基底在原本的YZ两轴上都有了分量。</p>
 <img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/7.jpg">
 $$
 X =
