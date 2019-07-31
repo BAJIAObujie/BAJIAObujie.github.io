@@ -1,90 +1,63 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-
-
-
-
-
-
-
-
-
-
+<html lang="en">
 <head><meta name="generator" content="Hexo 3.9.0">
-    <meta charset="utf-8">
-    <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="description" content>
-    <meta name="author" content="BAJIAObujie">
-    <meta name="keywords" content>
-    <title>翻译：可编程渲染管线之定制化着色器（二） ~ 芭蕉不解的博客</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.2/css/all.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.7.4/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.7.4/css/mdb.min.css">
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="https://at.alicdn.com/t/font_1067060_vr10bjtg3us.css">
-    
-        <link rel="stylesheet" href="/css/Prettify/tomorrow-night-eighties.min.css">
-    
-</head>
-
-<body>
-  <header style="height: 70vh;">
-    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
-<div class="container">
-    <a class="navbar-brand" href="/"><strong>芭蕉不解的博客</strong></a>
-
-    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <div class="animated-icon"><span></span><span></span><span></span></div>
-    </button>
-
-    <!-- Collapsible content -->
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav ml-auto text-center">
-            
-            <li class="nav-item">
-                <a class="nav-link" href="/">Home</a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link" href="/archives/">Archives</a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link" href="/about/">About</a>
-            </li>
-            
-        </ul>
-    </div>
-</div>
-
-
-</nav>
-    <div class="view intro-2" style='background: url("https://i.imgur.com/oADD1Ip.jpg")no-repeat center center;background-size: cover;'>
-    <div class="full-bg-img">
-        <div class="mask rgba-black-light flex-center">
-        <div class="container text-center white-text wow fadeInUp">
-            <p class="h2">翻译：可编程渲染管线之定制化着色器（二）</p>
-            <br>
-            
-            <p>Friday, June 14th 2019, 12:00 am</p>
-            
-        </div>
-        </div>
-    </div>
-    </div>
-  </header>
-
-  <main>
+  <meta charset="utf-8">
   
-  <div class="container-fluid">
-    <div class="row">
-        <div class="col-md-8 offset-md-2 ">
-            <div class="post-content py-5 z-depth-3 main">
-                <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>翻译：可编程渲染管线之定制化着色器（二）</p>
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>
+    翻译：可编程渲染管线之定制化着色器（二） |
+    
+    芭蕉不解的博客</title>
+  
+    <link rel="shortcut icon" href="/favicon.ico">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+    <link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+  
+  <script src="/js/pace.min.js"></script>
+</head>
+</html>
+<body>
+<main class="content">
+  <section class="outer">
+  <article id="post-2019-06-14-翻译：可编程渲染管线之定制化着色器（二）" class="article article-type-post" itemscope itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      翻译：可编程渲染管线之定制化着色器（二）
+    </h1>
+  
+  
+
+
+
+
+      </header>
+    
+
+    
+      <div class="article-meta">
+        <a href="/2019/06/14/2019-06-14-翻译：可编程渲染管线之定制化着色器（二）/" class="article-date">
+  <time datetime="2019-06-13T16:00:00.000Z" itemprop="datePublished">2019-06-14</time>
+</a>
+        
+      </div>
+    
+
+    <div class="article-entry" itemprop="articleBody">
+      
+
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>翻译：可编程渲染管线之定制化着色器（二）</p>
 <p>这篇文章是翻译自<a href="https://catlikecoding.com/unity/tutorials/scriptable-render-pipeline/custom-shaders/" target="_blank" rel="noopener">https://catlikecoding.com/unity/tutorials/scriptable-render-pipeline/custom-shaders/</a></p>
 <p>关于动态批处理和GPU Instancing 可以参考<a href="https://zhuanlan.zhihu.com/p/34499251" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/34499251</a></p>
 <h2 id="定制化Shaders-HLSL与CoreLibrary"><a href="#定制化Shaders-HLSL与CoreLibrary" class="headerlink" title="定制化Shaders  HLSL与CoreLibrary"></a>定制化Shaders  HLSL与CoreLibrary</h2><ul>
@@ -478,66 +451,139 @@ float4 UnlitPassFragment (VertexOutput input) : SV_TARGET {
 <p>现在我们有了一个最小的shader ，这个shader能用于高效绘制许多物体。之后我们会基于此创建更多高级的shader</p>
 <p>In the future, we will build on this foundation to create more advanced shaders.</p>
 
-                <hr>
-                <div>
-                    <p>
-                        
-                    </p>
-                </div>
-                <br>
-                
-                    <p class="note note-warning">本博客所有文章除特别声明外，均采用 <a href="https://zh.wikipedia.org/wiki/Wikipedia:CC_BY-SA_3.0%E5%8D%8F%E8%AE%AE%E6%96%87%E6%9C%AC">CC BY-SA 3.0协议</a> 。转载请注明出处！</p>
-                
-            </div>
-        </div>
-        <div class="d-none d-md-block col-md-2">
-            
-  <div id="toc" class="py-5">
-    <p class="h6"><i class="iconfont icon-toc" style="vertical-align:middle"></i> Toc:</p> 
-    <div id="tocbot"></div>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2019/06/14/2019-06-14-翻译：可编程渲染管线之定制化着色器（二）/" data-id="cjyqvtmrq000d1kvp5fvtrrot"
+         class="article-share-link">Share</a>
+      
+    </footer>
+
   </div>
 
-        </div>
-    </div>        
-</div>
-
-<br><br><br>
-
-<!-- Comments -->
-<div class="comments" id="comments">
- 
-</div>
   
-  </main>
+    
+  <nav class="article-nav">
+    
+      <a href="/2019/06/29/2019-06-29-写在毕业一周年/" class="article-nav-link">
+        <strong class="article-nav-caption">Newer posts</strong>
+        <div class="article-nav-title">
+          
+            写在毕业一周年
+          
+        </div>
+      </a>
+    
+    
+      <a href="/2019/06/12/2019-06-12-UE4安卓打包问题/" class="article-nav-link">
+        <strong class="article-nav-caption">Olde posts</strong>
+        <div class="article-nav-title">UE4安卓打包问题</div>
+      </a>
+    
+  </nav>
 
-<footer class="mt-5">
-  <div class="text-center py-3">
-    <a href="https://hexo.io" target="_blank"><b>HEXO</b></a>
-    <i class="iconfont icon-love"></i>
-    <a href="https://github.com/0x2e/Material-T" target="_blank"> <b>Material-T</b></a>
+
+  
+
+  
+    
+  
+
+</article>
+
+
+
+</section>
+  <footer class="footer">
+  <div class="outer">
+    <div class="float-right">
+      <ul class="list-inline">
+  
+    <li><i class="fe fe-smile-alt"></i> <span id="busuanzi_value_site_uv"></span></li>
+  
+</ul>
+    </div>
+    <ul class="list-inline">
+      <li>&copy; 2019 芭蕉不解的博客</li>
+      <li>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a></li>
+      <li>Theme  <a href="https://github.com/zhwangart/hexo-theme-ocean">Ocean</a></li>
+    </ul>
   </div>
 </footer>
 
-  <!-- SCRIPTS -->
-  <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.7.4/js/jquery-3.3.1.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.7.4/js/popper.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.7.4/js/bootstrap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.7.4/js/mdb.min.js"></script>
-  <script src="/js/main.js"></script>
+</main>
+<aside class="sidebar">
+  <button class="navbar-toggle"></button>
+
+<nav class="navbar">
   
-    
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/tocbot/4.4.2/tocbot.min.js"></script>
-    
-    <script src="/js/post.js"></script>
-    
-      <script src="/js/plugins/prettify.js"></script>
-      <script>
-          $(document).ready(function(){
-              $('pre').addClass('prettyprint linenums');
-              prettyPrint();
-          })
-      </script>
-    
+    <div class="logo">
+      <a href="/"><img src="/images/hexo.svg" alt="芭蕉不解的博客"></a>
+    </div>
   
+  <ul class="nav nav-main">
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/">Home</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/archives">Archives</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/gallery">Gallery</a>
+      </li>
+    
+      <li class="nav-item">
+        <a class="nav-item-link" href="/about">About</a>
+      </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link nav-item-search" title="Search">
+        <i class="fe fe-search"></i>
+        Search
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      <div class="totop" id="totop">
+  <i class="fe fe-rocket"></i>
+</div>
+    </li>
+    <li class="nav-item">
+      
+        <a class="nav-item-link" target="_blank" href="/atom.xml" title="RSS Feed">
+          <i class="fe fe-feed"></i>
+        </a>
+      
+    </li>
+  </ul>
+</nav>
+
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+</aside>
+<script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/lazyload.min.js"></script>
+<script src="/js/snap.svg-min.js"></script>
+<script src="/js/busuanzi-2.3.pure.min.js"></script>
+
+
+  <script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/ocean.js"></script>
+
 </body>
 </html>
