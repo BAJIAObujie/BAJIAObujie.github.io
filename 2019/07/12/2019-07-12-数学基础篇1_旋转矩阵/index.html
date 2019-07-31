@@ -76,7 +76,7 @@
 <meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/10.jpg">
 <meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/11a.jpg">
 <meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/12.jpg">
-<meta property="og:updated_time" content="2019-07-31T09:46:44.377Z">
+<meta property="og:updated_time" content="2019-07-31T11:18:48.611Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Shader入门精要读书笔记2-旋转矩阵">
 <meta name="twitter:description" content="系列前言自己在两年前就买了Shader入门精要这本书了，但是当时看了书却并没有很深入的了解，可谓浅尝辄止。学习了线性代数后终于可以开始重读这本书了。这本书应该还是算比较入门类的，在学习了大学计算机图形学以及线性代数后的，这本书作为后续读物是不错的选择。书的目录可以分为数学基础篇、初级篇、高级篇。其中数学基础篇和初级有一些关键的知识，比如后文的坐标系等等，这些知识如果没有彻底明白，会对后续学习造成很">
@@ -274,7 +274,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-07-31 17:46:44" itemprop="dateModified" datetime="2019-07-31T17:46:44+08:00">2019-07-31</time>
+                <time title="修改时间：2019-07-31 19:18:48" itemprop="dateModified" datetime="2019-07-31T19:18:48+08:00">2019-07-31</time>
               </span>
             
           
@@ -315,7 +315,7 @@
 <p>试着做一下上述的手势，会发现右手坐标系是逆时针旋转，左手坐标系是顺时针旋转的。</p>
 <p>二，坐标写成齐次坐标的形式一般是（x, y, z, 1）行向量，或者（x, y, z, 1）的转置，即列向量。当选择行向量的时候，根据矩阵乘法的规则，应该是右乘一个4×4的旋转矩阵。如果选择列向量，那么应该是左乘4×4的旋转矩阵。左乘与右乘所选择的这两个旋转矩阵是不一样的。</p>
 <p><strong>下文以右手坐标系，也就是OpenGL的标准来推导三个旋转矩阵，分别是绕X、Y、Z轴旋转。选择列向量左乘旋转矩阵。</strong></p>
-<h4 id="第一种思路"><a href="#第一种思路" class="headerlink" title="第一种思路"></a>第一种思路</h4><p>绕X轴旋转，让右手握拳，大拇指指向X正方向，旋转的正方向就是Y轴转向Z轴，OA向量与Y轴正方向的夹角是α，逆时针 旋转β度后，点A变成点B。如图。</p>
+<h3 id="第一种思路"><a href="#第一种思路" class="headerlink" title="第一种思路"></a>第一种思路</h3><p>绕X轴旋转，让右手握拳，大拇指指向X正方向，旋转的正方向就是Y轴转向Z轴，OA向量与Y轴正方向的夹角是α，逆时针 旋转β度后，点A变成点B。如图。</p>
 <img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/2.jpg">
 
 <p>为了方便计算，假设OA、OB矢量的模长都是1，那么A的坐标可以表示为(x, y, z, 1)，也可以表示为(x, cosα, sinα, 1)。B的坐标因为绕X轴旋转，X坐标不变，可以表示为(x, y’, z‘, 1)，也可以表示为(x, cos(α + β), sin(α + β), 1)。整理如下：<br>$$<br>y = cos\alpha \\<br>z = sin\alpha \\<br>y’ = cos(\alpha + \beta) = cos\alpha cos\beta - sin\alpha sin\beta = ycos\beta - zsin\beta  \\<br>z’ = sin(\alpha + \beta) = sin\alpha cos\beta + sin\beta cos\alpha = ysin\beta + zcos\beta<br>\<br>$$<br>把A的坐标写成列向量 $ (x,y,z,1)^T $ ，那么对应的矩阵如下 </p>
@@ -323,20 +323,20 @@
 <p>绕Y轴旋转，让右手握拳，大拇指指向Y正方向，旋转的正方向就是Z轴转向X轴，OA向量与X轴正方向的夹角是α，逆时针 旋转β度后，点A变成点B。如图。</p>
 <img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/3.jpg">
 
-<p>A的坐标可以表示为(x, y, z, 1)，也可以表示为(sinα, y, cosα, 1)。B的坐标因为绕Y轴旋转，Y坐标不变，可以表示为(x’, y, z‘, 1)，也可以表示为(sin(α + β), y, cos(α + β), 1)。整理如下：<br>$$<br>x = sin\alpha \\<br>z = cos\alpha \\<br>x’ = sin(\alpha + \beta) = sin\alpha cos\beta + sin\beta cos\alpha  = xcos\beta + zsin\beta  \\<br>z’ = cos(\alpha + \beta) = cos\alpha cos\beta - sin\alpha sin\beta = -xsin\beta + zcos\beta<br>\\<br>$$<br>把A的坐标写成列向量 $ (x,y,z,1)^T $ ，那么对应的矩阵如下<br>$$<br>\left [<br>\begin{matrix}<br> x’ \<br> y \<br> z’ \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>\left [<br>\begin{matrix}<br> sin(\alpha + \beta) \<br> y \<br> cos(\alpha + \beta) \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>\left [<br>\begin{matrix}<br> cos\beta  &amp; 0 &amp; sin\beta  &amp; 0    \<br> 0         &amp; 1 &amp; 0         &amp; 0    \<br> -sin\beta &amp; 0 &amp; cos\beta  &amp; 0    \<br> 0         &amp; 0 &amp; 0         &amp; 1    \<br>\end{matrix}<br>\right]<br>\left [<br>\begin{matrix}<br> x \<br> y \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>$$<br>这样就完成了绕Y轴的旋转矩阵。</p>
+<p>A的坐标可以表示为(x, y, z, 1)，也可以表示为(sinα, y, cosα, 1)。B的坐标因为绕Y轴旋转，Y坐标不变，可以表示为(x’, y, z‘, 1)，也可以表示为(sin(α + β), y, cos(α + β), 1)。整理如下：<br>$$<br>x = sin\alpha \\<br>z = cos\alpha \\<br>x’ = sin(\alpha + \beta) = sin\alpha cos\beta + sin\beta cos\alpha  = xcos\beta + zsin\beta  \\<br>z’ = cos(\alpha + \beta) = cos\alpha cos\beta - sin\alpha sin\beta = -xsin\beta + zcos\beta<br>\\<br>$$<br>把A的坐标写成列向量 $ (x,y,z,1)^T $ ，那么对应的矩阵如下<br>$$<br>\left [<br>\begin{matrix}<br> x’ \<br> y  \<br> z’ \<br> 1  \<br>\end{matrix}<br>\right]<br>=<br>\left [<br>\begin{matrix}<br> sin(\alpha + \beta) \<br> y \<br> cos(\alpha + \beta) \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>\left [<br>\begin{matrix}<br> cos\beta  &amp; 0 &amp; sin\beta  &amp; 0    \<br> 0         &amp; 1 &amp; 0         &amp; 0    \<br> -sin\beta &amp; 0 &amp; cos\beta  &amp; 0    \<br> 0         &amp; 0 &amp; 0         &amp; 1    \<br>\end{matrix}<br>\right]<br>\left [<br>\begin{matrix}<br> x \<br> y \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>$$<br>这样就完成了绕Y轴的旋转矩阵。</p>
 <p>绕Z轴旋转，让右手握拳，大拇指指向Z正方向，旋转的正方向就是X轴转向Y轴，OA向量与X轴正方向的夹角是α，逆时针 旋转β度后，点A变成点B。如图。</p>
 <img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/4.jpg">
 
 <p>A的坐标可以表示为(x, y, z, 1)，也可以表示为(cosα, sinα, z, 1)。B的坐标因为绕Z轴旋转，Z坐标不变，可以表示为(x’, y’, z, 1)，也可以表示为(cos(α + β), sin(α + β), z, 1)。整理如下：<br>$$<br>x = cos\alpha \\<br>y = sin\alpha \\<br>x’ = cos(\alpha + \beta) = cos\alpha cos\beta - sin\beta sin\alpha  = xcos\beta - ysin\beta  \\<br>z’ = sin(\alpha + \beta) = sin\alpha cos\beta + sin\beta cos\alpha  = xsin\beta + ycos\beta<br>\\<br>$$<br>把A的坐标写成列向量 $ (x,y,z,1)^T $ ，那么对应的矩阵如下<br>$$<br>\left [<br>\begin{matrix}<br> x’ \<br> y’ \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>\left [<br>\begin{matrix}<br> cos(\alpha + \beta) \<br> sin(\alpha + \beta) \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>\left [<br>\begin{matrix}<br> cos\beta  &amp; -sin\beta &amp; 0  &amp; 0    \<br> sin\beta  &amp; cos\beta  &amp; 0  &amp; 0    \<br> 0         &amp; 0         &amp; 1  &amp; 0    \<br> 0         &amp; 0         &amp; 0  &amp; 1    \<br>\end{matrix}<br>\right]<br>\left [<br>\begin{matrix}<br> x \<br> y \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>$$<br>这样就完成了绕Z轴的旋转矩阵。</p>
 <p>第一种思路就是绕哪一个轴旋转，那么就从那个轴的正方向，看向负方向，得到一个二维坐标系。接着设定旋转前的坐标A，以及逆时针旋转后的坐标B，结合三角公式得出对应的等式，最后整理成矩阵乘法的形式即可。</p>
-<h4 id="第二种思路"><a href="#第二种思路" class="headerlink" title="第二种思路"></a>第二种思路</h4><p>第二种思路是从这篇文章得到的启发 <a href="https://charlesnord.github.io/2017/04/01/rotation/" target="_blank" rel="noopener">https://charlesnord.github.io/2017/04/01/rotation/</a> 把涉及的内容截图如下。</p>
+<h3 id="第二种思路"><a href="#第二种思路" class="headerlink" title="第二种思路"></a>第二种思路</h3><p>第二种思路是从这篇文章得到的启发 <a href="https://charlesnord.github.io/2017/04/01/rotation/" target="_blank" rel="noopener">https://charlesnord.github.io/2017/04/01/rotation/</a> 把涉及的内容截图如下。</p>
 <img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/5.jpg">
 
 <img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/6.jpg">
 
 <p>虽然文章讲的是2D图像的旋转，但是第一种思路也是三维降成二维，所以仍然可以从文章中得到启发。文章的思路是旋转矩阵并不是旋转坐标点，而是旋转坐标轴。我们以这种思路重新来求三个旋转矩阵。</p>
 <p>绕X轴的旋转矩阵：</p>
-<p>在旋转之前的三个坐标基底如下<br>$$<br>X =<br>\left [<br>\begin{matrix}<br> 1 \<br> 0 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>\space\space\space<br>Y =<br>\left [<br>\begin{matrix}<br> 0 \<br> 1 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>\space\space\space<br>Z =<br>\left [<br>\begin{matrix}<br> 0 \<br> 0 \<br> 1 \<br> 0 \<br>\end{matrix}<br>\right]<br>$$<br>那么假设存在点A，点A可以表示成$ (x_0,y_0,z_0) $，写成基底相加的形式如下，其中x、y、z表示最终的坐标位置。<br>$$<br>\left [<br>\begin{matrix}<br> x \<br> y \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>x_0<br>\left [<br>\begin{matrix}<br> 1 \<br> 0 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>+<br>y_0<br>\left [<br>\begin{matrix}<br> 0 \<br> 1 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>+<br>z_0<br>\left [<br>\begin{matrix}<br> 0 \<br> 0 \<br> 1 \<br> 0 \<br>\end{matrix}<br>\right]<br>$$<br>让坐标轴逆时针旋转β，得到新的坐标基底。新的YZ基底在原本的YZ两轴上都有了分量。</p>
+<p>在旋转之前的三个坐标基底如下<br>$$<br>X =<br>\left [<br>\begin{matrix}<br> 1 \<br> 0 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>Y =<br>\left [<br>\begin{matrix}<br> 0 \<br> 1 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>\space\space\space<br>Z =<br>\left [<br>\begin{matrix}<br> 0 \<br> 0 \<br> 1 \<br> 0 \<br>\end{matrix}<br>\right]<br>$$<br>那么假设存在点A，点A可以表示成$ (x_0,y_0,z_0) $，写成基底相加的形式如下，其中x、y、z表示最终的坐标位置。<br>$$<br>\left [<br>\begin{matrix}<br> x \<br> y \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>x_0<br>\left [<br>\begin{matrix}<br> 1 \<br> 0 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>+<br>y_0<br>\left [<br>\begin{matrix}<br> 0 \<br> 1 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>+<br>z_0<br>\left [<br>\begin{matrix}<br> 0 \<br> 0 \<br> 1 \<br> 0 \<br>\end{matrix}<br>\right]<br>$$<br>让坐标轴逆时针旋转β，得到新的坐标基底。新的YZ基底在原本的YZ两轴上都有了分量。</p>
 <img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/7.jpg">
 $$
 X =
@@ -348,7 +348,7 @@ X =
  0 \\
 \end{matrix}
 \right]
-Y‘ =
+Y' =
 \left [
 \begin{matrix}
  0 \\
@@ -357,7 +357,7 @@ Y‘ =
  0 \\
 \end{matrix}
 \right]
-Z’ =
+Z' =
 \left [
 \begin{matrix}
  0 \\
@@ -611,7 +611,7 @@ $$
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#系列前言"><span class="nav-number">1.</span> <span class="nav-text">系列前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">2.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#旋转矩阵"><span class="nav-number">3.</span> <span class="nav-text">旋转矩阵</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#第一种思路"><span class="nav-number">3.0.1.</span> <span class="nav-text">第一种思路</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#第二种思路"><span class="nav-number">3.0.2.</span> <span class="nav-text">第二种思路</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Unity3D的旋转矩阵"><span class="nav-number">4.</span> <span class="nav-text">Unity3D的旋转矩阵</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#系列前言"><span class="nav-number">1.</span> <span class="nav-text">系列前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">2.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#旋转矩阵"><span class="nav-number">3.</span> <span class="nav-text">旋转矩阵</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#第一种思路"><span class="nav-number">3.1.</span> <span class="nav-text">第一种思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第二种思路"><span class="nav-number">3.2.</span> <span class="nav-text">第二种思路</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Unity3D的旋转矩阵"><span class="nav-number">4.</span> <span class="nav-text">Unity3D的旋转矩阵</span></a></li></ol></div>
             
 
           </div>
