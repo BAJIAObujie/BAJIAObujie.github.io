@@ -1529,7 +1529,7 @@ pre .javascript .function {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #42bf22;
+  background: #4e1d70;
 }
 .feed-link,
 .chat {
@@ -1835,6 +1835,10 @@ pre .javascript .function {
   50%, 70% {
     transform: scale(1.1);
   }
+}
+.has-jax {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 .page-archive .posts-collapse {
   position: relative;
