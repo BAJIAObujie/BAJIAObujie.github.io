@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: 'Kopieren',
+      copy_success: 'Kopiert',
+      copy_failure: 'Kopieren fehlgeschlagen'
+    }
+  };
+</script>
+
+  <meta name="description" content="系列前言自己在两年前就买了Shader入门精要这本书了，但是当时看了书却并没有很深入的了解，可谓浅尝辄止。学习了线性代数后终于可以开始重读这本书了。这本书应该还是算比较入门类的，在学习了大学计算机图形学以及线性代数后的，这本书作为后续读物是不错的选择。书的目录可以分为数学基础篇、初级篇、高级篇。其中数学基础篇和初级有一些关键的知识，比如后文的坐标系等等，这些知识如果没有彻底明白，会对后续学习造成很">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Shader入门精要读书笔记2-旋转矩阵">
+<meta property="og:url" content="http://yoursite.com/2019/07/12/2019-07-12-数学基础篇1_旋转矩阵/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="系列前言自己在两年前就买了Shader入门精要这本书了，但是当时看了书却并没有很深入的了解，可谓浅尝辄止。学习了线性代数后终于可以开始重读这本书了。这本书应该还是算比较入门类的，在学习了大学计算机图形学以及线性代数后的，这本书作为后续读物是不错的选择。书的目录可以分为数学基础篇、初级篇、高级篇。其中数学基础篇和初级有一些关键的知识，比如后文的坐标系等等，这些知识如果没有彻底明白，会对后续学习造成很">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/1.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/2.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/3.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/4.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/5.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/6.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/7.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/8.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/9.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/10.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/11a.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/12.jpg">
+<meta property="og:updated_time" content="2019-07-20T08:23:39.853Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Shader入门精要读书笔记2-旋转矩阵">
+<meta name="twitter:description" content="系列前言自己在两年前就买了Shader入门精要这本书了，但是当时看了书却并没有很深入的了解，可谓浅尝辄止。学习了线性代数后终于可以开始重读这本书了。这本书应该还是算比较入门类的，在学习了大学计算机图形学以及线性代数后的，这本书作为后续读物是不错的选择。书的目录可以分为数学基础篇、初级篇、高级篇。其中数学基础篇和初级有一些关键的知识，比如后文的坐标系等等，这些知识如果没有彻底明白，会对后续学习造成很">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/1.jpg">
+  <link rel="canonical" href="http://yoursite.com/2019/07/12/2019-07-12-数学基础篇1_旋转矩阵/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Shader入门精要读书笔记2-旋转矩阵 | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="default">
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Navigationsleiste an/ausschalten">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>Startseite</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>Über</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>Kategorien</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>Archiv</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/07/12/2019-07-12-数学基础篇1_旋转矩阵/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">Shader入门精要读书笔记2-旋转矩阵
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+
+              
+                
+              
+
+              <time title="Erstellt: 2019-07-12 00:00:00" itemprop="dateCreated datePublished" datetime="2019-07-12T00:00:00+08:00">2019-07-12</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Bearbeitet am</span>
+                
+                <time title="Geändert am: 2019-07-20 16:23:39" itemprop="dateModified" datetime="2019-07-20T16:23:39+08:00">2019-07-20</time>
+              </span>
+            
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="系列前言"><a href="#系列前言" class="headerlink" title="系列前言"></a>系列前言</h2><p>自己在两年前就买了Shader入门精要这本书了，但是当时看了书却并没有很深入的了解，可谓浅尝辄止。学习了线性代数后终于可以开始重读这本书了。这本书应该还是算比较入门类的，在学习了大学计算机图形学以及线性代数后的，这本书作为后续读物是不错的选择。书的目录可以分为数学基础篇、初级篇、高级篇。其中数学基础篇和初级有一些关键的知识，比如后文的坐标系等等，这些知识如果没有彻底明白，会对后续学习造成很大障碍。实际上这也是自己之前不求甚解的内容。所以自己打算归纳整理这些知识点，彻底搞懂并方便以后回顾。在归纳知识点的时候，如果Shader入门精要略写的部分，自己会结合大学的计算机图形学把它补充完整。</p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在网上查阅旋转矩阵的资料的时候，搜到的资料基本没有矩阵的推导过程，而是直接给出矩阵。即使有推导过程往往也缺少一些关键细节。不求甚解的态度是不可取的，不仅要明白是什么，更要明白为什么，所以自己写下这篇文章用来记录自己是如何理解旋转矩阵的。</p>
+<h2 id="旋转矩阵"><a href="#旋转矩阵" class="headerlink" title="旋转矩阵"></a>旋转矩阵</h2><p>在进入推导旋转矩阵之前需要明确两点。</p>
+<p>一，选择左手坐标系或者右手坐标系。3D一般分为左手坐标系和右手坐标系，OpenGL是使用右手坐标系，而Direct3D是使用左手坐标系。辨别使用的是哪一种坐标系的方法是，大拇指的方向指向X轴，食指指向Y轴，中指指向Z轴。左手做出来的坐标系就称为左手坐标系，右手同理。</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/1.jpg">
+
+<p>定义了左右手坐标系后还需要知道规定的旋转的正方向！这一点非常重要！假设我们当前使用右手坐标系，希望某一个点绕X轴旋转一定角度。举起右手并且握拳，大拇指指向X轴的正方向，四指弯曲的方向就是旋转的正方向。同理当你使用左手坐标系希望旋转的时候，正方向的辨别和右手坐标系一样，只不过是换成左手而已。</p>
+<p>试着做一下上述的手势，会发现右手坐标系是逆时针旋转，左手坐标系是顺时针旋转的。</p>
+<p>二，坐标写成齐次坐标的形式一般是（x, y, z, 1）行向量，或者（x, y, z, 1）的转置，即列向量。当选择行向量的时候，根据矩阵乘法的规则，应该是右乘一个4×4的旋转矩阵。如果选择列向量，那么应该是左乘4×4的旋转矩阵。左乘与右乘所选择的这两个旋转矩阵是不一样的。</p>
+<p><strong>下文以右手坐标系，也就是OpenGL的标准来推导三个旋转矩阵，分别是绕X、Y、Z轴旋转。选择列向量左乘旋转矩阵。</strong></p>
+<h4 id="第一种思路"><a href="#第一种思路" class="headerlink" title="第一种思路"></a>第一种思路</h4><p>绕X轴旋转，让右手握拳，大拇指指向X正方向，旋转的正方向就是Y轴转向Z轴，OA向量与Y轴正方向的夹角是α，逆时针 旋转β度后，点A变成点B。如图。</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/2.jpg">
+
+<p>为了方便计算，假设OA、OB矢量的模长都是1，那么A的坐标可以表示为(x, y, z, 1)，也可以表示为(x, cosα, sinα, 1)。B的坐标因为绕X轴旋转，X坐标不变，可以表示为(x, y’, z‘, 1)，也可以表示为(x, cos(α + β), sin(α + β), 1)。整理如下：<br>$$<br>y = cos\alpha \<br>z = sin\alpha \<br>y’ = cos(\alpha + \beta) = cos\alpha cos\beta - sin\alpha sin\beta = ycos\beta - zsin\beta  \<br>z’ = sin(\alpha + \beta) = sin\alpha cos\beta + sin\beta cos\alpha = ysin\beta + zcos\beta<br>\<br>$$<br>把A的坐标写成列向量 $ (x,y,z,1)^T $ ，那么对应的矩阵如下 </p>
+<p>$$<br>\left [<br>\begin{matrix}<br> x \<br> y’ \<br> z’ \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>\left [<br>\begin{matrix}<br> x \<br> ycos\beta - zsin\beta \<br> ysin\beta + zcos\beta \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>\left [<br>\begin{matrix}<br> 1 &amp; 0        &amp;         0 &amp; 0    \<br> 0 &amp; cos\beta &amp; -sin\beta &amp; 0    \<br> 0 &amp; sin\beta &amp; cos\beta  &amp; 0    \<br> 0 &amp; 0        &amp;         0 &amp; 1    \<br>\end{matrix}<br>\right]<br>\left [<br>\begin{matrix}<br> x \<br> y \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>$$<br>这样就完成了绕X轴的旋转矩阵。</p>
+<p>绕Y轴旋转，让右手握拳，大拇指指向Y正方向，旋转的正方向就是Z轴转向X轴，OA向量与X轴正方向的夹角是α，逆时针 旋转β度后，点A变成点B。如图。</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/3.jpg">
+
+<p>A的坐标可以表示为(x, y, z, 1)，也可以表示为(sinα, y, cosα, 1)。B的坐标因为绕Y轴旋转，Y坐标不变，可以表示为(x’, y, z‘, 1)，也可以表示为(sin(α + β), y, cos(α + β), 1)。整理如下：<br>$$<br>x = sin\alpha \<br>z = cos\alpha \<br>x’ = sin(\alpha + \beta) = sin\alpha cos\beta + sin\beta cos\alpha  = xcos\beta + zsin\beta  \<br>z’ = cos(\alpha + \beta) = cos\alpha cos\beta - sin\alpha sin\beta = -xsin\beta + zcos\beta<br>\<br>$$<br>把A的坐标写成列向量 $ (x,y,z,1)^T $ ，那么对应的矩阵如下<br>$$<br>\left [<br>\begin{matrix}<br> x’ \<br> y \<br> z’ \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>\left [<br>\begin{matrix}<br> sin(\alpha + \beta) \<br> y \<br> cos(\alpha + \beta) \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>\left [<br>\begin{matrix}<br> cos\beta  &amp; 0 &amp; sin\beta  &amp; 0    \<br> 0         &amp; 1 &amp; 0         &amp; 0    \<br> -sin\beta &amp; 0 &amp; cos\beta  &amp; 0    \<br> 0         &amp; 0 &amp; 0         &amp; 1    \<br>\end{matrix}<br>\right]<br>\left [<br>\begin{matrix}<br> x \<br> y \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>$$<br>这样就完成了绕Y轴的旋转矩阵。</p>
+<p>绕Z轴旋转，让右手握拳，大拇指指向Z正方向，旋转的正方向就是X轴转向Y轴，OA向量与X轴正方向的夹角是α，逆时针 旋转β度后，点A变成点B。如图。</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/4.jpg">
+
+<p>A的坐标可以表示为(x, y, z, 1)，也可以表示为(cosα, sinα, z, 1)。B的坐标因为绕Z轴旋转，Z坐标不变，可以表示为(x’, y’, z, 1)，也可以表示为(cos(α + β), sin(α + β), z, 1)。整理如下：<br>$$<br>x = cos\alpha \<br>y = sin\alpha \<br>x’ = cos(\alpha + \beta) = cos\alpha cos\beta - sin\beta sin\alpha  = xcos\beta - ysin\beta  \<br>z’ = sin(\alpha + \beta) = sin\alpha cos\beta + sin\beta cos\alpha  = xsin\beta + ycos\beta<br>\<br>$$<br>把A的坐标写成列向量 $ (x,y,z,1)^T $ ，那么对应的矩阵如下<br>$$<br>\left [<br>\begin{matrix}<br> x’ \<br> y’ \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>\left [<br>\begin{matrix}<br> cos(\alpha + \beta) \<br> sin(\alpha + \beta) \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>\left [<br>\begin{matrix}<br> cos\beta  &amp; -sin\beta &amp; 0  &amp; 0    \<br> sin\beta  &amp; cos\beta  &amp; 0  &amp; 0    \<br> 0         &amp; 0         &amp; 1  &amp; 0    \<br> 0         &amp; 0         &amp; 0  &amp; 1    \<br>\end{matrix}<br>\right]<br>\left [<br>\begin{matrix}<br> x \<br> y \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>$$<br>这样就完成了绕Z轴的旋转矩阵。</p>
+<p>第一种思路就是绕哪一个轴旋转，那么就从那个轴的正方向，看向负方向，得到一个二维坐标系。接着设定旋转前的坐标A，以及逆时针旋转后的坐标B，结合三角公式得出对应的等式，最后整理成矩阵乘法的形式即可。</p>
+<h4 id="第二种思路"><a href="#第二种思路" class="headerlink" title="第二种思路"></a>第二种思路</h4><p>第二种思路是从这篇文章得到的启发 <a href="https://charlesnord.github.io/2017/04/01/rotation/" target="_blank" rel="noopener">https://charlesnord.github.io/2017/04/01/rotation/</a> 把涉及的内容截图如下。</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/5.jpg">
+
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/6.jpg">
+
+<p>虽然文章讲的是2D图像的旋转，但是第一种思路也是三维降成二维，所以仍然可以从文章中得到启发。文章的思路是旋转矩阵并不是旋转坐标点，而是旋转坐标轴。我们以这种思路重新来求三个旋转矩阵。</p>
+<p>绕X轴的旋转矩阵：</p>
+<p>在旋转之前的三个坐标基底如下<br>$$<br>X =<br>\left [<br>\begin{matrix}<br> 1 \<br> 0 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>Y =<br>\left [<br>\begin{matrix}<br> 0 \<br> 1 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>Z =<br>\left [<br>\begin{matrix}<br> 0 \<br> 0 \<br> 1 \<br> 0 \<br>\end{matrix}<br>\right]<br>$$<br>那么假设存在点A，点A可以表示成$ (x_0,y_0,z_0) $，写成基底相加的形式如下，其中x、y、z表示最终的坐标位置。<br>$$<br>\left [<br>\begin{matrix}<br> x \<br> y \<br> z \<br> 1 \<br>\end{matrix}<br>\right]<br>=<br>x_0<br>\left [<br>\begin{matrix}<br> 1 \<br> 0 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>+<br>y_0<br>\left [<br>\begin{matrix}<br> 0 \<br> 1 \<br> 0 \<br> 0 \<br>\end{matrix}<br>\right]<br>+<br>z_0<br>\left [<br>\begin{matrix}<br> 0 \<br> 0 \<br> 1 \<br> 0 \<br>\end{matrix}<br>\right]<br>$$<br>让坐标轴逆时针旋转β，得到新的坐标基底。新的YZ基底在原本的YZ两轴上都有了分量。</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/7.jpg">
+$$
+X =
+\left [
+\begin{matrix}
+ 1 \\
+ 0 \\
+ 0 \\
+ 0 \\
+\end{matrix}
+\right]
+Y‘ =
+\left [
+\begin{matrix}
+ 0 \\
+ cos\beta \\
+ sin\beta \\
+ 0 \\
+\end{matrix}
+\right]
+Z’ =
+\left [
+\begin{matrix}
+ 0 \\
+ -sin\beta \\
+ cos\beta \\
+ 0 \\
+\end{matrix}
+\right]
+$$
+接着不改变点的坐标值$x_0,y_0,z_0 $，把基底替换成新的基底得到
+$$
+\left [
+\begin{matrix}
+ x_0 \\
+ y_0 \\
+ z_0 \\
+ 1 \\
+\end{matrix}
+\right]
+=
+x_0
+\left [
+\begin{matrix}
+ 1 \\
+ 0 \\
+ 0 \\
+ 0 \\
+\end{matrix}
+\right]
++
+y_0
+\left [
+\begin{matrix}
+ 0 \\
+ cos\beta \\
+ sin\beta \\
+ 0 \\
+\end{matrix}
+\right]
++
+z_0
+\left [
+\begin{matrix}
+ 0 \\
+ -sin\beta \\
+ cos\beta \\
+ 0 \\
+\end{matrix}
+\right]
+$$
+写成矩阵乘法的形式如下，x、y、z仍然表示最终的坐标位置
+$$
+\left [
+\begin{matrix}
+ x \\
+ y \\
+ z \\
+ 1 \\
+\end{matrix}
+\right]
+=
+\left [
+\begin{matrix}
+ 1 & 0        &         0 & 0    \\
+ 0 & cos\beta & -sin\beta & 0    \\
+ 0 & sin\beta & cos\beta  & 2    \\
+ 0 & 0        &         0 & 1    \\
+\end{matrix}
+\right]
+\left [
+\begin{matrix}
+ x_0 \\
+ y_0 \\
+ z_0 \\
+ 1 \\
+\end{matrix}
+\right]
+$$
+
+
+<p>因为篇幅原因，剩下两个矩阵不再细讲。绕Y轴的旋转矩阵基底变化如下</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/8.jpg">
+
+<p>绕Z轴的旋转矩阵基底变化如下</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/9.jpg">
+
+
+
+<h2 id="Unity3D的旋转矩阵"><a href="#Unity3D的旋转矩阵" class="headerlink" title="Unity3D的旋转矩阵"></a>Unity3D的旋转矩阵</h2><p>下面来推导Unity3D的旋转矩阵。Unity3D是使用左手坐标系的，也就是旋转的方向是顺时针方向。</p>
+<p>绕X轴旋转矩阵：</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/10.jpg">
+$$
+\left [
+\begin{matrix}
+ 1 & 0        &         0 & 0    \\
+ 0 & cos\beta & -sin\beta & 0    \\
+ 0 & sin\beta & cos\beta  & 0    \\
+ 0 & 0        &         0 & 1    \\
+\end{matrix}
+\right]
+$$
+
+
+<p>绕Y轴旋转矩阵：</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/11a.jpg">
+$$
+\left [
+\begin{matrix}
+ cos\beta  & 0 & sin\beta  & 0    \\
+ 0         & 1 & 0         & 0    \\
+ -sin\beta & 0 & cos\beta  & 0    \\
+ 0         & 0 & 0         & 1    \\
+\end{matrix}
+\right]
+$$
+
+
+<p>绕Z轴旋转矩阵：</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/Rotate-Matrix/12.jpg">
+$$
+\left [
+\begin{matrix}
+ cos\beta  & -sin\beta & 0  & 0    \\
+ sin\beta  & cos\beta  & 0  & 0    \\
+ 0         & 0         & 1  & 0    \\
+ 0         & 0         & 0  & 1    \\
+\end{matrix}
+\right]
+$$
+
+
+<p>这三个绕轴旋转和右手坐标系下的旋转是一样。</p>
+<ol>
+<li>绕X轴旋转正方向都是Y轴转Z轴。</li>
+<li>绕Y轴旋转正方向都是Z轴转X轴。</li>
+<li>绕Z轴旋转正方向都是X轴转Y轴。</li>
+</ol>
+<p>所以旋转公式的推导也是一样的。</p>
+<p><strong>为了方便记忆，可以这么记住旋转矩阵的公式，正对角线的两个是cos，副对角线的是sin，只有绕Y轴旋转的时候副对角线右上角的sin为正，左下角的sin为负。绕XZ轴的恰好相反，右上角的sin为负，左下角为正。</strong></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2019/06/29/2019-06-29-写在毕业一周年/" rel="next" title="写在毕业一周年">
+                <i class="fa fa-chevron-left"></i> 写在毕业一周年
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Inhaltsverzeichnis
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Übersicht
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-name">Artikel</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">Kategorien</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#系列前言"><span class="nav-number">1.</span> <span class="nav-text">系列前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">2.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#旋转矩阵"><span class="nav-number">3.</span> <span class="nav-text">旋转矩阵</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#第一种思路"><span class="nav-number">3.0.1.</span> <span class="nav-text">第一种思路</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#第二种思路"><span class="nav-number">3.0.2.</span> <span class="nav-text">第二种思路</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Unity3D的旋转矩阵"><span class="nav-number">4.</span> <span class="nav-text">Unity3D的旋转矩阵</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">Erstellt mit  <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">Design – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script>
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
