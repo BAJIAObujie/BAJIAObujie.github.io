@@ -1,14 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
-  <meta charset="utf-8">
-  
 
-  
-  <title>UE4资源加载（四）UnrealPak打包 | 芭蕉不解的博客</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="前言上一篇文章讲完了从pak中加载出资源文件的过程，那么pak是如何打包生成的呢？pak是分为游戏主体包和后续补丁包两种的，两种又有什么区别呢？这是本篇文章的内容。在UE4打包的时候会启动UAT打包工具，UAT会经历烘焙内容等阶段，最后调用UnrealPak的方法将资源文件打包成pak文件。上一篇文章提到过pak打包与读取是序列化与反序列化的过程，两者是可以互相印证的。本篇文章是pak打包的过程，">
-<meta property="og:type" content="article">
+<!DOCTYPE html>
+<html lang="">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="芭蕉不解的博客">
+    <title>UE4资源加载（四）UnrealPak打包 - 芭蕉不解的博客</title>
+    <meta name="author" content="BAJIAObujie">
+    
+    
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"BAJIAObujie","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"articleBody":"前言上一篇文章讲完了从pak中加载出资源文件的过程，那么pak是如何打包生成的呢？pak是分为游戏主体包和后续补丁包两种的，两种又有什么区别呢？这是本篇文章的内容。在UE4打包的时候会启动UAT打包工具，UAT会经历烘焙内容等阶段，最后调用UnrealPak的方法将资源文件打包成pak文件。上一篇文章提到过pak打包与读取是序列化与反序列化的过程，两者是可以互相印证的。本篇文章是pak打包的过程，所以在读代码的时候，不妨与FPakPlatformFile.cpp的内容互相对比。\n在4.18版本，Unreal Pak的相关代码是放在UnrealPak.cpp底下的。在4.21版本则是写到了PakFileUtilities.cpp里。文章以4.21版本为准。\nUnrealPak打包过程以下主要以打游戏的主体包为例。\n1、UAT命令打包的时候可以在对应的UE的控制台找到UnrealPak的相关日志，文章是用的ProjectLauncher来打包，在ProjectLauncher.log 打包日志中可以看到一句\nRunning: D:\\Program Files\\Epic Games\\UE_4.21\\Engine\\Binaries\\Win64\\UnrealPak.exe D:\\MyUnrealProjects\\second\\second.uproject -batch=”D:\\Program Files\\Epic Games\\UE_4.21\\Engine\\Programs\\AutomationTool\\Saved\\UnrealPak-Commands.txt”\n这个txt包含了对UnrealPak如何打包的具体命令。\n相关的UAT代码如下，其中RunAndLog即启动UnrealPak.exe。\n\n\n\n\n参考官网文档，文章用电脑打包以创建Release版本，其中电脑的txt命令内容如下\nC:\\Users\\ZL0032\\Desktop\\UE_Launcher\\NoIncludeEditorContetn\\WindowsNoEditor\\second\\Content\\Paks\\second-WindowsNoEditor.pak -create=”C:\\Users\\ZL0032\\AppData\\Roaming\\Unreal Engine\\AutomationTool\\Logs\\D+Program+Files+Epic+Games+UE_4.21\\PakList_second-WindowsNoEditor.txt” -cryptokeys=D:\\MyUnrealProjects\\second\\Saved\\Cooked\\WindowsNoEditor\\second\\Metadata\\Crypto.json -order=D:\\MyUnrealProjects\\second\\Build\\WindowsNoEditor\\FileOpenOrder\\CookerOpenOrder.log -patchpaddingalign=2048 \n命令里首先是打包完成后pak的存储位置，没有以”-”开头。随后是\n\n-create \n-cryptokeys \n-order \n-patchpaddingalign=2048\n\n-create是获取到一个txt文件，这个txt文件保存了当前版本的资源文件列表。\n-order 保存烘焙文件和烘焙文件对应的order顺序\n接下来就是具体的打包过程，其中可以分为两步骤，收集需要打包的文件以及生成pak文件的过程。\n2、收集打包文件收集打包文件是将每个资源文件整理成FPakInputPair，保存在一个TArray FilesToAdd里，每个FPakInputPair保存打包时候的具体信息，比如是否压缩，烘焙文件在电脑上的地址等。\n前文提过命令行中的-create之后txt文件就是当前版本资源文件的列表。发布Release版本也就是主体包直接用这个资源列表就可以了，打补丁包的时候会有所不同，将在后面补充。\n读取create的txt文件\n首先读取txt中存储的内容，txt以每行对应一个文件的形式的存储，每一行又分为三部分，前一部分保存烘焙后的文件在电脑上的地址，第二部分是记录到pak中的地址（在new FPakFile会构建文件夹路径-文件名-索引的结构，这个路径正是用来构建这个结构的），第三部分是这个资源对应的一个标签，例如-compress，表明这个资源打包的时候是需要压缩的，这样有助于减少pak的文件大小。如下\n\n\n“D:\\MyUnrealProjects\\second\\Saved\\Cooked\\WindowsNoEditor\\second\\AssetRegistry.bin” “../../../second/AssetRegistry.bin” -compress\n将这个txt读取到TArray Lines中，每一行即代表一个资源，Lines.Num()即代表资源的数量。遍历Lines，把每一行的第一部分（本地烘焙文件地址）保存为Source，第二部分（保存到pak中的地址）保存为Dest，第三部分（-compress标签）保存为Switches。这三部分信息保存到一个FPakInputPair里，在把这个Pair保存进TArray中。\n\n\n读取order的txt文件\n这样就读取了-create的所有信息，并生成了FPakInputPair的数组，接着再取出-order保存的txt文件。如图\n\n\n其中second是我这个工程的目录，以六个省略号开头的是我本地的资源。\norder命令的txt文件的读取和create命令的txt文件读取是类似的，每一行代表一个资源，左边是资源打到pak路径，相当于之前的FPakInputPair的Dest。右边是这个资源的SuggestOrder，建议顺序。每一个资源如果路径匹配则赋予对应的SuggestOrder，如果找不到则SuggestOrder默认为MAX_uint64。在对所有FPakInputPair赋予SuggestOrder后，将会对这个数组重新按照从小到大的顺序排序。\n\n\nPS: 这个order命令其实让人很难捉摸，因为按照或者不按照这个顺序打入pak包，对最后似乎是没有太大影响的。而且对SuggestOrder赋值，似乎仅仅是对系统自带的资源有效，就是指“../../../Engine”开头的资源，而六个省略号开头的项目内的资源反而是没有赋值的。这样的结果就是优先打入引擎自带的资源，项目资源被最后才被打入包里。在我看我似乎影响不大\n3、生成pak文件收集打包文件之后就可以开始生成pak文件了。\n1bool bResult = CreatePakFile(*PakFilename, FilesToAdd, CmdLineParameters, SigningKey, EncryptionKey);\n\n\nPakFilename是pak打包完成后的保存地址\nFileToAdd保存了本次pak打包的每个资源的信息。由之前的收集打包文件过程收集而来。\n\n之前的文章曾经提过pak文件的格式，如下图。\n\n\n打包的过程其实就是依次从上往下写入的过程，CreatePakFile函数首先建立一个FPakInfo和TArray Index的数组，随后将资源文件逐个写入，每个写入完毕之后，就将文件的偏移、大小记录到FPakInputPair中并加入到Index，等所有的资源全部写入后，也就是完成了文件内容区的写入后，就开始写入Index，文件索引区。写入文件索引区后，再次记录文件索引区的偏移情况以及大小到FPakInfo中，最后写入FPakInfo。这样就完成了一个pak文件。在之前的文章中有提到过new FPakFile构建文件夹路径-文件名-索引的过程，在这个过程中就是因为FPakInfo的大小固定，而且在文件末尾，所以非常方便可以读取到这部分信息，从而读取到文件索引区的。序列化与反序列化是一一对应的！\n如图，在代码一开始就建立一个FPakInfo和TArray Index的数组。\n\n\n在把资源文件打入文件内容区的时候，还会根据是否是本体包或者补丁包而有所区别，也在补丁包模块中讲。\nUnrealPak打补丁包下面将介绍打补丁包与打主体包的不同\n\nUAT传入的命令不同\n\n收集文件步骤不同\n\nCreatePakFile对已删除的文件的处理不同\n\n\n1、UAT命令不同在打补丁包的时候，启动UnrealPak的命令如下：\nC:\\Users\\ZL0032\\Desktop\\UE_Launcher\\1\\WindowsNoEditor\\second\\Content\\Paks\\second-WindowsNoEditor_0_P.pak -create=”C:\\Users\\ZL0032\\AppData\\Roaming\\Unreal Engine\\AutomationTool\\Logs\\D+Program+Files+Epic+Games+UE_4.21\\PakList_second-WindowsNoEditor_0_P.txt” -cryptokeys=D:\\MyUnrealProjects\\second\\Saved\\Cooked\\WindowsNoEditor\\second\\Metadata\\Crypto.json -order=D:\\MyUnrealProjects\\second\\Build\\WindowsNoEditor\\FileOpenOrder\\CookerOpenOrder.log -generatepatch=D:\\MyUnrealProjects\\second\\Releases\\1.1\\WindowsNoEditor\\second-WindowsNoEditor*.pak -tempfiles=”D:\\Program Files\\Epic Games\\UE_4.21\\TempFilessecond-WindowsNoEditor_0_P” -patchpaddingalign=2048 \n\n-create \n\n-cryptokeys \n\n-order \n\n-generatepatch（补丁专用，指定了要比较的Release文件）\n\n-tempfiles\n\n-patchpaddingalign    \n\n\nPatch版本相比Release版本，主要有两点不同：\n\n打包文件的名字多了0P结尾，这种名字结尾的pak在FPakPlatformFile读取的时候将获得更高的优先级。\n\n-generatepatch是表明这次要生成的是补丁文件，其后是Release版本的文件路径，补丁包是基于Release包为基础打出的，所以如果本次打包是补丁包，那么必须指明具体的Release版本，在发布Release版本的时候，除了生成对应的pak外，还会在电脑项目工程的Release目录下生成一个以ReleaseVersion为名的文件夹。在打补丁包的时候，此时已经是新版本了，新版本的内容将与先前Release版本的内容逐个资源进行比较，判断新加入、修改、删除的内容，从而打出一个补丁包。\n\n\n2、收集文件步骤不同前文提过命令行中的-create之后txt文件就是当前版本资源文件的列表。Release版本也就是主体包直接用这个列表就可以了。Patch版本会有所不同，新版本与旧版本资源比较后，相同的文件是不需要重复打包的，而有变化的文件，包括删除、新增都需要打包进补丁包。那么如何分析哪些文件是相同的，哪些文件是有变化的呢？\ngeneratepatch后面带了一个地址，这个地址的文件是先前本体pak的一个备份。UE4会找到本体pak，生成FPakFile，并对每一个文件进行分析,记录文件大小以及生成的md5值到FileInfo中，并把结果记录到 TMap&lt;FString, FFileInfo&gt; SourceFileHashes中。FileInfo是用来比较文件的，判断是否有变化。如下\n\n\n主要方法就是GenerateHashesFromPak，分析pak生成FileInfo。具体代码就不展示了，感兴趣的去看看这个方法即可。\n\n\n在对每个文件生成了FileInfo之后，就可以来判断文件是否相同了。\n\nGetNewDeleteRecords方法 遍历旧版本的文件，查询文件是否在新版本还存在，如果不存在就表明被删除了。\n将GetNewDeleteRecords记录到的已删除的文件的添加到FileToAdd中，以便打包的时候记录。此时FileToAdd中的已删除文件的FPakInputPair的bDeleteRecord已经被标记为true\nRemoveIdenticalFiles方法 移除相同的文件。\n\nRemoveIdenticalFiles比较复杂。需要遍历每一个资源文件。一个资源文件是对应uasset/uexp组合的或者umap/uexp组合，（还有一些其他格式，如ubulk，这些我不太清楚怎么回事）在遍历资源文件的时候，只判断uasset、umap部分，就是非uexp的部分。通过FileIsIdentical方法。这个方法首先去判断新旧版本文件的大小，如果大小不一致，那肯定是有变化的。如果大小一致，那么判断md5值是否一致，只有一致了才判断文件是相同的。才可以从补丁包中移除。\n对于文件来说除了自身数据变化，还有可能是移动、删除、新增三种状态。移动其实可以看做是删除和新增的组合吧。不过我没有试验过，应该是没有问题的。这样就完成了收集文件的步骤。\n3、CreatePakFile对已删除的文件的处理不同对于本体pak来说是不存在已删除文件的，只有新版本与旧版本比较产生的补丁包才会有。\n1bool bResult = CreatePakFile(*PakFilename, FilesToAdd, CmdLineParameters, SigningKey, EncryptionKey);\n\n在执行CreatePakFile代码的时候，FileToAdd保存了本次pak打包的每个资源的信息。由之前的收集打包文件过程收集而来。FileToAdd不仅仅有新增加的资源，应该说有变化的资源都会被打包，包括被删除的。当资源是被删除的时候，FileToAdd里对应的FPakInputPair的一个标志位bDeleteRecord会被标记为true，那么在把资源文件打入文件内容区的时候，在知道了这个资源被删除的时候，资源不会再被写入到文件内容区，而是只会记录到index中。这样，在读取资源的时候因为补丁包的优先级，总是优先读取到补丁包，那么索引到这个资源已经是删除的了，就不会继续往本体pak中去加载。这样就完成了不改变本体包的情况下，也可以让资源“删除”的效果，因为本体包虽然存在这个资源，但是却无法被读取到。\n","dateCreated":"2019-04-25T00:00:00+08:00","dateModified":"2019-05-25T17:07:21+08:00","datePublished":"2019-04-25T00:00:00+08:00","description":"","headline":"UE4资源加载（四）UnrealPak打包","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/"},"publisher":{"@type":"Organization","name":"BAJIAObujie","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"url":"http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/"}</script>
+    <meta name="description" content="前言上一篇文章讲完了从pak中加载出资源文件的过程，那么pak是如何打包生成的呢？pak是分为游戏主体包和后续补丁包两种的，两种又有什么区别呢？这是本篇文章的内容。在UE4打包的时候会启动UAT打包工具，UAT会经历烘焙内容等阶段，最后调用UnrealPak的方法将资源文件打包成pak文件。上一篇文章提到过pak打包与读取是序列化与反序列化的过程，两者是可以互相印证的。本篇文章是pak打包的过程，">
+<meta property="og:type" content="blog">
 <meta property="og:title" content="UE4资源加载（四）UnrealPak打包">
 <meta property="og:url" content="http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/index.html">
 <meta property="og:site_name" content="芭蕉不解的博客">
@@ -29,75 +34,271 @@
 <meta name="twitter:title" content="UE4资源加载（四）UnrealPak打包">
 <meta name="twitter:description" content="前言上一篇文章讲完了从pak中加载出资源文件的过程，那么pak是如何打包生成的呢？pak是分为游戏主体包和后续补丁包两种的，两种又有什么区别呢？这是本篇文章的内容。在UE4打包的时候会启动UAT打包工具，UAT会经历烘焙内容等阶段，最后调用UnrealPak的方法将资源文件打包成pak文件。上一篇文章提到过pak打包与读取是序列化与反序列化的过程，两者是可以互相印证的。本篇文章是pak打包的过程，">
 <meta name="twitter:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad4/1.jpg">
-  
-    <link rel="alternate" href="/atom.xml" title="芭蕉不解的博客" type="application/atom+xml">
-  
-  
-    <link rel="icon" href="/favicon.png">
-  
-  
-    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
-  
-  <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
-<body>
-  <div id="container">
-    <div id="wrap">
-      <header id="header">
-  <div id="banner"></div>
-  <div id="header-outer" class="outer">
-    <div id="header-title" class="inner">
-      <h1 id="logo-wrap">
-        <a href="/" id="logo">芭蕉不解的博客</a>
-      </h1>
-      
-    </div>
-    <div id="header-inner" class="inner">
-      <nav id="main-nav">
-        <a id="main-nav-toggle" class="nav-icon"></a>
-        
-          <a class="main-nav-link" href="/">Home</a>
-        
-          <a class="main-nav-link" href="/archives">Archives</a>
-        
-      </nav>
-      <nav id="sub-nav">
-        
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
-        
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
-      </nav>
-      <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
-      </div>
-    </div>
-  </div>
-</header>
-      <div class="outer">
-        <section id="main"><article id="post-2019-04-25-UE4资源加载（四）UnrealPak打包" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/" class="article-date">
-  <time datetime="2019-04-24T16:00:00.000Z" itemprop="datePublished">2019-04-25</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
     
     
-      <header class="article-header">
         
-  
-    <h1 class="article-title" itemprop="name">
-      UE4资源加载（四）UnrealPak打包
-    </h1>
-  
+    
+    
+    
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
 
-      </header>
     
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一篇文章讲完了从pak中加载出资源文件的过程，那么pak是如何打包生成的呢？pak是分为游戏主体包和后续补丁包两种的，两种又有什么区别呢？这是本篇文章的内容。在UE4打包的时候会启动UAT打包工具，UAT会经历烘焙内容等阶段，最后调用UnrealPak的方法将资源文件打包成pak文件。上一篇文章提到过pak打包与读取是序列化与反序列化的过程，两者是可以互相印证的。本篇文章是pak打包的过程，所以在读代码的时候，不妨与FPakPlatformFile.cpp的内容互相对比。</p>
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/ "
+            aria-label=""
+        >
+            芭蕉不解的博客
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Öffne den Link: /#about"
+            >
+        
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Kategorien"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Kategorien</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archiv"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archiv</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Suche"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Suche</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="Über"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Über</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/" target="_blank" rel="noopener" title="GitHub">
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="http://stackoverflow.com/users" target="_blank" rel="noopener" title="Stack Overflow">
+                    
+                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Stack Overflow</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://twitter.com/" target="_blank" rel="noopener" title="Twitter">
+                    
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://plus.google.com/" target="_blank" rel="noopener" title="Google Plus">
+                    
+                        <i class="sidebar-button-icon fab fa-google-plus" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Google Plus</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/profile/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/mailto"
+                            title="E-Mail"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">E-Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            UE4资源加载（四）UnrealPak打包
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-04-25T00:00:00+08:00">
+	
+		    25 Apr 2019
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一篇文章讲完了从pak中加载出资源文件的过程，那么pak是如何打包生成的呢？pak是分为游戏主体包和后续补丁包两种的，两种又有什么区别呢？这是本篇文章的内容。在UE4打包的时候会启动UAT打包工具，UAT会经历烘焙内容等阶段，最后调用UnrealPak的方法将资源文件打包成pak文件。上一篇文章提到过pak打包与读取是序列化与反序列化的过程，两者是可以互相印证的。本篇文章是pak打包的过程，所以在读代码的时候，不妨与FPakPlatformFile.cpp的内容互相对比。</p>
 <p>在4.18版本，Unreal Pak的相关代码是放在UnrealPak.cpp底下的。在4.21版本则是写到了PakFileUtilities.cpp里。文章以4.21版本为准。</p>
 <h2 id="UnrealPak打包过程"><a href="#UnrealPak打包过程" class="headerlink" title="UnrealPak打包过程"></a>UnrealPak打包过程</h2><p>以下主要以打游戏的主体包为例。</p>
 <h4 id="1、UAT命令"><a href="#1、UAT命令" class="headerlink" title="1、UAT命令"></a>1、UAT命令</h4><p>打包的时候可以在对应的UE的控制台找到UnrealPak的相关日志，文章是用的ProjectLauncher来打包，在ProjectLauncher.log 打包日志中可以看到一句</p>
@@ -206,124 +407,318 @@
 
 <p>在执行CreatePakFile代码的时候，FileToAdd保存了本次pak打包的每个资源的信息。由之前的收集打包文件过程收集而来。FileToAdd不仅仅有新增加的资源，应该说有变化的资源都会被打包，包括被删除的。当资源是被删除的时候，FileToAdd里对应的FPakInputPair的一个标志位bDeleteRecord会被标记为true，那么在把资源文件打入文件内容区的时候，在知道了这个资源被删除的时候，资源不会再被写入到文件内容区，而是只会记录到index中。这样，在读取资源的时候因为补丁包的优先级，总是优先读取到补丁包，那么索引到这个资源已经是删除的了，就不会继续往本体pak中去加载。这样就完成了不改变本体包的情况下，也可以让资源“删除”的效果，因为本体包虽然存在这个资源，但是却无法被读取到。</p>
 
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/" data-id="cjyqk8ck70004kwvpps95e7pn" class="article-share-link">Share</a>
-      
-      
-    </footer>
-  </div>
-  
-    
-<nav id="article-nav">
-  
-    <a href="/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
-      <div class="article-nav-title">
-        
-          UE4资源加载（三）FPakPlatformFile相关
-        
-      </div>
-    </a>
-  
-  
-    <a href="/2019/03/27/2019-03-27-UE4资源加载（一）从StaticLoadObject开始/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">UE4资源加载（一）从StaticLoadObject开始</div>
-    </a>
-  
-</nav>
+            
 
-  
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"
+                    data-tooltip="UE4资源加载（三）FPakPlatformFile相关"
+                    aria-label="FRÜHER: UE4资源加载（三）FPakPlatformFile相关"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">FRÜHER</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/03/27/2019-03-27-UE4资源加载（一）从StaticLoadObject开始/"
+                    data-tooltip="UE4资源加载（一）从StaticLoadObject开始"
+                    aria-label="NÄCHSTER: UE4资源加载（一）从StaticLoadObject开始"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NÄCHSTER</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/"
+                    title="Teilen auf Facebook"
+                    aria-label="Teilen auf Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/"
+                    title="Teilen auf Twitter"
+                    aria-label="Teilen auf Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/"
+                    title="Teilen auf Google Plus"
+                    aria-label="Teilen auf Google Plus"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
 </article>
 
-</section>
-        
-          <aside id="sidebar">
-  
-    
-
-  
-    
-
-  
-    
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
-    <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">July 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/06/">June 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/05/">May 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/04/">April 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">March 2019</a></li></ul>
-    </div>
-  </div>
 
 
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
-    <div class="widget">
-      <ul>
-        
-          <li>
-            <a href="/2019/07/31/hello-world/">Hello World</a>
-          </li>
-        
-          <li>
-            <a href="/2019/06/29/2019-06-29-写在毕业一周年/">写在毕业一周年</a>
-          </li>
-        
-          <li>
-            <a href="/2019/06/14/2019-06-14-翻译：可编程渲染管线之定制化着色器（二）/">翻译：可编程渲染管线之定制化着色器（二）</a>
-          </li>
-        
-          <li>
-            <a href="/2019/06/12/2019-06-12-UE4安卓打包问题/">UE4安卓打包问题</a>
-          </li>
-        
-          <li>
-            <a href="/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/">UE4的热更新与HTTP（三）</a>
-          </li>
-        
-      </ul>
-    </div>
-  </div>
-
-  
-</aside>
-        
-      </div>
-      <footer id="footer">
-  
-  <div class="outer">
-    <div id="footer-info" class="inner">
-      &copy; 2019 BAJIAObujie<br>
-      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
-    </div>
-  </div>
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2019 BAJIAObujie. All Rights Reserved.
+    </span>
 </footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"
+                    data-tooltip="UE4资源加载（三）FPakPlatformFile相关"
+                    aria-label="FRÜHER: UE4资源加载（三）FPakPlatformFile相关"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">FRÜHER</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/03/27/2019-03-27-UE4资源加载（一）从StaticLoadObject开始/"
+                    data-tooltip="UE4资源加载（一）从StaticLoadObject开始"
+                    aria-label="NÄCHSTER: UE4资源加载（一）从StaticLoadObject开始"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NÄCHSTER</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/"
+                    title="Teilen auf Facebook"
+                    aria-label="Teilen auf Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/"
+                    title="Teilen auf Twitter"
+                    aria-label="Teilen auf Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/"
+                    title="Teilen auf Google Plus"
+                    aria-label="Teilen auf Google Plus"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/"
+                        aria-label="Teilen auf Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Teilen auf Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/"
+                        aria-label="Teilen auf Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Teilen auf Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/"
+                        aria-label="Teilen auf Google Plus"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Teilen auf Google Plus</span>
+                    </a>
+                </li>
+            
+        </ul>
     </div>
-    <nav id="mobile-nav">
-  
-    <a href="/" class="mobile-nav-link">Home</a>
-  
-    <a href="/archives" class="mobile-nav-link">Archives</a>
-  
-</nav>
+
+
+            
+        </div>
+        
+
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <h4 id="about-card-name">BAJIAObujie</h4>
+        
+            <div id="about-card-bio"><p>author.bio</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+
     
 
-<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-
-
-  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
-  <script src="/fancybox/jquery.fancybox.pack.js"></script>
-
-
-<script src="/js/script.js"></script>
 
 
 
-  </div>
-</body>
+    </body>
 </html>

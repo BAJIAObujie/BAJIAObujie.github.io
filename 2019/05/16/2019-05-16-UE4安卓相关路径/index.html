@@ -1,14 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
-  <meta charset="utf-8">
-  
 
-  
-  <title>UE4安卓相关路径 | 芭蕉不解的博客</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="前言前几天在测试UE4打包的时候顺便在安卓机上输出了一些相关路径，做个记录 结论直接上结论：UE4打包后对应到安卓平台主要有两个目录路径 1、FPaths::ProjectPersistentDownloadDir()  根据FPaths的注释，这是专门为了下载的数据持续化存储的一个可写入的文件夹，应该是对应于Unity的persistentDataPath。在安卓上的输出结果为: “/stora">
-<meta property="og:type" content="article">
+<!DOCTYPE html>
+<html lang="">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="芭蕉不解的博客">
+    <title>UE4安卓相关路径 - 芭蕉不解的博客</title>
+    <meta name="author" content="BAJIAObujie">
+    
+    
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"BAJIAObujie","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"articleBody":"前言前几天在测试UE4打包的时候顺便在安卓机上输出了一些相关路径，做个记录\n结论直接上结论：UE4打包后对应到安卓平台主要有两个目录路径\n1、FPaths::ProjectPersistentDownloadDir()\n\n根据FPaths的注释，这是专门为了下载的数据持续化存储的一个可写入的文件夹，应该是对应于Unity的persistentDataPath。在安卓上的输出结果为:\n“/storage/emulated/0/Android/data/com.YourCompany.AndroidFirst/files”\n在手机上打开安卓文件管理器可以看到一个叫做Android的目录，进入Android文件夹然后按顺序就可以找到files文件夹\n2、“../../../”开头的路径\n\nFPaths::RootDir() 在安卓上的输出结果为 “../../../“\n\nFPaths::ProjectDir() 在安卓上的输出结果为 “../../../AndroidFirst/“\n\nFPaths::EngineDir() 在安卓上的输出结果为 “../../../Engine/“\n\n其他路径基本是以ProjectDir或者EngineDir为基础的路径\n\n\nFPaths::RootDir()在安卓平台上输出结果上是“../../../”，路径上对应/storage/emulated/0/UE4Game/AndroidFirst\nAndroidFirst是我的项目名。\nFPaths::ProjectDir()对应/storage/emulated/0/UE4Game/AndroidFirst/AndroidFirst/\nFPaths::EngineDir()对应/storage/emulated/0/UE4Game/AndroidFirst/Engine/\n如图\n\n\n实验过程代码：将路径打印到游戏界面上，并保存到本地文件\n\n\n\n\n在手机上运行后界面上的打印信息如下\n\n\n根据/storage/emulated/0/Android/data/com.YourCompany.AndroidFirst/files路径可在安卓上找到对应的文件。首先手机进入文件管理器下找到Android文件夹，YourCompany是依据游戏的打包时候的签名设置，接着根据目录找到paths.txt\n\n    \n    \n\n\n成功找到生成的paths.txt文件，传到电脑打开该文件\n\n\n第一行对应的FPaths::ProjectPersistentDownloadDir() 可写路径。剩下的就是以”../../..”开头的路径。\n在手机上进入文件管理器后除了Android目录与UE4有关，还有一个UE4Game的文件夹\n\n    \n    \n\n\nUE4Game这个文件夹猜测应该是所有跟UE4有关的项目都放在这里，例如我的AndroidFirst项目，点击进入AndroidFirst项目后才是FPath::RootDir()对应的路径。如果有其他的游戏项目比如AndroidSecond，那么UE4Game还有有第二个文件夹AndroidSecond。\n在代码中还把文件保存到FPaths::ProjectDir() / TEXT(“paths.txt”) 也就是”../../../AndroidFirst/“目录，进入文件夹/storage/emulated/0/UE4Game/AndroidFirst/AndroidFirst/“，在这里找到了paths.txt文件。说明“../../../”在路径上是对应“/storage/emulated/0/UE4Game/AndroidFirst/”\n由此就可以推出其他几个FPaths中常用的路径：\nFPaths::RootDir()在安卓平台上输出结果上是“../../../”路径上对应/storage/emulated/0/UE4Game/AndroidFirst\n这个目录文件夹下有AndroidFirst和Engine两个路径\nFPaths::ProjectDir()是对应的”../../../AndroidFirst/“\nFPaths::EngineDir()是对应的”../../../Engine/“\nps: 我是通过数据线连接到电脑，通过USB调试模式，在UE的启动中，直接选择手机调试的，这种选择发布到手机上的应用应该是Debug签名。因为Develop和Shipping模式的打开手机文件管理器是看不到一些关键的文件的，例如uproject等，只能看到一些ini、log文件。根据网上查阅的资料，想要看到这种文件要么是Debug签名的应用，要么取得Root权限。\n","dateCreated":"2019-05-16T00:00:00+08:00","dateModified":"2019-05-23T12:47:05+08:00","datePublished":"2019-05-16T00:00:00+08:00","description":"","headline":"UE4安卓相关路径","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/"},"publisher":{"@type":"Organization","name":"BAJIAObujie","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"url":"http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/"}</script>
+    <meta name="description" content="前言前几天在测试UE4打包的时候顺便在安卓机上输出了一些相关路径，做个记录 结论直接上结论：UE4打包后对应到安卓平台主要有两个目录路径 1、FPaths::ProjectPersistentDownloadDir()  根据FPaths的注释，这是专门为了下载的数据持续化存储的一个可写入的文件夹，应该是对应于Unity的persistentDataPath。在安卓上的输出结果为: “/stora">
+<meta property="og:type" content="blog">
 <meta property="og:title" content="UE4安卓相关路径">
 <meta property="og:url" content="http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/index.html">
 <meta property="og:site_name" content="芭蕉不解的博客">
@@ -29,75 +34,271 @@
 <meta name="twitter:title" content="UE4安卓相关路径">
 <meta name="twitter:description" content="前言前几天在测试UE4打包的时候顺便在安卓机上输出了一些相关路径，做个记录 结论直接上结论：UE4打包后对应到安卓平台主要有两个目录路径 1、FPaths::ProjectPersistentDownloadDir()  根据FPaths的注释，这是专门为了下载的数据持续化存储的一个可写入的文件夹，应该是对应于Unity的persistentDataPath。在安卓上的输出结果为: “/stora">
 <meta name="twitter:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/1.jpg">
-  
-    <link rel="alternate" href="/atom.xml" title="芭蕉不解的博客" type="application/atom+xml">
-  
-  
-    <link rel="icon" href="/favicon.png">
-  
-  
-    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
-  
-  <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
-<body>
-  <div id="container">
-    <div id="wrap">
-      <header id="header">
-  <div id="banner"></div>
-  <div id="header-outer" class="outer">
-    <div id="header-title" class="inner">
-      <h1 id="logo-wrap">
-        <a href="/" id="logo">芭蕉不解的博客</a>
-      </h1>
-      
-    </div>
-    <div id="header-inner" class="inner">
-      <nav id="main-nav">
-        <a id="main-nav-toggle" class="nav-icon"></a>
-        
-          <a class="main-nav-link" href="/">Home</a>
-        
-          <a class="main-nav-link" href="/archives">Archives</a>
-        
-      </nav>
-      <nav id="sub-nav">
-        
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
-        
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
-      </nav>
-      <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
-      </div>
-    </div>
-  </div>
-</header>
-      <div class="outer">
-        <section id="main"><article id="post-2019-05-16-UE4安卓相关路径" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2019/05/16/2019-05-16-UE4安卓相关路径/" class="article-date">
-  <time datetime="2019-05-15T16:00:00.000Z" itemprop="datePublished">2019-05-16</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
     
     
-      <header class="article-header">
         
-  
-    <h1 class="article-title" itemprop="name">
-      UE4安卓相关路径
-    </h1>
-  
+    
+    
+    
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
 
-      </header>
     
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>前几天在测试UE4打包的时候顺便在安卓机上输出了一些相关路径，做个记录</p>
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/ "
+            aria-label=""
+        >
+            芭蕉不解的博客
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Öffne den Link: /#about"
+            >
+        
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Kategorien"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Kategorien</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archiv"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archiv</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Suche"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Suche</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="Über"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Über</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/" target="_blank" rel="noopener" title="GitHub">
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="http://stackoverflow.com/users" target="_blank" rel="noopener" title="Stack Overflow">
+                    
+                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Stack Overflow</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://twitter.com/" target="_blank" rel="noopener" title="Twitter">
+                    
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://plus.google.com/" target="_blank" rel="noopener" title="Google Plus">
+                    
+                        <i class="sidebar-button-icon fab fa-google-plus" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Google Plus</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/profile/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/mailto"
+                            title="E-Mail"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">E-Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            UE4安卓相关路径
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-05-16T00:00:00+08:00">
+	
+		    16 May 2019
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>前几天在测试UE4打包的时候顺便在安卓机上输出了一些相关路径，做个记录</p>
 <h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>直接上结论：UE4打包后对应到安卓平台主要有两个目录路径</p>
 <p>1、FPaths::ProjectPersistentDownloadDir()</p>
 <p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/1.jpg" alt="image"></p>
@@ -155,124 +356,318 @@
 <p>FPaths::EngineDir()是对应的”../../../Engine/“</p>
 <p>ps: 我是通过数据线连接到电脑，通过USB调试模式，在UE的启动中，直接选择手机调试的，这种选择发布到手机上的应用应该是Debug签名。因为Develop和Shipping模式的打开手机文件管理器是看不到一些关键的文件的，例如uproject等，只能看到一些ini、log文件。根据网上查阅的资料，想要看到这种文件要么是Debug签名的应用，要么取得Root权限。</p>
 
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/" data-id="cjyqk8cjy0001kwvpch7sg2ti" class="article-share-link">Share</a>
-      
-      
-    </footer>
-  </div>
-  
-    
-<nav id="article-nav">
-  
-    <a href="/2019/06/02/2019-06-02-UE4的热更新与HTTP（二）/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
-      <div class="article-nav-title">
-        
-          UE4的热更新与HTTP（二）
-        
-      </div>
-    </a>
-  
-  
-    <a href="/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">UE4资源加载（三）FPakPlatformFile相关</div>
-    </a>
-  
-</nav>
+            
 
-  
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/06/02/2019-06-02-UE4的热更新与HTTP（二）/"
+                    data-tooltip="UE4的热更新与HTTP（二）"
+                    aria-label="FRÜHER: UE4的热更新与HTTP（二）"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">FRÜHER</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"
+                    data-tooltip="UE4资源加载（三）FPakPlatformFile相关"
+                    aria-label="NÄCHSTER: UE4资源加载（三）FPakPlatformFile相关"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NÄCHSTER</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/"
+                    title="Teilen auf Facebook"
+                    aria-label="Teilen auf Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/"
+                    title="Teilen auf Twitter"
+                    aria-label="Teilen auf Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/"
+                    title="Teilen auf Google Plus"
+                    aria-label="Teilen auf Google Plus"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
 </article>
 
-</section>
-        
-          <aside id="sidebar">
-  
-    
-
-  
-    
-
-  
-    
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
-    <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">July 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/06/">June 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/05/">May 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/04/">April 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">March 2019</a></li></ul>
-    </div>
-  </div>
 
 
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
-    <div class="widget">
-      <ul>
-        
-          <li>
-            <a href="/2019/07/31/hello-world/">Hello World</a>
-          </li>
-        
-          <li>
-            <a href="/2019/06/29/2019-06-29-写在毕业一周年/">写在毕业一周年</a>
-          </li>
-        
-          <li>
-            <a href="/2019/06/14/2019-06-14-翻译：可编程渲染管线之定制化着色器（二）/">翻译：可编程渲染管线之定制化着色器（二）</a>
-          </li>
-        
-          <li>
-            <a href="/2019/06/12/2019-06-12-UE4安卓打包问题/">UE4安卓打包问题</a>
-          </li>
-        
-          <li>
-            <a href="/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/">UE4的热更新与HTTP（三）</a>
-          </li>
-        
-      </ul>
-    </div>
-  </div>
-
-  
-</aside>
-        
-      </div>
-      <footer id="footer">
-  
-  <div class="outer">
-    <div id="footer-info" class="inner">
-      &copy; 2019 BAJIAObujie<br>
-      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
-    </div>
-  </div>
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2019 BAJIAObujie. All Rights Reserved.
+    </span>
 </footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/06/02/2019-06-02-UE4的热更新与HTTP（二）/"
+                    data-tooltip="UE4的热更新与HTTP（二）"
+                    aria-label="FRÜHER: UE4的热更新与HTTP（二）"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">FRÜHER</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"
+                    data-tooltip="UE4资源加载（三）FPakPlatformFile相关"
+                    aria-label="NÄCHSTER: UE4资源加载（三）FPakPlatformFile相关"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NÄCHSTER</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/"
+                    title="Teilen auf Facebook"
+                    aria-label="Teilen auf Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/"
+                    title="Teilen auf Twitter"
+                    aria-label="Teilen auf Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/"
+                    title="Teilen auf Google Plus"
+                    aria-label="Teilen auf Google Plus"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/"
+                        aria-label="Teilen auf Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Teilen auf Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/"
+                        aria-label="Teilen auf Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Teilen auf Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/"
+                        aria-label="Teilen auf Google Plus"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Teilen auf Google Plus</span>
+                    </a>
+                </li>
+            
+        </ul>
     </div>
-    <nav id="mobile-nav">
-  
-    <a href="/" class="mobile-nav-link">Home</a>
-  
-    <a href="/archives" class="mobile-nav-link">Archives</a>
-  
-</nav>
+
+
+            
+        </div>
+        
+
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <h4 id="about-card-name">BAJIAObujie</h4>
+        
+            <div id="about-card-bio"><p>author.bio</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+
     
 
-<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-
-
-  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
-  <script src="/fancybox/jquery.fancybox.pack.js"></script>
-
-
-<script src="/js/script.js"></script>
 
 
 
-  </div>
-</body>
+    </body>
 </html>

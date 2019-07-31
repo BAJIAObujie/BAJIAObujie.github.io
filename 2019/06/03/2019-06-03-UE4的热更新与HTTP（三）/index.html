@@ -1,14 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head><meta name="generator" content="Hexo 3.9.0">
-  <meta charset="utf-8">
-  
 
-  
-  <title>UE4的热更新与HTTP（三） | 芭蕉不解的博客</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="前言上一篇文章已经介绍完文件下载，为了测试代码功能，需要进行测试。这一篇文章就是来介绍如何搭建文件服务器，计算对应的Md5值并生成md5table.txt文件，以及记录测试过程中遇到的几个问题。 搭建文件服务器https://blog.csdn.net/zhangnana200/article/details/77116030 照着这个做基本OK 其中两个问题多解释一下 1、配置安装Apache的">
-<meta property="og:type" content="article">
+<!DOCTYPE html>
+<html lang="">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="芭蕉不解的博客">
+    <title>UE4的热更新与HTTP（三） - 芭蕉不解的博客</title>
+    <meta name="author" content="BAJIAObujie">
+    
+    
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"BAJIAObujie","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"articleBody":"前言上一篇文章已经介绍完文件下载，为了测试代码功能，需要进行测试。这一篇文章就是来介绍如何搭建文件服务器，计算对应的Md5值并生成md5table.txt文件，以及记录测试过程中遇到的几个问题。\n搭建文件服务器https://blog.csdn.net/zhangnana200/article/details/77116030 照着这个做基本OK 其中两个问题多解释一下\n1、配置安装Apache的主服务的时候，出现的命令行 Error底下一行没有后续提示，说明本次运行没有发生错误。成功安装。不是说出现Error就是有错。\n\n\n2 配置安装Apache的主服务的时候，用cmd命令行启动，可能会报错\n\n\n必须通过管理员身份启动，在这个目录下找到cmd.exe，用管理员身份启动\n\n\n\n\n计算Md5值前文介绍过md5table.txt文件是用来保存资源信息的，每一行是 “FileName - Md5 - FileSize” 的形式。这里用Java实现。\n1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;import java.io.File;import java.io.FileInputStream;import java.io.FileWriter;import java.security.MessageDigest;import java.util.ArrayList;public class Main &#123;    /**     * FileServer底下的所有目录的所有文件全部收集起来。FileServer文件夹下的文件不包括在内     */    private static void GetAllFilesFromFolder(File folder, ArrayList&lt;File&gt; result, boolean bIncludeFile)&#123;        for(File file : folder.listFiles())&#123;            if(file.isFile())&#123;                if(bIncludeFile)&#123;                    result.add(file);                &#125;            &#125;            if(file.isDirectory())&#123;                GetAllFilesFromFolder(file, result, true);            &#125;        &#125;    &#125;    public static void main(String[] args) &#123;        String Path = &quot;G:\\\\FileServer&quot;;        int PathLength = Path.length();        File folder = new File(Path);        ArrayList&lt;String&gt; output = new ArrayList&lt;&gt;();        byte[] buffer = new byte[8192];        ArrayList&lt;File&gt; result = new ArrayList&lt;&gt;();        GetAllFilesFromFolder(folder, result, false);        for(File file : result)&#123;            try&#123;                FileInputStream stream = new FileInputStream(file);                MessageDigest md = MessageDigest.getInstance(&quot;MD5&quot;);                int length;                while((length = stream.read(buffer)) != -1)&#123;                    md.update(buffer, 0 , length);                &#125;                stream.close();                String relevantPath = file.getAbsolutePath().substring(PathLength + 1);                String fileMd5 = HexBin.encode(md.digest());                //文件大小不要超过2GB int32 hold不住                String line = String.format(&quot;%s,%s,%s&quot;,relevantPath,fileMd5,file.length());                output.add(line);            &#125;            catch(Exception e)&#123;                e.printStackTrace();            &#125;        &#125;        File outputFile = new File(Path+&quot;\\\\android_resource_md5.txt&quot;);        try&#123;            FileWriter outputFileWrite = new FileWriter(outputFile);            StringBuffer sb = new StringBuffer();            output.forEach(line-&gt;&#123;                String newLine = line.replaceAll(&quot;\\\\\\\\&quot;,&quot;/&quot;);                sb.append(newLine);                sb.append(&quot;\\r\\n&quot;);            &#125;);            outputFileWrite.write(sb.toString());            outputFileWrite.close();        &#125;        catch(Exception e)&#123;            e.printStackTrace();        &#125;    &#125;&#125;\n\n\n\n\n\n这是我利用Apache搭建的文件服务器，和本地电脑对应的文件夹。上述Java代码会打包FileServer文件夹下的所有文件，但是不包括FileServer这一级文件夹下的文件。也就是两个txt文件不是打包的内容。执行代码就会把Contents Paks文件夹下的内容生成对应的md5table文件，以下是我的生成结果。\n1234567891011121314151617181920Contents/98108100.png,C90B90492AF6F2F69E7AF2CC0B4956EB,166528Contents/back10310.png,82E41BD48639DD803ED219AB268E72B7,344481Contents/back10400.png,9357A844E29BDF7A44CA1F1F9E77F6A5,280861Contents/back20151001.png,DF8C365A3BB27C848DFCDCE33CEFA28C,713083Contents/back20151101.png,6C279F4A70CFFD7B561A34689E9E113C,706371Contents/back20151102.png,BD432717CB5E455884F32334AAEFD920,618290Contents/back20160901.png,01CC1E48F35C35968AD596F570CBA2B1,766562Contents/back20503.png,F33275CDCC6419DAB977D5A581664439,699881Contents/back20902.png,740A622EAF7B61D90238845032645FD4,662138Contents/back21805.png,38119D16B52EE75C99BA857B68CC6727,805909Contents/codeworks.json,F4C986505671BCE0816C6D64496EF4C7,149992Contents/equip00002.png,09C797A31A8170D2856FA110E4BC80A4,248845Contents/Ereshkigal_Stage1_Sheet.png,C9DF4725291069BFC2B24FEF6F238582,1145249Contents/Ereshkigal_Stage2_Sheet.png,F40268EF1BD371B808C3F8F5A2C0C6CF,1255084Contents/Ereshkigal_Stage3_Sheet.png,9301113E4B752B454602CF8B41959C75,1150685Contents/Halal_eresh.png,C754266747231CE94AA6839E995DA795,927168Contents/image.png,0FF7EF07F5219AF8F8714F023E99CD66,101881Contents/ObjectCN.rar,B56D7E47A0A9A5172782A609BB21572C,127616Paks/JetBrains.Rider-2018.1.pak,111FC7BBA27B081D2AE2C2AED6564EBD,294398520Paks/UnrealEngine-release.pak,A207EA0643F428CCC06332F6E11FBC93,288092632\n\n测试问题0KB文件在实际测试的过程中，发现了一个问题。当我在服务器上部署文件的时候，HTTP下载的过程中碰到那种 0KB 的文件，会直接报下载失败。因为我们已经在md5table.txt 记录了文件大小，所以我们可以在生成md5table.txt的过程中直接过滤掉 0KB 的文件，或者在启动HTTP下载的时候，遇到文件大小为0的文件直接在对应的位置生成一个文件。\n单例模式我实现的热更新管理器 UpdateResourceManager 是一个单例，模仿了 PlatformFileManager 的实现，头文件定义：\n123456789101112class UpdateResourceManager&#123;public:   //......private:   //......public:   static UpdateResourceManger&amp; Get(); &#125;UpdateResourceManager&amp; UpdateResourceManager::Get() &#123;\tstatic UpdateResourceManager Singleton;\treturn Singleton;&#125;\n\n这样定义在VS中是不会报错的，但是在UE4中会报错，提示 error: lnk 2005 重复定义。重新看了 PlatformFileManager  的实现，它是把实现部分放到了 .cpp 文件里，转移这个Get函数后成功编译通过了。感觉很奇怪，UE4净整一些有的没的。报错如下：\nUpdateResourceManager.cpp.obj : error LNK2005: “public: static class UpdateResourceManager &amp; __cdecl UpdateResourceManager::Get(void)” (?Get@UpdateResourceManager@@SAAEAV1@XZ) 已经在 MyActor.cpp.obj 中定义\n添加 .h .cpp 文件添加文件最好在UE4中新建，不要通过vs的项目列表 新建项，因为如果这样，写好了.h .cpp文件后，别的文件里include这个 .h文件是找不到的。#include “UpdateResourceManager” 会提示找不到这个文件。\nDownloadTask实例变量放在堆还是栈？这是一段从下载列表里分离出pak下载任务 和 普通文件下载任务的过程。\n123456789101112131415161718for (int32 i = 0; i &lt; DownloadFileList.Num(); i++) &#123;\tFString&amp; FileName = DownloadFileList[i];\tFString SavePath = Util::GetPersistentPath(FileName);\t//pak文件放到对应的TArray中，优先下载TaskArray，下载完毕后逐个下载Pak\tif (FileName.EndsWith(TEXT(&quot;.pak&quot;))) &#123;\t\tFString PakFileName = FileName;\t\tif (PakFileName.Equals(BreakPointPakFileName)) &#123;\t\t\tcontinue;\t\t&#125;\t\tFString PakSavePath = SavePath;\t\tint32 PakFileSize = NewMd5Table.Find(FileName)-&gt;Size;\t\tFString PakMd5 = NewMd5Table.Find(FileName)-&gt;Md5;\t\tDownloadPakFileTask* temp = new DownloadPakFileTask(this, PakFileName, PakSavePath, PakFileSize, PakMd5);\t\tPakTaskArray.Add(temp);\t\tcontinue;\t&#125;\tTaskArray.Add(DownloadTask(this, FileName, SavePath, ServerResVersion, NewMd5Table[FileName]));&#125;\n\n看一下 DownloadPakFileTask 的构造函数\n123456789101112131415161718class DownloadPakFileTask &#123;public:\tDownloadPakFileTask(UpdateResourceManager* InParent, FString&amp; InFileName, FString&amp; InSavePath, int32 FileSize, FString&amp; InMd5)\t\t: Parent(InParent), FileName(InFileName), SavePath(InSavePath), PakFileSize(FileSize), PakMd5(InMd5), bFinished(false), NextTaskIndex(0), SuccessfulPartialTaskCount(0), RunningHttpCount(0)\t&#123;\t\tint32 TwentyMB = 20 * 1024 * 1024;\t\tint32 TaskCount = FMath::CeilToInt(FileSize * 1.0f / TwentyMB);\t\tfor (int32 index = 0; index &lt; TaskCount; index++) &#123;\t\t\tFString From = FString::FromInt(index * TwentyMB);\t\t\tFString To = FString::FromInt((index + 1) * TwentyMB - 1); //如果文件大小是 1500KB，那么第二个PartialTask是1024-2047.超出了文件的范围，不过从PC下载测试来看是没问题的。\t\t\tFString Range = FString::Format(TEXT(&quot;bytes=&#123;0&#125;-&#123;1&#125;&quot;), &#123; From, To &#125;);\t\t\tFString Suffix = FString::Format(TEXT(&quot;temp&#123;0&#125;&quot;), &#123; index &#125;);\t\t\tFString TaskSavePath = FString::Format(TEXT(&quot;&#123;0&#125;/HotUpdateTemp/&#123;1&#125;&#123;2&#125;&quot;), &#123; FPaths::ProjectPersistentDownloadDir(),  FileName, Suffix &#125;); //  patchPak.paktemp1   patchPak.paktemp2\t\t\t//PartialTask Task = PartialTask(this, FileName, false, Range, TaskSavePath);\t\t\tPartialTasks.Add(new PartialTask(this, FileName, false, Range, TaskSavePath));\t\t&#125;\t&#125;&#125;\n\n这一段代码的结构是这样的，UpdateResourceManager是一个单例，持有\n\nTArray&lt;DownloadTask&gt;  TaskArray \nTArray&lt;DownloadPakFileTask&gt;  PakTaskArray  \n\n两者分别用来存放除了pak外的普通文件的下载任务 和 pak文件下载任务。其中 DownloadPakFileTask 是分成很多个PartialTask 的。也就是结构是这样的 UpdateResourceManager -&gt; 持有多个DownloadPakFileTask  -&gt; 持有多个PartialTask。同时DownloadPakFileTask  也持有热更新管理器的指针，PartialTask也持有DownloadPakFileTask  的指针。它们是一个互相引用的结构。\n注意 new DownloadPakFileTask 这一段代码，本来是这么实现的\n123TArray&lt;DownloadPakFileTask&gt; PakTaskArray;DownloadPakFileTask temp = DownloadPakFileTask(this, PakFileName, PakSavePath, PakFileSize, PakMd5);PakTaskArray.Add(temp);\n\nDownloadPakFileTask 是在栈上的！在DownloadPakFileTask  的构造函数里，本来PartialTask也不是用new的方式，也是直接生成放在栈上的。\n当我执行的时候发现DownloadPakFileTask生成的时候，每一个PartialTask还是可以通过指针看到DownloadPakFileTask底下的内容的。但是添加到TArray中后，只有PakFileTask指针正确 PakFileSize正确，其他的FString都显示为乱码了 \n也就是说，试着把DownloadPakFileTask当做A，PartialTask当做B，两者互相引用。我们断点查看A的时候可以看到内容，但是通过A-&gt;B-&gt;A 这样看的时候就有一些内容是丢失的。非常令人疑惑的一点，指针一致，但是内容却丢失了一部分。在栈上生成对象然后添加到TArray中才会出现这种情况，这也导致了我后来发起http请求的失败。可能是栈容量的问题？或者TArray的内部实现的问题？详细原因仍然不清楚。\n","dateCreated":"2019-06-03T00:00:00+08:00","dateModified":"2019-06-06T10:03:52+08:00","datePublished":"2019-06-03T00:00:00+08:00","description":"","headline":"UE4的热更新与HTTP（三）","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://yoursite.com/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/"},"publisher":{"@type":"Organization","name":"BAJIAObujie","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"url":"http://yoursite.com/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/"}</script>
+    <meta name="description" content="前言上一篇文章已经介绍完文件下载，为了测试代码功能，需要进行测试。这一篇文章就是来介绍如何搭建文件服务器，计算对应的Md5值并生成md5table.txt文件，以及记录测试过程中遇到的几个问题。 搭建文件服务器https://blog.csdn.net/zhangnana200/article/details/77116030 照着这个做基本OK 其中两个问题多解释一下 1、配置安装Apache的">
+<meta property="og:type" content="blog">
 <meta property="og:title" content="UE4的热更新与HTTP（三）">
 <meta property="og:url" content="http://yoursite.com/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/index.html">
 <meta property="og:site_name" content="芭蕉不解的博客">
@@ -24,75 +29,271 @@
 <meta name="twitter:title" content="UE4的热更新与HTTP（三）">
 <meta name="twitter:description" content="前言上一篇文章已经介绍完文件下载，为了测试代码功能，需要进行测试。这一篇文章就是来介绍如何搭建文件服务器，计算对应的Md5值并生成md5table.txt文件，以及记录测试过程中遇到的几个问题。 搭建文件服务器https://blog.csdn.net/zhangnana200/article/details/77116030 照着这个做基本OK 其中两个问题多解释一下 1、配置安装Apache的">
 <meta name="twitter:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4HotUpdate&HTTP3/1.jpg">
-  
-    <link rel="alternate" href="/atom.xml" title="芭蕉不解的博客" type="application/atom+xml">
-  
-  
-    <link rel="icon" href="/favicon.png">
-  
-  
-    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
-  
-  <link rel="stylesheet" href="/css/style.css">
-</head>
-</html>
-<body>
-  <div id="container">
-    <div id="wrap">
-      <header id="header">
-  <div id="banner"></div>
-  <div id="header-outer" class="outer">
-    <div id="header-title" class="inner">
-      <h1 id="logo-wrap">
-        <a href="/" id="logo">芭蕉不解的博客</a>
-      </h1>
-      
-    </div>
-    <div id="header-inner" class="inner">
-      <nav id="main-nav">
-        <a id="main-nav-toggle" class="nav-icon"></a>
-        
-          <a class="main-nav-link" href="/">Home</a>
-        
-          <a class="main-nav-link" href="/archives">Archives</a>
-        
-      </nav>
-      <nav id="sub-nav">
-        
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
-        
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
-      </nav>
-      <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
-      </div>
-    </div>
-  </div>
-</header>
-      <div class="outer">
-        <section id="main"><article id="post-2019-06-03-UE4的热更新与HTTP（三）" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/" class="article-date">
-  <time datetime="2019-06-02T16:00:00.000Z" itemprop="datePublished">2019-06-03</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
     
     
-      <header class="article-header">
         
-  
-    <h1 class="article-title" itemprop="name">
-      UE4的热更新与HTTP（三）
-    </h1>
-  
+    
+    
+    
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/all.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
 
-      </header>
     
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一篇文章已经介绍完文件下载，为了测试代码功能，需要进行测试。这一篇文章就是来介绍如何搭建文件服务器，计算对应的Md5值并生成md5table.txt文件，以及记录测试过程中遇到的几个问题。</p>
+
+    
+        
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a
+            class="header-title-link"
+            href="/ "
+            aria-label=""
+        >
+            芭蕉不解的博客
+        </a>
+    </div>
+    
+        
+            <a
+                class="header-right-picture "
+                href="#about"
+                aria-label="Öffne den Link: /#about"
+            >
+        
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Kategorien"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Kategorien</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archiv"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archiv</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Suche"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Suche</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="Über"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Über</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://github.com/" target="_blank" rel="noopener" title="GitHub">
+                    
+                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">GitHub</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="http://stackoverflow.com/users" target="_blank" rel="noopener" title="Stack Overflow">
+                    
+                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Stack Overflow</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://twitter.com/" target="_blank" rel="noopener" title="Twitter">
+                    
+                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Twitter</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://facebook.com/" target="_blank" rel="noopener" title="Facebook">
+                    
+                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Facebook</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://plus.google.com/" target="_blank" rel="noopener" title="Google Plus">
+                    
+                        <i class="sidebar-button-icon fab fa-google-plus" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Google Plus</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link " href="https://www.linkedin.com/profile/" target="_blank" rel="noopener" title="LinkedIn">
+                    
+                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">LinkedIn</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/mailto"
+                            title="E-Mail"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">E-Mail</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            UE4的热更新与HTTP（三）
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2019-06-03T00:00:00+08:00">
+	
+		    03 Jun 2019
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一篇文章已经介绍完文件下载，为了测试代码功能，需要进行测试。这一篇文章就是来介绍如何搭建文件服务器，计算对应的Md5值并生成md5table.txt文件，以及记录测试过程中遇到的几个问题。</p>
 <h2 id="搭建文件服务器"><a href="#搭建文件服务器" class="headerlink" title="搭建文件服务器"></a>搭建文件服务器</h2><p><a href="https://blog.csdn.net/zhangnana200/article/details/77116030" target="_blank" rel="noopener">https://blog.csdn.net/zhangnana200/article/details/77116030</a> 照着这个做基本OK 其中两个问题多解释一下</p>
 <p>1、配置安装Apache的主服务的时候，出现的命令行 Error底下一行没有后续提示，说明本次运行没有发生错误。成功安装。不是说出现Error就是有错。</p>
 <img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4HotUpdate&HTTP3/1.jpg">
@@ -141,124 +342,318 @@
 <p>当我执行的时候发现DownloadPakFileTask生成的时候，每一个PartialTask还是可以通过指针看到DownloadPakFileTask底下的内容的。但是添加到TArray中后，只有PakFileTask指针正确 PakFileSize正确，其他的FString都显示为乱码了 </p>
 <p>也就是说，试着把DownloadPakFileTask当做A，PartialTask当做B，两者互相引用。我们断点查看A的时候可以看到内容，但是通过A-&gt;B-&gt;A 这样看的时候就有一些内容是丢失的。非常令人疑惑的一点，指针一致，但是内容却丢失了一部分。在栈上生成对象然后添加到TArray中才会出现这种情况，这也导致了我后来发起http请求的失败。可能是栈容量的问题？或者TArray的内部实现的问题？详细原因仍然不清楚。</p>
 
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/" data-id="cjyqk8ckb0007kwvpcrw94hkv" class="article-share-link">Share</a>
-      
-      
-    </footer>
-  </div>
-  
-    
-<nav id="article-nav">
-  
-    <a href="/2019/06/12/2019-06-12-UE4安卓打包问题/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
-      <div class="article-nav-title">
-        
-          UE4安卓打包问题
-        
-      </div>
-    </a>
-  
-  
-    <a href="/2019/06/02/2019-06-02-UE4的热更新与HTTP（一）/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">UE4的热更新与HTTP（一）</div>
-    </a>
-  
-</nav>
+            
 
-  
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/06/12/2019-06-12-UE4安卓打包问题/"
+                    data-tooltip="UE4安卓打包问题"
+                    aria-label="FRÜHER: UE4安卓打包问题"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">FRÜHER</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/06/02/2019-06-02-UE4的热更新与HTTP（一）/"
+                    data-tooltip="UE4的热更新与HTTP（一）"
+                    aria-label="NÄCHSTER: UE4的热更新与HTTP（一）"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NÄCHSTER</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/"
+                    title="Teilen auf Facebook"
+                    aria-label="Teilen auf Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/"
+                    title="Teilen auf Twitter"
+                    aria-label="Teilen auf Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://yoursite.com/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/"
+                    title="Teilen auf Google Plus"
+                    aria-label="Teilen auf Google Plus"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
 </article>
 
-</section>
-        
-          <aside id="sidebar">
-  
-    
-
-  
-    
-
-  
-    
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
-    <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">July 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/06/">June 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/05/">May 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/04/">April 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">March 2019</a></li></ul>
-    </div>
-  </div>
 
 
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
-    <div class="widget">
-      <ul>
-        
-          <li>
-            <a href="/2019/07/31/hello-world/">Hello World</a>
-          </li>
-        
-          <li>
-            <a href="/2019/06/29/2019-06-29-写在毕业一周年/">写在毕业一周年</a>
-          </li>
-        
-          <li>
-            <a href="/2019/06/14/2019-06-14-翻译：可编程渲染管线之定制化着色器（二）/">翻译：可编程渲染管线之定制化着色器（二）</a>
-          </li>
-        
-          <li>
-            <a href="/2019/06/12/2019-06-12-UE4安卓打包问题/">UE4安卓打包问题</a>
-          </li>
-        
-          <li>
-            <a href="/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/">UE4的热更新与HTTP（三）</a>
-          </li>
-        
-      </ul>
-    </div>
-  </div>
-
-  
-</aside>
-        
-      </div>
-      <footer id="footer">
-  
-  <div class="outer">
-    <div id="footer-info" class="inner">
-      &copy; 2019 BAJIAObujie<br>
-      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
-    </div>
-  </div>
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2019 BAJIAObujie. All Rights Reserved.
+    </span>
 </footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/06/12/2019-06-12-UE4安卓打包问题/"
+                    data-tooltip="UE4安卓打包问题"
+                    aria-label="FRÜHER: UE4安卓打包问题"
+                >
+                    
+                        <i class="fa fa-angle-left" aria-hidden="true"></i>
+                        <span class="hide-xs hide-sm text-small icon-ml">FRÜHER</span>
+                    </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                <a
+                    class="post-action-btn btn btn--default tooltip--top"
+                    href="/2019/06/02/2019-06-02-UE4的热更新与HTTP（一）/"
+                    data-tooltip="UE4的热更新与HTTP（一）"
+                    aria-label="NÄCHSTER: UE4的热更新与HTTP（一）"
+                >
+                    
+                        <span class="hide-xs hide-sm text-small icon-mr">NÄCHSTER</span>
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a
+                class="post-action-btn btn btn--default btn-open-shareoptions"
+                href="#btn-open-shareoptions"
+                aria-label="Diesen Beitrag teilen"
+            >
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/"
+                    title="Teilen auf Facebook"
+                    aria-label="Teilen auf Facebook"
+                >
+                    <i class="fab fa-facebook" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/"
+                    title="Teilen auf Twitter"
+                    aria-label="Teilen auf Twitter"
+                >
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a
+                    class="post-action-btn btn btn--default"
+                    target="new" href="https://plus.google.com/share?url=http://yoursite.com/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/"
+                    title="Teilen auf Google Plus"
+                    aria-label="Teilen auf Google Plus"
+                >
+                    <i class="fab fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                
+    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+        <i id="btn-close-shareoptions" class="fa fa-times"></i>
+        <ul class="share-options">
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/"
+                        aria-label="Teilen auf Facebook"
+                    >
+                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Teilen auf Facebook</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/"
+                        aria-label="Teilen auf Twitter"
+                    >
+                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Teilen auf Twitter</span>
+                    </a>
+                </li>
+            
+                
+                
+                <li class="share-option">
+                    <a
+                        class="share-option-btn"
+                        target="new"
+                        href="https://plus.google.com/share?url=http://yoursite.com/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/"
+                        aria-label="Teilen auf Google Plus"
+                    >
+                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Teilen auf Google Plus</span>
+                    </a>
+                </li>
+            
+        </ul>
     </div>
-    <nav id="mobile-nav">
-  
-    <a href="/" class="mobile-nav-link">Home</a>
-  
-    <a href="/archives" class="mobile-nav-link">Archives</a>
-  
-</nav>
+
+
+            
+        </div>
+        
+
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-times"></i>
+        </div>
+        
+            <h4 id="about-card-name">BAJIAObujie</h4>
+        
+            <div id="about-card-bio"><p>author.bio</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+
     
 
-<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-
-
-  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
-  <script src="/fancybox/jquery.fancybox.pack.js"></script>
-
-
-<script src="/js/script.js"></script>
 
 
 
-  </div>
-</body>
+    </body>
 </html>
