@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+
+  
+  <title>UE4的热更新与HTTP（一） | 芭蕉不解的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="前言这一系列的文章会探讨UE4热更新用HTTP的实现方案。首先第一篇文章先来讲讲UE4的HTTP。 先来创建一条Http请求吧123456789101112131415161718void Download(const FString&amp;amp; URL)&amp;#123;	//发送Http请求	TSharedRef&amp;lt;IHttpRequest&amp;gt; HttpReuest = FHttpModule">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE4的热更新与HTTP（一）">
+<meta property="og:url" content="http://yoursite.com/2019/06/02/2019-06-02-UE4的热更新与HTTP（一）/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言这一系列的文章会探讨UE4热更新用HTTP的实现方案。首先第一篇文章先来讲讲UE4的HTTP。 先来创建一条Http请求吧123456789101112131415161718void Download(const FString&amp;amp; URL)&amp;#123;	//发送Http请求	TSharedRef&amp;lt;IHttpRequest&amp;gt; HttpReuest = FHttpModule">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-06-03T12:46:59.259Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UE4的热更新与HTTP（一）">
+<meta name="twitter:description" content="前言这一系列的文章会探讨UE4热更新用HTTP的实现方案。首先第一篇文章先来讲讲UE4的HTTP。 先来创建一条Http请求吧123456789101112131415161718void Download(const FString&amp;amp; URL)&amp;#123;	//发送Http请求	TSharedRef&amp;lt;IHttpRequest&amp;gt; HttpReuest = FHttpModule">
+  
+    <link rel="alternate" href="/atom.xml" title="芭蕉不解的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">芭蕉不解的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-2019-06-02-UE4的热更新与HTTP（一）" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/06/02/2019-06-02-UE4的热更新与HTTP（一）/" class="article-date">
+  <time datetime="2019-06-01T16:00:00.000Z" itemprop="datePublished">2019-06-02</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      UE4的热更新与HTTP（一）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这一系列的文章会探讨UE4热更新用HTTP的实现方案。首先第一篇文章先来讲讲UE4的HTTP。</p>
+<h2 id="先来创建一条Http请求吧"><a href="#先来创建一条Http请求吧" class="headerlink" title="先来创建一条Http请求吧"></a>先来创建一条Http请求吧</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">void Download(const FString&amp; URL)&#123;</span><br><span class="line">	//发送Http请求</span><br><span class="line">	TSharedRef&lt;IHttpRequest&gt; HttpReuest = FHttpModule::Get().CreateRequest();</span><br><span class="line">	HttpReuest-&gt;SetURL(URL);</span><br><span class="line">	HttpReuest-&gt;SetVerb(TEXT(&quot;GET&quot;));</span><br><span class="line">	HttpReuest-&gt;SetHeader(TEXT(&quot;Content-Type&quot;), TEXT(&quot;application/x-www-form-urlencoded&quot;));</span><br><span class="line">    HttpReuest-&gt;OnProcessRequestComplete().BindRaw(this, &amp;FHttpRequestTest::OnRequestComplete);</span><br><span class="line">	HttpReuest-&gt;OnRequestProgress().BindRaw(this, &amp;FHttpRequestTest::OnRequestProgress);</span><br><span class="line">	HttpReuest-&gt;ProcessRequest();</span><br><span class="line">	&#125;</span><br><span class="line">	//请求完成</span><br><span class="line">	void OnRequestComplete(FHttpRequestPtr HttpRequest, FHttpResponsePtr HttpResponse, bool bSucceeded)</span><br><span class="line">	&#123;</span><br><span class="line">	&#125;</span><br><span class="line">	//请求进度 每帧调用</span><br><span class="line">	void OnRequestProgress(FHttpRequestPtr HttpRequest, int32 BytesSent, int32 BytesReceived)</span><br><span class="line">	&#123;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这是一段Http的发送请求的代码，可以看到通过HttpModule创建了一个IHttpRequest的指针，并设置这个Http的相关属性，URL、Header等，绑定下载过程中每帧的回调函数和下载完成的回调函数。（UE4确实对HTTP方法的封装还是不错的，能够覆盖很多的应用场景。）</p>
+<p>注意上面这段代码，不管是创建HttpRequest的过程，还是绑定的回调方法，全部都是在游戏主线程中执行的。</p>
+<p>HttpRequest的ProcessRequest方法，作用是根据设置的URL、Header等等设置一些HttpRequest的具体属性，如果设置属性失败，那么会直接执行FinishedRequest执行绑定的回调方法，如果设置属性成功则将这条请求添加到Http线程的PendingThreadedRequests。</p>
+<p>这里涉及到了多线程方面的处理，除了游戏的主线程外，负责HTTP处理的是HTTP线程。</p>
+<p>HttpModule启动一个HttpManager，HttpManager持有一个HttpThread的指针。在初始化模块的时候，就已经生成了一个线程。它持有很多Request的TQueue线程安全的队列，例如PendingThreadedRequests就是待执行的HTTP请求。HttpThread线程有一个每帧的更新函数，从待处理的数组中取出请求去执行，正在执行的请求接收数据，下载完成的请求标记为成功。ProcessRequest方法就是把当前请求给放入Http线程的待执行Http队列中，也就是PendingThreadedRequests。在Http完成之后，被标记为成功，然后就会被加入CompletedThreadedRequests数组。在游戏主线程中，HttpManager的Tick函数中，就会取出这些已经完成的请求，并去执行它们的回调方法。</p>
+<p>以下是HttpThread线程的持有队列。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"> /** </span><br><span class="line"> * Threaded requests that are waiting to be processed on the http thread.</span><br><span class="line"> * Added to on (any) non-HTTP thread, processed then cleared on HTTP thread.</span><br><span class="line"> */</span><br><span class="line">TQueue&lt;IHttpThreadedRequest*, EQueueMode::Mpsc&gt; PendingThreadedRequests;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Threaded requests that are waiting to be cancelled on the http thread.</span><br><span class="line"> * Added to on (any) non-HTTP thread, processed then cleared on HTTP thread.</span><br><span class="line"> */</span><br><span class="line">TQueue&lt;IHttpThreadedRequest*, EQueueMode::Mpsc&gt; CancelledThreadedRequests;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Currently running threaded requests (not in any of the other lists, except potentially CancelledThreadedRequests).</span><br><span class="line"> * Only accessed on the HTTP thread.</span><br><span class="line"> */</span><br><span class="line">TArray&lt;IHttpThreadedRequest*&gt; RunningThreadedRequests;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Threaded requests that have completed and are waiting for the game thread to process.</span><br><span class="line"> * Added to on HTTP thread, processed then cleared on game thread (Single producer, single consumer)</span><br><span class="line"> */</span><br><span class="line">TQueue&lt;IHttpThreadedRequest*, EQueueMode::Spsc&gt; CompletedThreadedRequests;</span><br><span class="line"></span><br><span class="line">/** Pointer to Runnable Thread */</span><br><span class="line">FRunnableThread* Thread;</span><br></pre></td></tr></table></figure>
+
+<p>为了讲的清楚一些，举个例子：</p>
+<p>假设有一家餐厅，前台有一个人负责帮客人点菜，上菜。后厨房也有一个人负责做菜，前台后台中间有四个列表。现在来了一个客人，点了一份宫保鸡丁，前台并不是直接喊厨师说给做一份菜，而是写好菜的标签，然后放到待处理的列表中，然后就不管了。后台的厨师看到这里待处理列表新增了一份菜的标签，就开始做这道菜。做菜的过程中，就把待处理列表的标签给划掉，并且在“正在做菜”的列表中加上宫保鸡丁标签。做完宫保鸡丁后把菜的标签放到“已经做好的菜”的列表，并且把菜放上。这个时候前台看到了这份菜已经做好了，就端去给客人。如果中间发生了意外，比如后厨房里已经没有鸡肉了做不了宫保鸡丁，或者客人突然要取消，那么厨师或者前台就把菜标签挂到取消列表中。前台随后再把菜标签放到“已经做好的菜”的列表，但是这个时候并没有放上做好的菜。也就是这次做菜失败了。</p>
+<p>把以上场景带入到HTTP请求以及回复是差不多的。两个人、两个线程是两条并行的线，各自忙各自的事。客人点菜就相当于一个HTTP请求，前台（游戏主线程）只是把请求放到待做列表中而已，等厨师做完菜（HTTP线程请求完数据）就把菜放到完成列表里，前台看到菜做好了就把菜端给客人（主线程取出完成列表的请求，执行回调）。而中间的四个列表，就是对应代码中的四个TQueue线程安全的队列。</p>
+<h2 id="Http模块结构"><a href="#Http模块结构" class="headerlink" title="Http模块结构"></a>Http模块结构</h2><p>UE4的HTTP代码部分主要可以分为四个部分，HttpModule，HttpManager，HttpThread，HttpRequest。</p>
+<ul>
+<li><p>Module：UE4的许多功能模块是以Module为划分的，HttpModule可以说是Http模块的“老大”。HttpModule负责初始化模块的一些配置，创建一个HttpManager并初始化，还有提供一个创建Http请求的通用方法CreateRequest。</p>
+</li>
+<li><p>HttpManager：FHttpManager定义了具体的操作流程。UE4调用外部库Curl来做Http请求。FCurlHttpManager继承自FHttpManager，对一些虚方法提供了Curl的具体实现。</p>
+</li>
+<li><p>HttpThread：FCurlHttpThread也是继承自FHttpManger</p>
+</li>
+<li><p>HttpRequest：只能通过Module里提供的方法来创建一个Http请求，这个请求继承了IHttpRequest。具体实现是CurlHttpRequest。IHttpRequest只有少量的接口，如设置URL、设置头等。细节由CurlHttpRequest实现。</p>
+</li>
+</ul>
+<p>UE4将流程定义在FHttpManger和FHttpThread里，然后具体实现FCurlHttpManager、FCurlHttpThread里结合外部库Curl来实现。如果以后出了什么更高效的Http外部库，那也只需要修改具体的实现部分，流程方面是不用改动的。这种思想也是值得学习的。根据“我”想对外提供的方法api等定制一套流程，具体实现由子类去完成。相当于做了一层封装。</p>
+<h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h2><p>CurlHttpThread里有一个Tick函数，这个函数实现了单线程、高并发、非阻塞的去执行HTTP任务。代码摘录如下，具体细节可以直接网上搜索Curl单线程、高并发等关键字。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line">void FCurlHttpThread::HttpThreadTick(float DeltaSeconds)</span><br><span class="line">&#123;</span><br><span class="line">	QUICK_SCOPE_CYCLE_COUNTER(STAT_FCurlHttpThread_HttpThreadTick);</span><br><span class="line">	check(FCurlHttpManager::GMultiHandle);</span><br><span class="line"></span><br><span class="line">	const int NumRequestsToTick = RunningThreadedRequests.Num();</span><br><span class="line"></span><br><span class="line">	&#123;</span><br><span class="line">		if (RunningThreadedRequests.Num() &gt; 0)</span><br><span class="line">		&#123;</span><br><span class="line">			int RunningRequests = -1;</span><br><span class="line">			&#123;</span><br><span class="line">				QUICK_SCOPE_CYCLE_COUNTER(STAT_FCurlHttpThread_HttpThreadTick_Perform);</span><br><span class="line">				curl_multi_perform(FCurlHttpManager::GMultiHandle, &amp;RunningRequests);</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			// read more info if number of requests changed or if there&apos;s zero running</span><br><span class="line">			// (note that some requests might have never be &quot;running&quot; from libcurl&apos;s point of view)</span><br><span class="line">			if (RunningRequests == 0 || RunningRequests != RunningThreadedRequests.Num())</span><br><span class="line">			&#123;</span><br><span class="line">				for (;;)</span><br><span class="line">				&#123;</span><br><span class="line">					QUICK_SCOPE_CYCLE_COUNTER(STAT_FCurlHttpThread_HttpThreadTick_Loop);</span><br><span class="line">					int MsgsStillInQueue = 0;	// may use that to impose some upper limit we may spend in that loop</span><br><span class="line">					CURLMsg * Message = curl_multi_info_read(FCurlHttpManager::GMultiHandle, &amp;MsgsStillInQueue);</span><br><span class="line"></span><br><span class="line">					if (Message == NULL)</span><br><span class="line">					&#123;</span><br><span class="line">						break;</span><br><span class="line">					&#125;</span><br><span class="line"></span><br><span class="line">					// find out which requests have completed</span><br><span class="line">					if (Message-&gt;msg == CURLMSG_DONE)</span><br><span class="line">					&#123;</span><br><span class="line">						CURL* CompletedHandle = Message-&gt;easy_handle;</span><br><span class="line">						curl_multi_remove_handle(FCurlHttpManager::GMultiHandle, CompletedHandle);</span><br><span class="line"></span><br><span class="line">						IHttpThreadedRequest** Request = HandlesToRequests.Find(CompletedHandle);</span><br><span class="line">						if (Request)</span><br><span class="line">						&#123;</span><br><span class="line">							FCurlHttpRequest* CurlRequest = static_cast&lt; FCurlHttpRequest* &gt;(*Request);</span><br><span class="line">							CurlRequest-&gt;MarkAsCompleted(Message-&gt;data.result);</span><br><span class="line"></span><br><span class="line">							UE_LOG(LogHttp, Verbose, TEXT(&quot;Request %p (easy handle:%p) has completed (code:%d) and has been marked as such&quot;), CurlRequest, CompletedHandle, (int32)Message-&gt;data.result);</span><br><span class="line"></span><br><span class="line">							HandlesToRequests.Remove(CompletedHandle);</span><br><span class="line">						&#125;</span><br><span class="line">						else</span><br><span class="line">						&#123;</span><br><span class="line">							UE_LOG(LogHttp, Warning, TEXT(&quot;Could not find mapping for completed request (easy handle: %p)&quot;), CompletedHandle);</span><br><span class="line">						&#125;</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	FHttpThread::HttpThreadTick(DeltaSeconds);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2019/06/02/2019-06-02-UE4的热更新与HTTP（一）/" data-id="cjyqk8cka0006kwvp8r8nvvng" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          UE4的热更新与HTTP（三）
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/06/02/2019-06-02-UE4的热更新与HTTP（二）/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">UE4的热更新与HTTP（二）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">July 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/06/">June 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/05/">May 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/04/">April 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">March 2019</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/07/31/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2019/06/29/2019-06-29-写在毕业一周年/">写在毕业一周年</a>
+          </li>
+        
+          <li>
+            <a href="/2019/06/14/2019-06-14-翻译：可编程渲染管线之定制化着色器（二）/">翻译：可编程渲染管线之定制化着色器（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2019/06/12/2019-06-12-UE4安卓打包问题/">UE4安卓打包问题</a>
+          </li>
+        
+          <li>
+            <a href="/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/">UE4的热更新与HTTP（三）</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2019 BAJIAObujie<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>

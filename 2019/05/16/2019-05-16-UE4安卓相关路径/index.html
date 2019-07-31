@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+
+  
+  <title>UE4安卓相关路径 | 芭蕉不解的博客</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="前言前几天在测试UE4打包的时候顺便在安卓机上输出了一些相关路径，做个记录 结论直接上结论：UE4打包后对应到安卓平台主要有两个目录路径 1、FPaths::ProjectPersistentDownloadDir()  根据FPaths的注释，这是专门为了下载的数据持续化存储的一个可写入的文件夹，应该是对应于Unity的persistentDataPath。在安卓上的输出结果为: “/stora">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE4安卓相关路径">
+<meta property="og:url" content="http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言前几天在测试UE4打包的时候顺便在安卓机上输出了一些相关路径，做个记录 结论直接上结论：UE4打包后对应到安卓平台主要有两个目录路径 1、FPaths::ProjectPersistentDownloadDir()  根据FPaths的注释，这是专门为了下载的数据持续化存储的一个可写入的文件夹，应该是对应于Unity的persistentDataPath。在安卓上的输出结果为: “/stora">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/1.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/2.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/3.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/4.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/5.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/6.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/7.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/8.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/9.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/10.jpg">
+<meta property="og:updated_time" content="2019-05-23T04:47:05.665Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UE4安卓相关路径">
+<meta name="twitter:description" content="前言前几天在测试UE4打包的时候顺便在安卓机上输出了一些相关路径，做个记录 结论直接上结论：UE4打包后对应到安卓平台主要有两个目录路径 1、FPaths::ProjectPersistentDownloadDir()  根据FPaths的注释，这是专门为了下载的数据持续化存储的一个可写入的文件夹，应该是对应于Unity的persistentDataPath。在安卓上的输出结果为: “/stora">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/1.jpg">
+  
+    <link rel="alternate" href="/atom.xml" title="芭蕉不解的博客" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">芭蕉不解的博客</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-2019-05-16-UE4安卓相关路径" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/05/16/2019-05-16-UE4安卓相关路径/" class="article-date">
+  <time datetime="2019-05-15T16:00:00.000Z" itemprop="datePublished">2019-05-16</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      UE4安卓相关路径
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>前几天在测试UE4打包的时候顺便在安卓机上输出了一些相关路径，做个记录</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>直接上结论：UE4打包后对应到安卓平台主要有两个目录路径</p>
+<p>1、FPaths::ProjectPersistentDownloadDir()</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/1.jpg" alt="image"></p>
+<p>根据FPaths的注释，这是专门为了下载的数据持续化存储的一个可写入的文件夹，应该是对应于Unity的persistentDataPath。在安卓上的输出结果为:</p>
+<p>“/storage/emulated/0/Android/data/com.YourCompany.AndroidFirst/files”</p>
+<p>在手机上打开安卓文件管理器可以看到一个叫做Android的目录，进入Android文件夹然后按顺序就可以找到files文件夹</p>
+<p>2、“../../../”开头的路径</p>
+<ul>
+<li><p>FPaths::RootDir() 在安卓上的输出结果为 “../../../“</p>
+</li>
+<li><p>FPaths::ProjectDir() 在安卓上的输出结果为 “../../../AndroidFirst/“</p>
+</li>
+<li><p>FPaths::EngineDir() 在安卓上的输出结果为 “../../../Engine/“</p>
+</li>
+<li><p>其他路径基本是以ProjectDir或者EngineDir为基础的路径</p>
+</li>
+</ul>
+<p>FPaths::RootDir()在安卓平台上输出结果上是“../../../”，路径上对应/storage/emulated/0/UE4Game/AndroidFirst</p>
+<p>AndroidFirst是我的项目名。</p>
+<p>FPaths::ProjectDir()对应/storage/emulated/0/UE4Game/AndroidFirst/AndroidFirst/</p>
+<p>FPaths::EngineDir()对应/storage/emulated/0/UE4Game/AndroidFirst/Engine/</p>
+<p>如图</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/2.jpg" width="300px">
+
+<h2 id="实验过程"><a href="#实验过程" class="headerlink" title="实验过程"></a>实验过程</h2><p>代码：将路径打印到游戏界面上，并保存到本地文件</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/3.jpg">
+
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/4.jpg">
+
+<p>在手机上运行后界面上的打印信息如下</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/5.jpg">
+
+<p>根据/storage/emulated/0/Android/data/com.YourCompany.AndroidFirst/files路径可在安卓上找到对应的文件。首先手机进入文件管理器下找到Android文件夹，YourCompany是依据游戏的打包时候的签名设置，接着根据目录找到paths.txt</p>
+<center class="half">
+    <img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/6.jpg" width="300px">
+    <img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/7.jpg" width="300px">
+</center>
+
+<p>成功找到生成的paths.txt文件，传到电脑打开该文件</p>
+<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/8.jpg">
+
+<p>第一行对应的FPaths::ProjectPersistentDownloadDir() 可写路径。剩下的就是以”../../..”开头的路径。</p>
+<p>在手机上进入文件管理器后除了Android目录与UE4有关，还有一个UE4Game的文件夹</p>
+<center class="half">
+    <img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/9.jpg" width="300px">
+    <img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4AndroidPath/10.jpg" width="300px">
+</center>
+
+<p>UE4Game这个文件夹猜测应该是所有跟UE4有关的项目都放在这里，例如我的AndroidFirst项目，点击进入AndroidFirst项目后才是FPath::RootDir()对应的路径。如果有其他的游戏项目比如AndroidSecond，那么UE4Game还有有第二个文件夹AndroidSecond。</p>
+<p>在代码中还把文件保存到FPaths::ProjectDir() / TEXT(“paths.txt”) 也就是”../../../AndroidFirst/“目录，进入文件夹/storage/emulated/0/UE4Game/AndroidFirst/AndroidFirst/“，在这里找到了paths.txt文件。说明“../../../”在路径上是对应“/storage/emulated/0/UE4Game/AndroidFirst/”</p>
+<p>由此就可以推出其他几个FPaths中常用的路径：</p>
+<p>FPaths::RootDir()在安卓平台上输出结果上是“../../../”路径上对应/storage/emulated/0/UE4Game/AndroidFirst</p>
+<p>这个目录文件夹下有AndroidFirst和Engine两个路径</p>
+<p>FPaths::ProjectDir()是对应的”../../../AndroidFirst/“</p>
+<p>FPaths::EngineDir()是对应的”../../../Engine/“</p>
+<p>ps: 我是通过数据线连接到电脑，通过USB调试模式，在UE的启动中，直接选择手机调试的，这种选择发布到手机上的应用应该是Debug签名。因为Develop和Shipping模式的打开手机文件管理器是看不到一些关键的文件的，例如uproject等，只能看到一些ini、log文件。根据网上查阅的资料，想要看到这种文件要么是Debug签名的应用，要么取得Root权限。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2019/05/16/2019-05-16-UE4安卓相关路径/" data-id="cjyqk8cjy0001kwvpch7sg2ti" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/06/02/2019-06-02-UE4的热更新与HTTP（二）/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          UE4的热更新与HTTP（二）
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">UE4资源加载（三）FPakPlatformFile相关</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">July 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/06/">June 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/05/">May 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/04/">April 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">March 2019</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/07/31/hello-world/">Hello World</a>
+          </li>
+        
+          <li>
+            <a href="/2019/06/29/2019-06-29-写在毕业一周年/">写在毕业一周年</a>
+          </li>
+        
+          <li>
+            <a href="/2019/06/14/2019-06-14-翻译：可编程渲染管线之定制化着色器（二）/">翻译：可编程渲染管线之定制化着色器（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2019/06/12/2019-06-12-UE4安卓打包问题/">UE4安卓打包问题</a>
+          </li>
+        
+          <li>
+            <a href="/2019/06/03/2019-06-03-UE4的热更新与HTTP（三）/">UE4的热更新与HTTP（三）</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2019 BAJIAObujie<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
