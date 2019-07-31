@@ -1,324 +1,90 @@
-
 <!DOCTYPE html>
-<html lang="">
-    
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="generator" content="芭蕉不解的博客">
-    <title>UE4资源加载（三）FPakPlatformFile相关 - 芭蕉不解的博客</title>
+<html lang="zh-CN">
+
+
+
+
+
+
+
+
+
+
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+    <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="description" content>
     <meta name="author" content="BAJIAObujie">
+    <meta name="keywords" content>
+    <title>UE4资源加载（三）FPakPlatformFile相关 ~ 芭蕉不解的博客</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.2/css/all.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.7.4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.7.4/css/mdb.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://at.alicdn.com/t/font_1067060_vr10bjtg3us.css">
     
-    
-    
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"BAJIAObujie","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"articleBody":"前言这篇文章是继续上一篇文件责任链的内容，继续讲FPakPlatformFile。上一篇文章中提到在文件责任链模式下，调用OpenAsyncRead这个方法后，就可以具体读取到文件，这里将从这个方法为起点，了解FPakPlatformFile的相关内容。首先看看这个方法在FPakPlatformFile中的实现。\n\n\n首先先简单介绍一下概念，FPakPlatformFile是责任链中专门负责处理pak文件的一环处理器。FPakEntry对应具体要读取的uasset文件，FPakFile对应具体的磁盘上的pak文件。FPakPlatformFile持有一个FPakFile的数组，而FPakFile有包含有多个FPakEntry。（pak可以理解为压缩包，压缩包里有至少一个资源文件，这个文件就是对应FPakEntry）\n然后从代码可以了解到，在FindFileInPakFiles方法中传入三个参数，一是读取的文件名字，二三是FPakEntry和FPakFile指针。这个方法返回一个bool值表明是否找到对应的文件，FileEntry被赋值为对应的文件。PakFile被赋值为包含这个FileEntry的pak文件。在找到这个具体的文件FileEntry后，返回一个异步读取的句柄。\n我们不关心是如何异步读取的。关注点是FindFileInPakFiles这个方法。\n在了解这个方法前必须先了解四点相关内容\n\npak文件格式\n\nFPakPlatformFile、FPakFile、FPakEntry的代码结构。\n\nFPakPlatformFile的初始化过程\n\n挂载Mount\n\n\n四点相关内容1、pak文件格式\n\n参考文章：https://zhuanlan.zhihu.com/p/54531649\n\n\n在打包成pak的时候是按照从上到下的顺序依次写入的，而在读取pak的时候则是从下至上的顺序。读取pak文件的时候，因为FPakInfo的大小是固定的，只需要用整个pak文件的大小减去FPakInfo的大小就可以知道FPakInfo的偏移，这样就可以完整的读取到FPakInfo信息，继而也就知道了文件索引区的偏移以及大小。序列化文件索引区之后，通过FPakEntryPair就可以知道这个pak中存储了哪些文件，这些文件在pak中的偏移、大小情况。\n在4.21版本中，关于打包pak的相关代码在PakFileUtilities.cpp中的CreatePakFile方法中，关于读取pak的相关代码在IPlatformFilePak.cpp中的Initialize和LoadIndex中。\n打包以及读取是序列化与反序列化相反的过程，在以上两个方法中可以找到很多对应的部分。\n2、FPakPlatformFile、FPakFile、FPakEntry的组织结构。\nFPakPlatformFile是文件责任链中负责处理pak相关的一环处理器\n\nFPakFile对应磁盘上的一个pak文件\n\nFPakEntry对应pak中存储的单个资源文件\n\n\n\n\n\n\n\nFPakPlatformFile\n\n\nLowerLevel不必说，是指向责任链的下一环。\nFPakListEntry是由两部分组成，一个是ReadOrder，另一个是FPakFile，也就是具体的Pak文件。    TArray PakFiles也就是保存所有挂载的Pak文件，同时这些pak文件根据ReadOrder从大到小排序。\nFPakFile\n\n\nPak中存储了很多资源文件，FPakEntry对应一个具体的资源文件，在TArray Files中保存了所有的文件。每个文件在Files中都有一个对应的索引。\nTMap&lt;FString, FPakDirectory&gt; Index；是一个路径名到FPakDirectory的映射，而FPakDirectory定义为TMap&lt;FString, int32&gt;。这又是一个文件名到一个具体数字的映射。这个具体的数字就是这个文件在Files中的索引。综上来看，在读取一个文件的时候，也就是传入一个文件名字的时候，是将文件名分解为文件夹路径名+文件具体名字。然后通过文件夹路径名和文件具体名字的映射得到一个索引，这样就能够知道文件对应哪一个FPakEntry。\nFPakEntry\n\n\n通过注释就可以知道 一个FPakEntry对应保存在pak file中的单个文件。FPakEntry记录了这个资源文件的大小，以及在pak中的偏移位置等。\n3、FPakPlatformFile的初始化过程（找到pak文件并挂载）\n\n如图所示初始化主要分为三个步骤：\n\n指定这个处理器的LowerLevel下一环处理器。\n\n找到所有Pak文件夹并挂载所有Pak文件。\n\n指定一些委托函数。例如想手动挂载某个pak或者卸载pak那么将会触发对应的方法。\n\n\n这三个步骤中重点是第二个步骤找到pak文件并挂载。首先是找到对应的Pak文件夹\n\n\n\n\nUE4将通过硬编码的形式，指定三个文件夹，其中第一个文件夹 ProjectContentDir + “Paks/“是我们打出来的包存放的文件夹。如图。找到所有PAK对应的文件夹后是挂载这些文件夹中的pak文件\n\n\n挂载所有pak的过程分为三个步骤：\n\n找到文件夹下的pak文件\n\n找到已挂载的pak文件\n\n具体挂载单个pak文件\n\n\n\n\n挂载单个pak文件，首先是与已经挂载的pak文件进行比较，过滤重复挂载的pak文件。接着每一个pak文件必须有读取的先后顺序，得到先后顺序后，通过Mount方法挂载上。\n\n\npak的顺序与所在文件目录有关，在ProjectContentDir下的文件优先级最高。随后将pak文件名字与pak优先级传入Mount方法里。\n4、挂载Mount\n\n在找到pak文件后接着就是挂载的过程，挂载可以理解为把pak的包含了哪些内容生成一个目录，并加入到PakFiles中，查找文件的时候，遍历这些PakFiles，根据生成的目录可以快速索引是否这个pak文件的目录包含查找文件。对之前的FPakPlatformFile的结构图来说也就是构造红线的部分。新生成一个FPakFile，指定优先级顺序，加入到PakFiles中。\n\n\n挂载主要也主要分成三步骤：\n\n生成FPakFile。\n\n如果是补丁文件则提高补丁文件的优先级\n\n将FPakFile添加到FPakPlatformFile上，排序。（指定顺序与补丁包的使用有关，最后再说）\n\n\n生成FPakFile\n加载pak文件信息区以及文件索引区。知道这个pak的相关信息，存储了多少文件等等。对这些文件构建对应的路径-文件名-索引的结构。\n\n\n在Initialize函数里，首先需要读取pak文件中pak文件信息区的内容（PAK文件格式分成三部分，文件资源区，文件索引区，pak文件信息区）。pak文件信息区(对应一个FPakInfo)存放整个PAK的信息，FPakInfo是固定格式的。把整个文件大小减去FPakInfo的大小就是FPakInfo在pak文件中的偏移，（因为FPakInfo在文件的最后部分），如下图。\n\n\n在得到了pak文件信息区的内容后，接着就可以知道索引区的数量，偏移位置等等。\n\n\n在得到Pak文件信息区的内容后，接着读取文件索引区的内容。将这一部分的内容加载到内存了，首先读取MountPoint和NumEntries。接着读取TArray Index的内容。\n\n\n这一部分相当于是把索引区的内容给读取进来，然后读取挂点以及索引区的数量\n\n\n\n\n首先是读取到资源文件的名字，接着序列化得到整个Entry。然后是根据这个名字构建对应的文件夹路径-文件名-索引的关系\n获得这个资源名字的文件夹路径Path，在保存的Index中寻找是否已存在文件夹，把索引和文件名字放入这个文件夹。\n\nFPaths::GetPath(Filename); 获得文件的路径\n\nFPaths::GetCleanFilename(Filename)  获得文件的名字 包含后缀\n\nFilename = 路径 + 名字 = FPaths::GetPath(Filename) + FPaths::GetCleanFilename(Filename)\n\n\n\n\n构建文件夹路径-文件名-索引这种结构是为了方便在寻找一个文件的时候能够利用Hash快速索引至正确位置，把传入的名字拆分得到文件夹路径和文件名，这样就可以得到索引，索引对应TArray中的资源的位置，这样就快速索引到了资源。完成以上步骤后就正确生成了FPakFile。\n如果是补丁文件则提高补丁文件的优先级\n​       补丁文件的以 _ 数字_P.pak 这种形式结尾，读取到其中的数字，再加上1，和值乘上100加到原先的优先级上。\n\n\n仍然以此图为例，本体包优先级为4，补丁包为 （0+1）*100 + 4。如果后面出新的补丁包，后缀为1、2、3。优先级就是204、304、404。\n\n\n将FPakFile添加到FPakPlatformFile上，排序。\n每挂载上一个PAK文件，就是添加到FPakPlatformFile的数组上，并且按照从大到小顺序排。按照从大到小的顺序与资源加载是有关的。如果在本体包中的一个文件，在日后的更新中删除的时候，那么这个文件也会打到补丁包上，相当于只是记录到补丁包中，这个文件已经被删除了。这样读取的时候，优先读取补丁包，知道这个文件已经被删除了，就不会继续往低优先级的pak文件中搜索。这样虽然原来的本体包中存在资源文件，但是却不会被访问到，效果上相当于删除了。\n\n\n通过生成FPakFile（读取Pak文件信息区和文件索引区再构建路径-文件名-索引的结构），指定优先级顺序，加入到PakFiles并排序，这样就完成了挂载Mount的过程。\n网上有问题探讨Mount挂载和加载到内存的区别，通过以上分析，可以知道Mount其实是只加载部分pak的文件信息到内存，这部分信息是这个pak存储了多少文件，文件在什么位置等等。并没有加载具体的文件信息。只有用到了具体的文件信息才会去读取。\nFindFileInPakFiles讲完了以上四点之后，接着就是回到开头的问题了，从文件责任链开始的OpenAsyncRead之后是如何找到正确的文件的。\n依据FPakPlatformFile的结构图简单来说就是，遍历所有挂载的Pak文件，每个Pak文件都有一个路径-文件名-索引的结构，我们将文件的名字拆分成这种路径加文件名，快速取得索引，这样就可以在Files中取得正确的FPakEntry。\n下面是具体的代码\n\n\nFindFileInPaiFiles方法如下，找到所有已经挂载的pak，并且从pak中寻找正确的文件\n\n\n其核心代码是这一段\n\n\n对挂载的每一个Pak做一个遍历操作，每一个Pak都调用Find方法寻找文件\n\n\n在Find方法中，通过FileName分割为对应的文件夹路径和具体文件资源的名字\n先通过文件夹路径找到指定文件夹FPakDirectory，接着再通过具体资源名字在FPakDirectory找到具体索引。通过具体索引就可以在TArray存储所有FPakEntry的数组中找到具体索引的资源文件，这样就找到了正确的FPakEntry。\nFPakEntry只是记录了这个资源文件在这个Pak中的偏移位置，以及文件大小等。剩下的就是由读取文件的系统去实际的读取这一部分数据。\n补充至此文章的主题部分就结束了，从OpenAsyncRead方法入手，了解了FPakPlatformFile的代码结构，初始化过程等。也明白了是如何找到FPakEntry的。思考一下，UE4的这种设计结构如何来配合UE4的打包。Unity的策略是，每一个文件一个Bundle，手动管理依赖关系。加载的时候加载依赖文件，这样来加载整个物体。UE4也是可以做到一样的，每一个文件单独打成一个Pak，然后AssetRegistry是可以导出文件的依赖与被依赖关系的。但是结合之前FindFileInPakFiles的代码，如果我们在游戏初始化的时候就挂载所有Pak文件，读取资源的时候逐个遍历这些Pak，这样的效率是不高的。相比之下如果把资源文件打包成一个Pak，那么寻找资源的时候就可以通过Hash的方法快速找到资源。两种方法就是遍历与哈希的时间复杂度的比较。如果坚持一个资源一个Pak的话，那么手动管理Pak的挂载与释放可以减少挂载的Pak，减少遍历的时间，但这相当于必须记录它们之间的依赖引用关系，做法相对来说也是比较麻烦的，而且也有Pak挂载与Pak释放的消耗。所以应该说Pak中更适合放多个文件的。\nUE4的Pak可以分为游戏的主体包，与后续的补丁包。而且它在ProjectLauncher里也提供了非常方便的打包工具，接下来将会介绍UE4的打包相关的内容。\n","dateCreated":"2019-04-25T00:00:00+08:00","dateModified":"2019-05-25T14:36:06+08:00","datePublished":"2019-04-25T00:00:00+08:00","description":"","headline":"UE4资源加载（三）FPakPlatformFile相关","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"},"publisher":{"@type":"Organization","name":"BAJIAObujie","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"url":"http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"}</script>
-    <meta name="description" content="前言这篇文章是继续上一篇文件责任链的内容，继续讲FPakPlatformFile。上一篇文章中提到在文件责任链模式下，调用OpenAsyncRead这个方法后，就可以具体读取到文件，这里将从这个方法为起点，了解FPakPlatformFile的相关内容。首先看看这个方法在FPakPlatformFile中的实现。   首先先简单介绍一下概念，FPakPlatformFile是责任链中专门负责处理p">
-<meta property="og:type" content="blog">
-<meta property="og:title" content="UE4资源加载（三）FPakPlatformFile相关">
-<meta property="og:url" content="http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/index.html">
-<meta property="og:site_name" content="芭蕉不解的博客">
-<meta property="og:description" content="前言这篇文章是继续上一篇文件责任链的内容，继续讲FPakPlatformFile。上一篇文章中提到在文件责任链模式下，调用OpenAsyncRead这个方法后，就可以具体读取到文件，这里将从这个方法为起点，了解FPakPlatformFile的相关内容。首先看看这个方法在FPakPlatformFile中的实现。   首先先简单介绍一下概念，FPakPlatformFile是责任链中专门负责处理p">
-<meta property="og:locale" content="default">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/1.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/2.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/3.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/4.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/5.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/6.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/7.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/8.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/9.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/10.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/11.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/12.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/13.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/14.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/15.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/16.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/17.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/18.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/19.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/20.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/21.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/22.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/23.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/24.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/25.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/26.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/27.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/28.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/29.jpg">
-<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/30.jpg">
-<meta property="og:updated_time" content="2019-05-25T06:36:06.258Z">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="UE4资源加载（三）FPakPlatformFile相关">
-<meta name="twitter:description" content="前言这篇文章是继续上一篇文件责任链的内容，继续讲FPakPlatformFile。上一篇文章中提到在文件责任链模式下，调用OpenAsyncRead这个方法后，就可以具体读取到文件，这里将从这个方法为起点，了解FPakPlatformFile的相关内容。首先看看这个方法在FPakPlatformFile中的实现。   首先先简单介绍一下概念，FPakPlatformFile是责任链中专门负责处理p">
-<meta name="twitter:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/1.jpg">
-    
-    
-        
-    
-    
-    
-    
-    
-    <!--STYLES-->
-    <link rel="stylesheet" href="/assets/css/all.css">
-    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
-    <link rel="stylesheet" href="/assets/css/thumbs.css">
-    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
-    <!--STYLES END-->
-    
-
-    
-
-    
-        
+        <link rel="stylesheet" href="/css/Prettify/tomorrow-night-eighties.min.css">
     
 </head>
 
-    <body>
-        <div id="blog">
-            <!-- Define author's picture -->
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+<div class="container">
+    <a class="navbar-brand" href="/"><strong>芭蕉不解的博客</strong></a>
 
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
 
-    
-
-<header id="header" data-behavior="4">
-    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
-    <div class="header-title">
-        <a
-            class="header-title-link"
-            href="/ "
-            aria-label=""
-        >
-            芭蕉不解的博客
-        </a>
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ml-auto text-center">
+            
+            <li class="nav-item">
+                <a class="nav-link" href="/">Home</a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="/archives/">Archives</a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="/about/">About</a>
+            </li>
+            
+        </ul>
     </div>
-    
-        
-            <a
-                class="header-right-picture "
-                href="#about"
-                aria-label="Öffne den Link: /#about"
-            >
-        
-        
-        </a>
-    
-</header>
-
-            <!-- Define author's picture -->
+</div>
 
 
-<nav id="sidebar" data-behavior="4">
-    <div class="sidebar-container">
-        
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link "
-                             href="/ "
-                            
-                            title="Home"
-                        >
-                    
-                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Home</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link "
-                             href="/all-categories"
-                            
-                            title="Kategorien"
-                        >
-                    
-                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Kategorien</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link "
-                             href="/all-tags"
-                            
-                            title="Tags"
-                        >
-                    
-                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Tags</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link "
-                             href="/all-archives"
-                            
-                            title="Archiv"
-                        >
-                    
-                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Archiv</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link open-algolia-search"
-                             href="#search"
-                            
-                            title="Suche"
-                        >
-                    
-                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Suche</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link "
-                             href="#about"
-                            
-                            title="Über"
-                        >
-                    
-                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Über</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link " href="https://github.com/" target="_blank" rel="noopener" title="GitHub">
-                    
-                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">GitHub</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link " href="http://stackoverflow.com/users" target="_blank" rel="noopener" title="Stack Overflow">
-                    
-                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Stack Overflow</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link " href="https://twitter.com/" target="_blank" rel="noopener" title="Twitter">
-                    
-                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Twitter</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link " href="https://facebook.com/" target="_blank" rel="noopener" title="Facebook">
-                    
-                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Facebook</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link " href="https://plus.google.com/" target="_blank" rel="noopener" title="Google Plus">
-                    
-                        <i class="sidebar-button-icon fab fa-google-plus" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Google Plus</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link " href="https://www.linkedin.com/profile/" target="_blank" rel="noopener" title="LinkedIn">
-                    
-                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">LinkedIn</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link "
-                             href="/mailto"
-                            title="E-Mail"
-                        >
-                    
-                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">E-Mail</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a  class="sidebar-button-link "
-                             href="/atom.xml"
-                            
-                            title="RSS"
-                        >
-                    
-                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">RSS</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-    </div>
 </nav>
-
+    <div class="view intro-2" style='background: url("https://i.imgur.com/oADD1Ip.jpg")no-repeat center center;background-size: cover;'>
+    <div class="full-bg-img">
+        <div class="mask rgba-black-light flex-center">
+        <div class="container text-center white-text wow fadeInUp">
+            <p class="h2">UE4资源加载（三）FPakPlatformFile相关</p>
+            <br>
             
-            <div id="main" data-behavior="4"
-                 class="
-                        hasCoverMetaIn
-                        ">
-                
-<article class="post">
-    
-    
-        <div class="post-header main-content-wrap text-left">
-    
-        <h1 class="post-title">
-            UE4资源加载（三）FPakPlatformFile相关
-        </h1>
-    
-    
-        <div class="post-meta">
-    <time datetime="2019-04-25T00:00:00+08:00">
-	
-		    25 Apr 2019
-    	
-    </time>
-    
-</div>
+            <p>Thursday, April 25th 2019, 12:00 am</p>
+            
+        </div>
+        </div>
+    </div>
+    </div>
+  </header>
 
-    
-</div>
-
-    
-    <div class="post-content markdown">
-        <div class="main-content-wrap">
-            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这篇文章是继续上一篇文件责任链的内容，继续讲FPakPlatformFile。上一篇文章中提到在文件责任链模式下，调用OpenAsyncRead这个方法后，就可以具体读取到文件，这里将从这个方法为起点，了解FPakPlatformFile的相关内容。首先看看这个方法在FPakPlatformFile中的实现。</p>
+  <main>
+  
+  <div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2 ">
+            <div class="post-content py-5 z-depth-3 main">
+                <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这篇文章是继续上一篇文件责任链的内容，继续讲FPakPlatformFile。上一篇文章中提到在文件责任链模式下，调用OpenAsyncRead这个方法后，就可以具体读取到文件，这里将从这个方法为起点，了解FPakPlatformFile的相关内容。首先看看这个方法在FPakPlatformFile中的实现。</p>
 <img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad3/1.jpg">
 
 <p>首先先简单介绍一下概念，FPakPlatformFile是责任链中专门负责处理pak文件的一环处理器。FPakEntry对应具体要读取的uasset文件，FPakFile对应具体的磁盘上的pak文件。FPakPlatformFile持有一个FPakFile的数组，而FPakFile有包含有多个FPakEntry。（pak可以理解为压缩包，压缩包里有至少一个资源文件，这个文件就是对应FPakEntry）</p>
@@ -482,318 +248,66 @@
 <h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h2><p>至此文章的主题部分就结束了，从OpenAsyncRead方法入手，了解了FPakPlatformFile的代码结构，初始化过程等。也明白了是如何找到FPakEntry的。思考一下，UE4的这种设计结构如何来配合UE4的打包。Unity的策略是，每一个文件一个Bundle，手动管理依赖关系。加载的时候加载依赖文件，这样来加载整个物体。UE4也是可以做到一样的，每一个文件单独打成一个Pak，然后AssetRegistry是可以导出文件的依赖与被依赖关系的。但是结合之前FindFileInPakFiles的代码，如果我们在游戏初始化的时候就挂载所有Pak文件，读取资源的时候逐个遍历这些Pak，这样的效率是不高的。相比之下如果把资源文件打包成一个Pak，那么寻找资源的时候就可以通过Hash的方法快速找到资源。两种方法就是遍历与哈希的时间复杂度的比较。如果坚持一个资源一个Pak的话，那么手动管理Pak的挂载与释放可以减少挂载的Pak，减少遍历的时间，但这相当于必须记录它们之间的依赖引用关系，做法相对来说也是比较麻烦的，而且也有Pak挂载与Pak释放的消耗。所以应该说Pak中更适合放多个文件的。</p>
 <p>UE4的Pak可以分为游戏的主体包，与后续的补丁包。而且它在ProjectLauncher里也提供了非常方便的打包工具，接下来将会介绍UE4的打包相关的内容。</p>
 
+                <hr>
+                <div>
+                    <p>
+                        
+                    </p>
+                </div>
+                <br>
+                
+                    <p class="note note-warning">本博客所有文章除特别声明外，均采用 <a href="https://zh.wikipedia.org/wiki/Wikipedia:CC_BY-SA_3.0%E5%8D%8F%E8%AE%AE%E6%96%87%E6%9C%AC">CC BY-SA 3.0协议</a> 。转载请注明出处！</p>
+                
+            </div>
+        </div>
+        <div class="d-none d-md-block col-md-2">
             
-
+  <div id="toc" class="py-5">
+    <p class="h6"><i class="iconfont icon-toc" style="vertical-align:middle"></i> Toc:</p> 
+    <div id="tocbot"></div>
+  </div>
 
         </div>
-    </div>
-    <div id="post-footer" class="post-footer main-content-wrap">
-        
-        
-            <div class="post-actions-wrap">
-    <nav>
-        <ul class="post-actions post-action-nav">
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2019/05/16/2019-05-16-UE4安卓相关路径/"
-                    data-tooltip="UE4安卓相关路径"
-                    aria-label="FRÜHER: UE4安卓相关路径"
-                >
-                    
-                        <i class="fa fa-angle-left" aria-hidden="true"></i>
-                        <span class="hide-xs hide-sm text-small icon-ml">FRÜHER</span>
-                    </a>
-            </li>
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/"
-                    data-tooltip="UE4资源加载（四）UnrealPak打包"
-                    aria-label="NÄCHSTER: UE4资源加载（四）UnrealPak打包"
-                >
-                    
-                        <span class="hide-xs hide-sm text-small icon-mr">NÄCHSTER</span>
-                        <i class="fa fa-angle-right" aria-hidden="true"></i>
-                    </a>
-            </li>
-        </ul>
-    </nav>
-    <ul class="post-actions post-action-share">
-        <li class="post-action hide-lg hide-md hide-sm">
-            <a
-                class="post-action-btn btn btn--default btn-open-shareoptions"
-                href="#btn-open-shareoptions"
-                aria-label="Diesen Beitrag teilen"
-            >
-                <i class="fa fa-share-alt" aria-hidden="true"></i>
-            </a>
-        </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"
-                    title="Teilen auf Facebook"
-                    aria-label="Teilen auf Facebook"
-                >
-                    <i class="fab fa-facebook" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"
-                    title="Teilen auf Twitter"
-                    aria-label="Teilen auf Twitter"
-                >
-                    <i class="fab fa-twitter" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"
-                    title="Teilen auf Google Plus"
-                    aria-label="Teilen auf Google Plus"
-                >
-                    <i class="fab fa-google-plus" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-        
-            
-        
-        <li class="post-action">
-            
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
-            
-                <i class="fa fa-list" aria-hidden="true"></i>
-            </a>
-        </li>
-    </ul>
+    </div>        
 </div>
 
+<br><br><br>
 
-        
-        
-            
-        
-    </div>
-</article>
+<!-- Comments -->
+<div class="comments" id="comments">
+ 
+</div>
+  
+  </main>
 
-
-
-                <footer id="footer" class="main-content-wrap">
-    <span class="copyrights">
-        Copyrights &copy; 2019 BAJIAObujie. All Rights Reserved.
-    </span>
+<footer class="mt-5">
+  <div class="text-center py-3">
+    <a href="https://hexo.io" target="_blank"><b>HEXO</b></a>
+    <i class="iconfont icon-love"></i>
+    <a href="https://github.com/0x2e/Material-T" target="_blank"> <b>Material-T</b></a>
+  </div>
 </footer>
 
-            </div>
-            
-                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
-                    <div class="post-actions-wrap">
-    <nav>
-        <ul class="post-actions post-action-nav">
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2019/05/16/2019-05-16-UE4安卓相关路径/"
-                    data-tooltip="UE4安卓相关路径"
-                    aria-label="FRÜHER: UE4安卓相关路径"
-                >
-                    
-                        <i class="fa fa-angle-left" aria-hidden="true"></i>
-                        <span class="hide-xs hide-sm text-small icon-ml">FRÜHER</span>
-                    </a>
-            </li>
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/"
-                    data-tooltip="UE4资源加载（四）UnrealPak打包"
-                    aria-label="NÄCHSTER: UE4资源加载（四）UnrealPak打包"
-                >
-                    
-                        <span class="hide-xs hide-sm text-small icon-mr">NÄCHSTER</span>
-                        <i class="fa fa-angle-right" aria-hidden="true"></i>
-                    </a>
-            </li>
-        </ul>
-    </nav>
-    <ul class="post-actions post-action-share">
-        <li class="post-action hide-lg hide-md hide-sm">
-            <a
-                class="post-action-btn btn btn--default btn-open-shareoptions"
-                href="#btn-open-shareoptions"
-                aria-label="Diesen Beitrag teilen"
-            >
-                <i class="fa fa-share-alt" aria-hidden="true"></i>
-            </a>
-        </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"
-                    title="Teilen auf Facebook"
-                    aria-label="Teilen auf Facebook"
-                >
-                    <i class="fab fa-facebook" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"
-                    title="Teilen auf Twitter"
-                    aria-label="Teilen auf Twitter"
-                >
-                    <i class="fab fa-twitter" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"
-                    title="Teilen auf Google Plus"
-                    aria-label="Teilen auf Google Plus"
-                >
-                    <i class="fab fa-google-plus" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-        
-            
-        
-        <li class="post-action">
-            
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
-            
-                <i class="fa fa-list" aria-hidden="true"></i>
-            </a>
-        </li>
-    </ul>
-</div>
-
-
-                </div>
-                
-    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
-        <i id="btn-close-shareoptions" class="fa fa-times"></i>
-        <ul class="share-options">
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"
-                        aria-label="Teilen auf Facebook"
-                    >
-                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Teilen auf Facebook</span>
-                    </a>
-                </li>
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://twitter.com/intent/tweet?text=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"
-                        aria-label="Teilen auf Twitter"
-                    >
-                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Teilen auf Twitter</span>
-                    </a>
-                </li>
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://plus.google.com/share?url=http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（三）FPakPlatformFile相关/"
-                        aria-label="Teilen auf Google Plus"
-                    >
-                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Teilen auf Google Plus</span>
-                    </a>
-                </li>
-            
-        </ul>
-    </div>
-
-
-            
-        </div>
-        
-
-
-<div id="about">
-    <div id="about-card">
-        <div id="about-btn-close">
-            <i class="fa fa-times"></i>
-        </div>
-        
-            <h4 id="about-card-name">BAJIAObujie</h4>
-        
-            <div id="about-card-bio"><p>author.bio</p>
-</div>
-        
-        
-            <div id="about-card-job">
-                <i class="fa fa-briefcase"></i>
-                <br/>
-                <p>author.job</p>
-
-            </div>
-        
-        
-    </div>
-</div>
-
-        
-        
-<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
-        <!--SCRIPTS-->
-<script src="/assets/js/jquery.js"></script>
-<script src="/assets/js/jquery.fancybox.js"></script>
-<script src="/assets/js/thumbs.js"></script>
-<script src="/assets/js/tranquilpeak.js"></script>
-<!--SCRIPTS END-->
-
-
+  <!-- SCRIPTS -->
+  <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.7.4/js/jquery-3.3.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.7.4/js/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.7.4/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.7.4/js/mdb.min.js"></script>
+  <script src="/js/main.js"></script>
+  
     
-
-
-
-
-    </body>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/tocbot/4.4.2/tocbot.min.js"></script>
+    
+    <script src="/js/post.js"></script>
+    
+      <script src="/js/plugins/prettify.js"></script>
+      <script>
+          $(document).ready(function(){
+              $('pre').addClass('prettyprint linenums');
+              prettyPrint();
+          })
+      </script>
+    
+  
+</body>
 </html>
