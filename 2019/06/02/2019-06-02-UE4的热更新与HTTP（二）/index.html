@@ -294,7 +294,7 @@
       
         <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一篇文章讲了UE4源码里Http的部分内容，创建一条http请求，Http模块的结构。</p>
 <p>这一篇内容来讲讲我在实现UE4的热更新中遇到的一些困难以及如何用UE4的Http来完成断点续传功能。</p>
-<h2 id="UE4热更新的思路"><a href="#UE4热更新的思路" class="headerlink" title="UE4热更新的思路"></a>UE4热更新的思路</h2><p>热更新的整体思路是这样的，文件服务器与本地都会有一个版本文件，姑且分别叫做ServerResVersion.txt和LocalResVersion.txt。也都会有一个存储资源信息的Md5文件，这个文件有多行，每一行的格式是“FileName-Md5-FileSize”，其中Md5值是用来保证下载的文件一致的。首先本地启动之后启动http请求加载服务器版本文件，加载完毕后加载本地版本文件，存储为int32 ServerResVersion 和 int32 LocalResVersion，比较版本是否有差异。随后加载本地Md5文件，存储到TMap&lt;FString, FileInfo&gt; LocalMd5，检查每一个资源名字是否在本地有对应的资源，也就是检查资源的完整性，如果资源完整且版本没有差异，那么此时就可以进入游戏了。如果有丢失文件，那么必须移除LocalMd5中对应的数据。也就是要保证LocalMd5存储的是本地存在的资源信息。</p>
+<h2 id="UE4热更新的思路"><a href="#UE4热更新的思路" class="headerlink" title="UE4热更新的思路"></a>UE4热更新的思路</h2><p>热更新的整体思路是这样的，文件服务器与本地都会有一个版本文件，姑且分别叫做ServerResVersion.txt和LocalResVersion.txt。也都会有一个存储资源信息的Md5文件，这个文件有多行，每一行的格式是“FileName-Md5-FileSize”，其中Md5值是用来保证下载的文件一致的。首先本地启动之后启动http请求加载服务器版本文件，加载完毕后加载本地版本文件，存储为int32 ServerResVersion 和 int32 LocalResVersion，比较版本是否有差异。随后加载本地Md5文件，存储到TMap<fstring, fileinfo> LocalMd5，检查每一个资源名字是否在本地有对应的资源，也就是检查资源的完整性，如果资源完整且版本没有差异，那么此时就可以进入游戏了。如果有丢失文件，那么必须移除LocalMd5中对应的数据。也就是要保证LocalMd5存储的是本地存在的资源信息。</fstring,></p>
 <p>如果资源是资源不是完整的，或者版本有更新，那么这个时候就要去加载服务器的Md5文件。知道本地资源列表LocalMd5与服务器资源列表ServerMd5之后，删除本地的无用文件，并且整理出一份下载文件列表去服务器加载新的或者丢失的资源文件。</p>
 <p>删除本地的无用文件，可以通过遍历LocalMd5，如果ServerMd5不存在就说明在新版本中这个资源已经被删除了。整理下载文件列表，可以通过遍历ServerMd5，如果新版本存在的而本地不存在，那么就说明这个资源要么是资源丢失，要么是新更新的资源。</p>
 <p>整理出一份下载文件列表之后，就当做 TArray<fstring> DownloadList 吧，FString 存储的是这个资源的名字。根据自己的文件服务器host 等生成URL，生成HTTP去请求数据。</fstring></p>
@@ -323,7 +323,8 @@
             TryDownloadTask();
         }
     }
-}</code></pre><pre><code>void UpdateResourceManager::TryDownloadTask() {
+}
+</code></pre><pre><code>void UpdateResourceManager::TryDownloadTask() {
     DownloadTask*  NextDownloadTask = nullptr;
     for (int32 i = NextDownloadTaskIndex; i &lt; TaskArray.Num() || CurHostIndex &lt; hosts.Num(); i++) {
         if (i == TaskArray.Num()) {
@@ -351,7 +352,8 @@
     }
     RunningTaskNum++;
     NextDownloadTask-&gt;SendHttpRequest();
-}</code></pre><pre><code>void UpdateResourceManager::FinishOneTask(FString&amp; FileName) {
+}
+</code></pre><pre><code>void UpdateResourceManager::FinishOneTask(FString&amp; FileName) {
     RunningTaskNum--;
     UE_LOG(LogTemp, Warning, TEXT(&quot;RunningTaskNum=%d, SuccessfulDownloadTaskNum=%d&quot;), RunningTaskNum, SuccessfulDownloadTaskNum);
     //一个下载任务完成 通知界面更新进度
@@ -370,7 +372,8 @@
         //还有任务没有下载完成。
         TryDownloadTask();
     }
-}</code></pre><p>每次完成一个下载任务，那么检查，是否当前还有正在进行的下载任务，如果为0，且成功下载的个数等于TaskArray.Num()， 说明下载已经完成。如果剩余的下载任务与已经完成的任务的和等于TaskArray.Num()，说明不需要再去尝试下载了。</p>
+}
+</code></pre><p>每次完成一个下载任务，那么检查，是否当前还有正在进行的下载任务，如果为0，且成功下载的个数等于TaskArray.Num()， 说明下载已经完成。如果剩余的下载任务与已经完成的任务的和等于TaskArray.Num()，说明不需要再去尝试下载了。</p>
 <p>DownloadTask定义如下：</p>
 <pre><code>class DownloadTask {
 private:
@@ -390,7 +393,8 @@ public:
     bool bFinished;
     bool IsRunning;
     void SendHttpRequest();
-};</code></pre><p>其中 bFinished 为这个任务是否完成，IsRunning表明这个任务是否正在运行。TaskArray是由 UpdateResourceManager 持有的，每个DownloadTask 也会有这个热更新管理器的指针 Parent。 SendHttpRequest 如下</p>
+};
+</code></pre><p>其中 bFinished 为这个任务是否完成，IsRunning表明这个任务是否正在运行。TaskArray是由 UpdateResourceManager 持有的，每个DownloadTask 也会有这个热更新管理器的指针 Parent。 SendHttpRequest 如下</p>
 <pre><code>void DownloadTask::SendHttpRequest() {
     FString URL = Parent-&gt;GetResURL(FileName, Md5);
     TSharedRef&lt;IHttpRequest&gt; HttpRequest = FHttpModule::Get().CreateRequest();
@@ -404,7 +408,8 @@ public:
     });
     UE_LOG(LogTemp, Warning, TEXT(&quot;DownloadTask  fileURL is (%s)&quot;), *URL);
     HttpRequest-&gt;ProcessRequest();
-}</code></pre><p>其中完成回调：</p>
+}
+</code></pre><p>其中完成回调：</p>
 <pre><code>HttpRequest-&gt;OnProcessRequestComplete().BindLambda([&amp;](FHttpRequestPtr HttpRequest, FHttpResponsePtr HttpResponse, bool bSucceeded) {
         if (bSucceeded &amp;&amp; HttpResponse.IsValid() &amp;&amp; HttpResponse-&gt;GetContentLength() &gt; 0) {
             if (IFileManager::Get().FileExists(*SavePath)) {
@@ -442,7 +447,8 @@ public:
             UE_LOG(LogTemp, Warning, TEXT(&quot;DownloadTask fail... ... fileURL is (%s)&quot;), *URL);
             Parent-&gt;FinishOneTask(FileName);
         }
-    });</code></pre><p>如果请求失败则通知Parent 完成了一个任务，即使他失败了。</p>
+    });
+</code></pre><p>如果请求失败则通知Parent 完成了一个任务，即使他失败了。</p>
 <p>如果成功，则将这个文件保存到SavePath的位置，同时计算这个文件的Md5值，是否与ServerMd5值相同。如果相同那么可以确定这是一个完成的任务，把bFinished标记为成功，通知Parent。</p>
 <p>以上是UpdateResourceManager 和 DownloadTask 的主要代码。libcurl内部实现是可以同时执行多个HTTP请求的，但是这样每个请求的速度就会相对的下降，如果执行完一个请求再执行下一个那也太慢了。因此我们让同时执行五个HTTP请求，每一个请求执行完毕后都会执行 FinishOneTask 验证是否需要继续申请任务执行。<strong>只有还有任务待执行，那么才会执行 TryDownload 的方法。</strong></p>
 <p>为什么还要设置一个 CurHostIndex 呢？在手机平台的时候，经常会有网络波动的情况。假设有可能任务20失败了，这个时候后续的任务都完成了，那么就说明还有任务需要执行，还会执行到 TryDownload 的方法。这个时候，NextTaskIndex 已经执行到末尾，让它重新归0，重新遍历，开始判断，是否这个下载任务没有完成且没有正在执行，如果是那么它就是下一个下载任务。请求失败的原因也有可能是文件服务器的不稳定，因此会部署多个文件服务器，当第一次遍历存在失败任务的时候，下一轮遍历，就去尝试第二个文件服务器的地址。</p>
@@ -460,7 +466,8 @@ public:
 <p>实现断点续传的方法是用HTTP的Range头来实现断点续传，把一个大文件拆分成很多个下载任务来下载，每个HTTP只下载文件的一部分。下载完成的时候，把这些零散的文件给拼接起来。重新组成一个完整的文件。既然要把文件分成多个HTTP分段下载，那么我们需要知道这个文件具体的大小，假设一个下载任务只有10M，只有知道文件的大小才知道能分多少个下载任务。</p>
 <p>分段下载的示例如下，如果下载范围是 0-499，那么总共是下载500个字节的数据，下一个下载范围就应该是500-999。</p>
 <pre><code>    FString Range = TEXT(&quot;bytes=500-999&quot;)
-    HttpRequest-&gt;SetHeader(TEXT(&quot;Range&quot;), Range);</code></pre><p>（更多的HTTP Header参考：<a href="https://kb.cnblogs.com/page/92320/）" target="_blank" rel="noopener">https://kb.cnblogs.com/page/92320/）</a></p>
+    HttpRequest-&gt;SetHeader(TEXT(&quot;Range&quot;), Range);
+</code></pre><p>（更多的HTTP Header参考：<a href="https://kb.cnblogs.com/page/92320/）" target="_blank" rel="noopener">https://kb.cnblogs.com/page/92320/）</a></p>
 <p>其中下载大文件，对于UE4来说主要是下载pak文件，类定义如下</p>
 <pre><code>//下载pak文件
 class DownloadPakFileTask {
@@ -528,7 +535,8 @@ public:
     void FinishOnePartialTask();
 
     int32 RunningHttpCount; //当前有多少个HTTP正在请求数据
-};</code></pre><p>DownloadPakFileTask 的 FinishOnePartialTask如下</p>
+};
+</code></pre><p>DownloadPakFileTask 的 FinishOnePartialTask如下</p>
 <pre><code>void DownloadPakFileTask::FinishOnePartialTask() {
     RunningHttpCount--;
     UE_LOG(LogTemp, Warning, TEXT(&quot;RunningHttpCount:%d, SuccessfulPartialTaskCount:%d&quot;), RunningHttpCount, SuccessfulPartialTaskCount); //应该要出现四次！
@@ -592,7 +600,8 @@ public:
         //还有http任务需要执行
         SendHttps();
     }
-}</code></pre><p>DownloadPakFileTask 的 SendHttps 如下</p>
+}
+</code></pre><p>DownloadPakFileTask 的 SendHttps 如下</p>
 <pre><code>void DownloadPakFileTask::SendHttps() {
     //找到下一个HTTP任务
     PartialTask* NextTask = nullptr;
@@ -659,7 +668,8 @@ public:
     }
     RunningHttpCount++;
     NextTask-&gt;SendPartialTaskHttp();
-}</code></pre><p>对于下载大文件DownloadPakFileTask来说，有两种生成对象的方式，第一种传入FileName 和 FileSize等，根据FileSize计算出有多少个PartialTask。另一种是根据 TArray<fstring> 的方式来生成对象，这种方式是为了断点续传设计的。如果上次下载失败了，那么就记录DownloadPakFileTask 和 PartialTask 的信息到一个txt文本中，如果下次下载检测到存在这个txt文件，就读取内容保存到TArray<fstring>中，根据这些信息就可以恢复进度继续下载。</fstring></fstring></p>
+}
+</code></pre><p>对于下载大文件DownloadPakFileTask来说，有两种生成对象的方式，第一种传入FileName 和 FileSize等，根据FileSize计算出有多少个PartialTask。另一种是根据 TArray<fstring> 的方式来生成对象，这种方式是为了断点续传设计的。如果上次下载失败了，那么就记录DownloadPakFileTask 和 PartialTask 的信息到一个txt文本中，如果下次下载检测到存在这个txt文件，就读取内容保存到TArray<fstring>中，根据这些信息就可以恢复进度继续下载。</fstring></fstring></p>
 <p>每一个被拆分的出来的小任务PartialTask定义如下：</p>
 <pre><code>class PartialTask {
 public:
@@ -672,7 +682,8 @@ public:
     FString SavePath;
     bool IsRunning;//是否任务正在下载
     void SendPartialTaskHttp();
-};</code></pre><pre><code>void PartialTask::SendPartialTaskHttp() {
+};
+</code></pre><pre><code>void PartialTask::SendPartialTaskHttp() {
     FString URL = PakFileTask-&gt;Parent-&gt;GetResURL(FileName, PakFileTask-&gt;PakMd5);
     TSharedRef&lt;IHttpRequest&gt; HttpRequest = FHttpModule::Get().CreateRequest();
     HttpRequest-&gt;SetURL(URL);
@@ -703,7 +714,8 @@ public:
     //UE_LOG(LogTemp, Warning, TEXT(&quot;PartialTask::SendPartialTaskHttp()&quot;));
     IsRunning = true;
     HttpRequest-&gt;ProcessRequest();
-}</code></pre><p>总体的步骤和之前下载多个小文件是类似的，CurHostIndex可以用来进行多轮、变换host地址下载。同时进行多个PartialTask。当下载任务全部完成之后，就开始拼接每一个文件，组合成最后的pak文件。</p>
+}
+</code></pre><p>总体的步骤和之前下载多个小文件是类似的，CurHostIndex可以用来进行多轮、变换host地址下载。同时进行多个PartialTask。当下载任务全部完成之后，就开始拼接每一个文件，组合成最后的pak文件。</p>
 <h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h2><p>对要保存一个新文件，或者对已存在文件增添新内容：</p>
 <pre><code>void AMyActor::WriteFile(FString&amp; SavePath, TArray&lt;uint8&gt;&amp; Content) {
     if (!FPaths::FileExists(SavePath)) {
@@ -714,7 +726,8 @@ public:
         FileWriter-&gt;Serialize(Content.GetData(), Content.Num());
         FileWriter-&gt;Close();
     }
-}</code></pre>
+}
+</code></pre>
     </div>
 
     
@@ -898,7 +911,24 @@ public:
 
 
 
-  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
 
   
 

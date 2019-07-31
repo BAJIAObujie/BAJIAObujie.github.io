@@ -301,16 +301,11 @@
         <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一篇文章已经介绍完文件下载，为了测试代码功能，需要进行测试。这一篇文章就是来介绍如何搭建文件服务器，计算对应的Md5值并生成md5table.txt文件，以及记录测试过程中遇到的几个问题。</p>
 <h2 id="搭建文件服务器"><a href="#搭建文件服务器" class="headerlink" title="搭建文件服务器"></a>搭建文件服务器</h2><p><a href="https://blog.csdn.net/zhangnana200/article/details/77116030" target="_blank" rel="noopener">https://blog.csdn.net/zhangnana200/article/details/77116030</a> 照着这个做基本OK 其中两个问题多解释一下</p>
 <p>1、配置安装Apache的主服务的时候，出现的命令行 Error底下一行没有后续提示，说明本次运行没有发生错误。成功安装。不是说出现Error就是有错。</p>
-<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4HotUpdate&HTTP3/1.jpg">
-
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4HotUpdate&HTTP3/1.jpg"></p>
 <p>2 配置安装Apache的主服务的时候，用cmd命令行启动，可能会报错</p>
-<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4HotUpdate&HTTP3/2.jpg">
-
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4HotUpdate&HTTP3/2.jpg"></p>
 <p>必须通过管理员身份启动，在这个目录下找到cmd.exe，用管理员身份启动</p>
-<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4HotUpdate&HTTP3/3.jpg">
-
-
-
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4HotUpdate&HTTP3/3.jpg"></p>
 <h2 id="计算Md5值"><a href="#计算Md5值" class="headerlink" title="计算Md5值"></a>计算Md5值</h2><p>前文介绍过md5table.txt文件是用来保存资源信息的，每一行是 “FileName - Md5 - FileSize” 的形式。这里用Java实现。</p>
 <pre><code>import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 import java.io.File;
@@ -382,10 +377,9 @@ public class Main {
             e.printStackTrace();
         }
     }
-}</code></pre><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4HotUpdate&HTTP3/4.jpg">
-
-<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4HotUpdate&HTTP3/5.jpg">
-
+}
+</code></pre><p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4HotUpdate&HTTP3/4.jpg"></p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4HotUpdate&HTTP3/5.jpg"></p>
 <p>这是我利用Apache搭建的文件服务器，和本地电脑对应的文件夹。上述Java代码会打包FileServer文件夹下的所有文件，但是不包括FileServer这一级文件夹下的文件。也就是两个txt文件不是打包的内容。执行代码就会把Contents Paks文件夹下的内容生成对应的md5table文件，以下是我的生成结果。</p>
 <pre><code>Contents/98108100.png,C90B90492AF6F2F69E7AF2CC0B4956EB,166528
 Contents/back10310.png,82E41BD48639DD803ED219AB268E72B7,344481
@@ -406,7 +400,8 @@ Contents/Halal_eresh.png,C754266747231CE94AA6839E995DA795,927168
 Contents/image.png,0FF7EF07F5219AF8F8714F023E99CD66,101881
 Contents/ObjectCN.rar,B56D7E47A0A9A5172782A609BB21572C,127616
 Paks/JetBrains.Rider-2018.1.pak,111FC7BBA27B081D2AE2C2AED6564EBD,294398520
-Paks/UnrealEngine-release.pak,A207EA0643F428CCC06332F6E11FBC93,288092632</code></pre><h2 id="测试问题"><a href="#测试问题" class="headerlink" title="测试问题"></a>测试问题</h2><h4 id="0KB文件"><a href="#0KB文件" class="headerlink" title="0KB文件"></a>0KB文件</h4><p>在实际测试的过程中，发现了一个问题。当我在服务器上部署文件的时候，HTTP下载的过程中碰到那种 0KB 的文件，会直接报下载失败。因为我们已经在md5table.txt 记录了文件大小，所以我们可以在生成md5table.txt的过程中直接过滤掉 0KB 的文件，或者在启动HTTP下载的时候，遇到文件大小为0的文件直接在对应的位置生成一个文件。</p>
+Paks/UnrealEngine-release.pak,A207EA0643F428CCC06332F6E11FBC93,288092632
+</code></pre><h2 id="测试问题"><a href="#测试问题" class="headerlink" title="测试问题"></a>测试问题</h2><h4 id="0KB文件"><a href="#0KB文件" class="headerlink" title="0KB文件"></a>0KB文件</h4><p>在实际测试的过程中，发现了一个问题。当我在服务器上部署文件的时候，HTTP下载的过程中碰到那种 0KB 的文件，会直接报下载失败。因为我们已经在md5table.txt 记录了文件大小，所以我们可以在生成md5table.txt的过程中直接过滤掉 0KB 的文件，或者在启动HTTP下载的时候，遇到文件大小为0的文件直接在对应的位置生成一个文件。</p>
 <h4 id="单例模式"><a href="#单例模式" class="headerlink" title="单例模式"></a>单例模式</h4><p>我实现的热更新管理器 UpdateResourceManager 是一个单例，模仿了 PlatformFileManager 的实现，头文件定义：</p>
 <pre><code>class UpdateResourceManager{
 public:
@@ -441,7 +436,8 @@ UpdateResourceManager&amp; UpdateResourceManager::Get() {
             continue;
         }
         TaskArray.Add(DownloadTask(this, FileName, SavePath, ServerResVersion, NewMd5Table[FileName]));
-    }</code></pre><p>看一下 DownloadPakFileTask 的构造函数</p>
+    }
+</code></pre><p>看一下 DownloadPakFileTask 的构造函数</p>
 <pre><code>class DownloadPakFileTask {
 public:
     DownloadPakFileTask(UpdateResourceManager* InParent, FString&amp; InFileName, FString&amp; InSavePath, int32 FileSize, FString&amp; InMd5)
@@ -459,7 +455,8 @@ public:
             PartialTasks.Add(new PartialTask(this, FileName, false, Range, TaskSavePath));
         }
     }
-}</code></pre><p>这一段代码的结构是这样的，UpdateResourceManager是一个单例，持有</p>
+}
+</code></pre><p>这一段代码的结构是这样的，UpdateResourceManager是一个单例，持有</p>
 <ul>
 <li><code>TArray&lt;DownloadTask&gt;  TaskArray</code> </li>
 <li><code>TArray&lt;DownloadPakFileTask&gt;  PakTaskArray</code>  </li>
@@ -468,7 +465,8 @@ public:
 <p>注意 new DownloadPakFileTask 这一段代码，本来是这么实现的</p>
 <pre><code>TArray&lt;DownloadPakFileTask&gt; PakTaskArray;
 DownloadPakFileTask temp = DownloadPakFileTask(this, PakFileName, PakSavePath, PakFileSize, PakMd5);
-PakTaskArray.Add(temp);</code></pre><p>DownloadPakFileTask 是在栈上的！在DownloadPakFileTask  的构造函数里，本来PartialTask也不是用new的方式，也是直接生成放在栈上的。</p>
+PakTaskArray.Add(temp);
+</code></pre><p>DownloadPakFileTask 是在栈上的！在DownloadPakFileTask  的构造函数里，本来PartialTask也不是用new的方式，也是直接生成放在栈上的。</p>
 <p>当我执行的时候发现DownloadPakFileTask生成的时候，每一个PartialTask还是可以通过指针看到DownloadPakFileTask底下的内容的。但是添加到TArray中后，只有PakFileTask指针正确 PakFileSize正确，其他的FString都显示为乱码了 </p>
 <p>也就是说，试着把DownloadPakFileTask当做A，PartialTask当做B，两者互相引用。我们断点查看A的时候可以看到内容，但是通过A-&gt;B-&gt;A 这样看的时候就有一些内容是丢失的。非常令人疑惑的一点，指针一致，但是内容却丢失了一部分。在栈上生成对象然后添加到TArray中才会出现这种情况，这也导致了我后来发起http请求的失败。可能是栈容量的问题？或者TArray的内部实现的问题？详细原因仍然不清楚。</p>
 
@@ -655,7 +653,24 @@ PakTaskArray.Add(temp);</code></pre><p>DownloadPakFileTask 是在栈上的！在
 
 
 
-  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
 
   
 

@@ -342,7 +342,8 @@
     TQueue&lt;IHttpThreadedRequest*, EQueueMode::Spsc&gt; CompletedThreadedRequests;
 
     /** Pointer to Runnable Thread */
-    FRunnableThread* Thread;</code></pre><p>为了讲的清楚一些，举个例子：</p>
+    FRunnableThread* Thread;
+</code></pre><p>为了讲的清楚一些，举个例子：</p>
 <p>假设有一家餐厅，前台有一个人负责帮客人点菜，上菜。后厨房也有一个人负责做菜，前台后台中间有四个列表。现在来了一个客人，点了一份宫保鸡丁，前台并不是直接喊厨师说给做一份菜，而是写好菜的标签，然后放到待处理的列表中，然后就不管了。后台的厨师看到这里待处理列表新增了一份菜的标签，就开始做这道菜。做菜的过程中，就把待处理列表的标签给划掉，并且在“正在做菜”的列表中加上宫保鸡丁标签。做完宫保鸡丁后把菜的标签放到“已经做好的菜”的列表，并且把菜放上。这个时候前台看到了这份菜已经做好了，就端去给客人。如果中间发生了意外，比如后厨房里已经没有鸡肉了做不了宫保鸡丁，或者客人突然要取消，那么厨师或者前台就把菜标签挂到取消列表中。前台随后再把菜标签放到“已经做好的菜”的列表，但是这个时候并没有放上做好的菜。也就是这次做菜失败了。</p>
 <p>把以上场景带入到HTTP请求以及回复是差不多的。两个人、两个线程是两条并行的线，各自忙各自的事。客人点菜就相当于一个HTTP请求，前台（游戏主线程）只是把请求放到待做列表中而已，等厨师做完菜（HTTP线程请求完数据）就把菜放到完成列表里，前台看到菜做好了就把菜端给客人（主线程取出完成列表的请求，执行回调）。而中间的四个列表，就是对应代码中的四个TQueue线程安全的队列。</p>
 <h2 id="Http模块结构"><a href="#Http模块结构" class="headerlink" title="Http模块结构"></a>Http模块结构</h2><p>UE4的HTTP代码部分主要可以分为四个部分，HttpModule，HttpManager，HttpThread，HttpRequest。</p>
@@ -351,10 +352,8 @@
 </li>
 <li><p>HttpManager：FHttpManager定义了具体的操作流程。UE4调用外部库Curl来做Http请求。FCurlHttpManager继承自FHttpManager，对一些虚方法提供了Curl的具体实现。</p>
 </li>
-<li><p>HttpThread：FCurlHttpThread也是继承自FHttpManger</p>
-</li>
-<li><p>HttpRequest：只能通过Module里提供的方法来创建一个Http请求，这个请求继承了IHttpRequest。具体实现是CurlHttpRequest。IHttpRequest只有少量的接口，如设置URL、设置头等。细节由CurlHttpRequest实现。</p>
-</li>
+<li>HttpThread：FCurlHttpThread也是继承自FHttpManger</li>
+<li>HttpRequest：只能通过Module里提供的方法来创建一个Http请求，这个请求继承了IHttpRequest。具体实现是CurlHttpRequest。IHttpRequest只有少量的接口，如设置URL、设置头等。细节由CurlHttpRequest实现。</li>
 </ul>
 <p>UE4将流程定义在FHttpManger和FHttpThread里，然后具体实现FCurlHttpManager、FCurlHttpThread里结合外部库Curl来实现。如果以后出了什么更高效的Http外部库，那也只需要修改具体的实现部分，流程方面是不用改动的。这种思想也是值得学习的。根据“我”想对外提供的方法api等定制一套流程，具体实现由子类去完成。相当于做了一层封装。</p>
 <h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h2><p>CurlHttpThread里有一个Tick函数，这个函数实现了单线程、高并发、非阻塞的去执行HTTP任务。代码摘录如下，具体细节可以直接网上搜索Curl单线程、高并发等关键字。</p>
@@ -416,7 +415,8 @@
     }
 
     FHttpThread::HttpThreadTick(DeltaSeconds);
-}</code></pre>
+}
+</code></pre>
     </div>
 
     
@@ -600,7 +600,24 @@
 
 
 
-  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
 
   
 

@@ -308,14 +308,13 @@
 <p>　　需要把每位领导的处理独立出来，实现成单独的职责处理对象，然后为它们提供一个公共的、抽象的父职责对象，这样就可以在客户端来动态地组合职责链，实现不同的功能要求了。</p>
 <p>​        项目经理可以解决（完成 ），不可以解决-&gt;抛给部门经理去处理-&gt;部门经理不能解决再抛给总经理去处理。各人负责各自领域内的责任 。</p>
 <h2 id="UE4文件责任链"><a href="#UE4文件责任链" class="headerlink" title="UE4文件责任链"></a>UE4文件责任链</h2><p>在UE4中对文件读取也采用了责任链的设计模式。好处是将负责一类功能的（比如专门负责读取Pak文件）给单独抽取了出来，保持类的单一职责。在这个链上的各个处理器只负责分内的事，如果请求不是自己处理直接抛给下一个就好了。链上的每一个环都继承自IPlatformFile接口。</p>
-<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad2/2.jpg">
-
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad2/2.jpg"></p>
 <p><a href="https://zhuanlan.zhihu.com/p/35925797" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/35925797</a></p>
 <p>在加载uasset文件的时候调用到了方法</p>
 <p><code>Handle = FPlatformFileManager::Get().GetPlatformFile().OpenAsyncRead(InFileName);</code></p>
 <p>其中FPlatformFileManager 是一个单例的管理器，持有一个TopmostPlayformFile，也就是责任链的头部位置。每个具体实现的类在初始化的时候都会持有下一个IPlatformFile的引用。这样TopmostPlayformFile处理不了的文件可以一直往下传递，直到被处理或者传递到链的末尾。</p>
 <p>相关方法如下</p>
-<pre><code class="c++">FPlatformFileManager 
+<pre><code class="lang-c++">FPlatformFileManager 
 
 /** Currently used platform file. */
 class IPlatformFile* TopmostPlatformFile; //类里的唯一变量
@@ -333,7 +332,8 @@ IPlatformFile&amp; FPlatformFileManager::GetPlatformFile() //获得链顶部的I
      TopmostPlatformFile = &amp;IPlatformFile::GetPlatformPhysical();
   }
   return *TopmostPlatformFile;
-}</code></pre>
+}
+</code></pre>
 <p><strong>如何生成责任链：</strong></p>
 <p>以安卓为例，启动过程：</p>
 <ol>
@@ -346,16 +346,13 @@ IPlatformFile&amp; FPlatformFileManager::GetPlatformFile() //获得链顶部的I
 <li><p>在LaunchCheckForFileOverride生成读取文件的责任链</p>
 </li>
 </ol>
-<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad2/4.jpg">
-
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad2/4.jpg"></p>
 <p>最开始责任链只有一个physical platform file，随后加入读取PakFile的处理器。此时physical platform file为PakFile的LowerLevel，也就是处理器的下一环。</p>
-<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad2/5.jpg">
-
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad2/5.jpg"></p>
 <p>ConditionallyCreateFileWrapper在获得相应的IPlatformFile之后会调用Initialize初始化方法，CurrentPlatformFile也就成了新生成的IPlatformFile的LowerLevel。</p>
 <p><strong>FPakPlatformFile的结构</strong></p>
 <p>生成责任链后，链上的每一环各自负责自己的内容，其中FPakPlatformFile是专门处理Pak的一环。这里对FPakPlatformFile只做简要介绍，下一篇内容会详细讲解Pak格式相关。</p>
-<img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad2/3.jpg" width="600px">
-
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UE4ResourceLoad2/3.jpg" width="600px"></p>
 <ul>
 <li><p>LowerLevel 链上下一环处理器</p>
 </li>
@@ -547,7 +544,24 @@ IPlatformFile&amp; FPlatformFileManager::GetPlatformFile() //获得链顶部的I
 
 
 
-  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
 
   
 
