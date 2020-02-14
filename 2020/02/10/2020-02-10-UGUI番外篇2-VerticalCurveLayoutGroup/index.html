@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言番外篇主要是记录工作上遇到的一些问题吧，或者UGUI的一点拓展吧，例如这个曲线滑动的组件，就是策划提的一个需求，然后就对VerticalLayoutGroup进行了一点拓展，实现了竖直拖动的时候UIListItem能够曲线滑动。 工程工程可以从这里下载 https://github.com/BAJIAObujie/VerticalCurveLayoutGroup UI层级结构  UIList的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI番外篇2-VerticalCurveLayoutGroup">
+<meta property="og:url" content="http://yoursite.com/2020/02/10/2020-02-10-UGUI番外篇2-VerticalCurveLayoutGroup/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言番外篇主要是记录工作上遇到的一些问题吧，或者UGUI的一点拓展吧，例如这个曲线滑动的组件，就是策划提的一个需求，然后就对VerticalLayoutGroup进行了一点拓展，实现了竖直拖动的时候UIListItem能够曲线滑动。 工程工程可以从这里下载 https://github.com/BAJIAObujie/VerticalCurveLayoutGroup UI层级结构  UIList的">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="d:/GitHub/BlogFile/source/img/VerticalCurveLayoutGroup/1.png">
+<meta property="og:image" content="d:/GitHub/BlogFile/source/img/VerticalCurveLayoutGroup/2.png">
+<meta property="og:image" content="d:/GitHub/BlogFile/source/img/VerticalCurveLayoutGroup/4.png">
+<meta property="og:updated_time" content="2020-02-14T06:33:37.460Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI番外篇2-VerticalCurveLayoutGroup">
+<meta name="twitter:description" content="前言番外篇主要是记录工作上遇到的一些问题吧，或者UGUI的一点拓展吧，例如这个曲线滑动的组件，就是策划提的一个需求，然后就对VerticalLayoutGroup进行了一点拓展，实现了竖直拖动的时候UIListItem能够曲线滑动。 工程工程可以从这里下载 https://github.com/BAJIAObujie/VerticalCurveLayoutGroup UI层级结构  UIList的">
+<meta name="twitter:image" content="d:/GitHub/BlogFile/source/img/VerticalCurveLayoutGroup/1.png">
+  <link rel="canonical" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI番外篇2-VerticalCurveLayoutGroup/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI番外篇2-VerticalCurveLayoutGroup | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI番外篇2-VerticalCurveLayoutGroup/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI番外篇2-VerticalCurveLayoutGroup
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-14 14:33:37" itemprop="dateModified" datetime="2020-02-14T14:33:37+08:00">2020-02-14</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>番外篇主要是记录工作上遇到的一些问题吧，或者UGUI的一点拓展吧，例如这个曲线滑动的组件，就是策划提的一个需求，然后就对VerticalLayoutGroup进行了一点拓展，实现了竖直拖动的时候UIListItem能够曲线滑动。</p>
+<h2 id="工程"><a href="#工程" class="headerlink" title="工程"></a>工程</h2><p>工程可以从这里下载</p>
+<p><a href="https://github.com/BAJIAObujie/VerticalCurveLayoutGroup" target="_blank" rel="noopener">https://github.com/BAJIAObujie/VerticalCurveLayoutGroup</a></p>
+<h2 id="UI"><a href="#UI" class="headerlink" title="UI"></a>UI</h2><p>层级结构</p>
+<p><img src="D:\GitHub\BlogFile\source\img\VerticalCurveLayoutGroup\1.png" alt="1580977139378"></p>
+<p>UIList的曲线布局组件继承自VerticalLayoutGroup，并新加五个字段，前四个是CurveRect对应的范围，最后一个是应用的曲线。</p>
+<p><img src="D:\GitHub\BlogFile\source\img\VerticalCurveLayoutGroup\2.png" alt="1580977183987"></p>
+<p>CurveRect</p>
+<p><img src="D:\GitHub\BlogFile\source\img\VerticalCurveLayoutGroup\4.png" alt="1580977222807"></p>
+<p>四个角上的GameObject形成CurveRect，即曲线的生效范围。</p>
+<h2 id="Code"><a href="#Code" class="headerlink" title="Code"></a>Code</h2><p>VerticalCurveLayoutGroup.cs</p>
+<pre><code>namespace UnityEngine.UI
+{
+    [DisallowMultipleComponent]
+    [AddComponentMenu(&quot;UI/VerticalCurveLayoutGroup(UGUI)&quot;)]
+    public class VerticalCurveLayoutGroup : VerticalLayoutGroup
+    {
+        //topLeft和bottomRight并没有作用，主要是为了方便编辑器下看到曲线生效的范围
+        [SerializeField]
+        private RectTransform bottomLeft;
+        [SerializeField]
+        private RectTransform bottomRight;
+        [SerializeField]
+        private RectTransform topRight;
+        [SerializeField]
+        private RectTransform topLeft;
+        [SerializeField]
+        private AnimationCurve curve;
+
+        public override void SetLayoutVertical()
+        {
+            base.SetLayoutVertical();
+            //UIList拖动的时候是UIList（Content）滑动，如果ScrollValue变化，滑动 那么需要重新计算水平方向的位置。
+            SetChildrenPosX();
+        }
+
+        private void SetChildrenPosX()
+        {
+            //以下计算是在世界空间下计算
+            Vector3 bottomLeftPos = bottomLeft.transform.position;
+            Vector3 topRightPos = topRight.transform.position;
+            float totalHeight = topRightPos.y - bottomLeftPos.y;
+            float totalWidth = topRightPos.x - bottomLeftPos.x;
+
+            foreach (RectTransform rectTransform in rectChildren)
+            {
+                Vector3 itemPos = rectTransform.position;
+
+                if (itemPos.y &lt; bottomLeftPos.y || itemPos.y &gt; topRightPos.y)
+                {
+                    continue;
+                }
+                float rate = (itemPos.y - bottomLeftPos.y) / totalHeight;
+                float offsetXRate = curve.Evaluate(rate);
+                float worldPosX = totalWidth * offsetXRate + bottomLeftPos.x;
+                rectTransform.position = new Vector3(worldPosX, itemPos.y, itemPos.z);
+            }
+        }
+    }
+}
+</code></pre><p>对应的Editor</p>
+<pre><code>using UnityEngine;
+using UnityEngine.UI;
+
+namespace UnityEditor.UI
+{
+    [CustomEditor(typeof(VerticalCurveLayoutGroup), true)]
+    [CanEditMultipleObjects]
+    class VerticalCurveLayoutGroupEditor : HorizontalOrVerticalLayoutGroupEditor
+    {
+        SerializedProperty m_BottomLeftProperty;
+        SerializedProperty m_BottomRightProperty;
+        SerializedProperty m_TopLeftProperty;
+        SerializedProperty m_TopRightProperty;
+        SerializedProperty m_CurveProperty;
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            m_BottomLeftProperty = serializedObject.FindProperty(&quot;bottomLeft&quot;);
+            m_BottomRightProperty = serializedObject.FindProperty(&quot;bottomRight&quot;);
+            m_TopLeftProperty = serializedObject.FindProperty(&quot;topLeft&quot;);
+            m_TopRightProperty = serializedObject.FindProperty(&quot;topRight&quot;);
+            m_CurveProperty = serializedObject.FindProperty(&quot;curve&quot;);
+        }
+
+        public override void OnInspectorGUI()
+        {
+            base.OnInspectorGUI();
+            serializedObject.Update();
+            EditorGUILayout.PropertyField(m_BottomLeftProperty, true);
+            EditorGUILayout.PropertyField(m_BottomRightProperty, true);
+            EditorGUILayout.PropertyField(m_TopLeftProperty, true);
+            EditorGUILayout.PropertyField(m_TopRightProperty, true);
+            EditorGUILayout.PropertyField(m_CurveProperty, true);
+            serializedObject.ApplyModifiedProperties();
+        }
+
+    }
+}
+</code></pre><p>UIList需要注册函数监听ScrollValue变化</p>
+<pre><code>//当ScrollRect滑动的时候，重绘每个物体
+if(layoutGroup != null &amp;&amp; layoutGroup is VerticalCurveLayoutGroup)
+{
+    scrollRect.onValueChanged.AddListener((delta) =&gt;
+    {
+        layoutGroup.SetLayoutVertical();
+    });
+}
+</code></pre><p>====================================</p>
+<p>做曲线滑动的效果一开始是策划提出的，之前上一个项目其实也有策划提出类似的需求，不过当时也不是提给我的，而且项目不久后突然就没了。现在新项目提出这个需求后，突然感觉，虽然策划换人了，但是，嗯，大家对曲线还是都有些好感的。</p>
+<p>考虑实现思路，之前的文章已经提过了滑动面板显示UIList内容的，通常是这样的结构，顶层是ScrollRect滑动面板，然后是带有RectMask2D组件的Viewport视窗，通常Viewport是和ScrollRect保持一样大小，最底层是Content，也就是显示的内容，对于很多情况下，Content也就是UIList。通常UIList会带有LayoutGroup也就是布局组件，例如在这个工程中，就是应用了一个VerticalLayoutGroup和ContentSizeFitter。这样在绘制10个UIListItem的情况下，VerticalLayoutGroup和ContentSizeFitter就可以计算每个物体大小和间距等，算出UIList的高度值。这样就能让10个物体有序排列在Content上。</p>
+<p>但是VerticalLayoutGroup仅仅是让物体在竖直方向上排序，这样是做不出上拉下拉曲线滑动效果的。所以需要根据竖轴的位置，根据一个公式去计算横轴的位置。因为这个弧是接近圆弧的，所以考虑是不是可以用圆的公式来计算。不过</p>
+<p>后来想策划可能还想各种各样的弧形，不一定能严格保证是圆，还可能是椭圆之类的，难不成每次都手写公式去计算位置吗。恰好Unity有一个曲线编辑器，AnimationCurve，所以就利用这个来，</p>
+<p>这个好处是方便调节，而且相对直观，容易做出各种复杂的曲线效果。而且这个工作可以交给策划。</p>
+<p>做这个还遇到一个问题，就是不清楚UGUI各种位置的关系，LocalPosition  anchoredposition这些。之前用圆形做的时候，经常做出奇奇怪怪的效果，比如计算横轴的位置，结果计算到9000+，很明显是错的。归根到底就是得统一到一个坐标轴下去计算。</p>
+<p>当时有考虑在局部坐标系下，例如统一到ScrollRect的局部坐标系。其实这个是没差的。</p>
+<p>但是为了计算方便，决定用世界坐标去做，主要是方便。同时还需要知道在哪一个范围上应用曲线效果。</p>
+<p>所以我就额外补了一个UI，也就是 _CurveRect</p>
+<p>====================</p>
+<p>这个UI是一个矩形底下有四个物体，分别在上下左右四个边界，这样来确定位置，也就是说当一个元素的位置在这个rect范围内，那么就根据曲线去计算偏移值，并且应用到元素的横轴位置上。</p>
+<p>需要注意的是，ScrollRect这些UI需要保证是固定大小的，也就是必须是集中型锚点，然后固定大小的，不能用分散型锚点。因为计算都是基于定值的宽高的，而不是基于比率。</p>
+<p>CurveRect还有一个好处就是也是方便调节，一旦发现曲线拟合的效果和背景曲线不够贴近，除了可以调节AnimationCurve之外，也可以调节这个ui的范围。</p>
+<p>在最后调节元</p>
+<p>===========================</p>
+<p>和这篇博客的挺像的</p>
+<p><a href="https://blog.csdn.net/qq_40294213/article/details/80117464" target="_blank" rel="noopener">https://blog.csdn.net/qq_40294213/article/details/80117464</a></p>
+<p><a href="https://blog.csdn.net/qq_33847100/article/details/81540435" target="_blank" rel="noopener">https://blog.csdn.net/qq_33847100/article/details/81540435</a></p>
+<p>制作思路差不多的 制作圆形的UIList滑动列表</p>
+<p>设定一个CircleCenter，然后根据每个Item的World PosY计算出WorldPosX，</p>
+<p>不过曲线的话更加灵活吧，理论上啥形状都hold得住</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2019/07/12/2019-07-12-数学基础篇1_旋转矩阵/" rel="next" title="Shader入门精要读书笔记2-旋转矩阵">
+                <i class="fa fa-chevron-left"></i> Shader入门精要读书笔记2-旋转矩阵
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#工程"><span class="nav-number">2.</span> <span class="nav-text">工程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UI"><span class="nav-number">3.</span> <span class="nav-text">UI</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Code"><span class="nav-number">4.</span> <span class="nav-text">Code</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
