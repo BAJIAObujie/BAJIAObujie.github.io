@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言UI事件系统通过ExecuteEvents发布需要执行的事件。本文讨论ExecuteEvents的具体实现。在进入正文之前首先需要先了解以下两点 1、委托 delegate委托的使用方法：声明委托类型后，就可以通过这个类型，构建出对应的对象。例如 public delegate void MyDel(); MyDel myDel = ... ... 也就是说delegate声明的MyDel相当">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码3-ExecuteEvents">
+<meta property="og:url" content="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码3-ExecuteEvents/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言UI事件系统通过ExecuteEvents发布需要执行的事件。本文讨论ExecuteEvents的具体实现。在进入正文之前首先需要先了解以下两点 1、委托 delegate委托的使用方法：声明委托类型后，就可以通过这个类型，构建出对应的对象。例如 public delegate void MyDel(); MyDel myDel = ... ... 也就是说delegate声明的MyDel相当">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-02-19T06:25:29.171Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码3-ExecuteEvents">
+<meta name="twitter:description" content="前言UI事件系统通过ExecuteEvents发布需要执行的事件。本文讨论ExecuteEvents的具体实现。在进入正文之前首先需要先了解以下两点 1、委托 delegate委托的使用方法：声明委托类型后，就可以通过这个类型，构建出对应的对象。例如 public delegate void MyDel(); MyDel myDel = ... ... 也就是说delegate声明的MyDel相当">
+  <link rel="canonical" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码3-ExecuteEvents/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码3-ExecuteEvents | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码3-ExecuteEvents/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码3-ExecuteEvents
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:25:29" itemprop="dateModified" datetime="2020-02-19T14:25:29+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>UI事件系统通过ExecuteEvents发布需要执行的事件。本文讨论ExecuteEvents的具体实现。在进入正文之前首先需要先了解以下两点</p>
+<p>1、委托</p>
+<p>delegate委托的使用方法：声明委托类型后，就可以通过这个类型，构建出对应的对象。例如</p>
+<pre><code>public delegate void MyDel();
+MyDel myDel = ... ...
+</code></pre><p>也就是说delegate声明的MyDel相当于一个class类，可以通过这个类新建出myDel对象，myDel相当于一个函数指针的列表。具体看委托的相关文章。</p>
+<p>2、handler</p>
+<p>handler是UI事件系统的一个概念。Unity中的一个GameObject是可以挂有许多component组件的。同时UI事件系统也提供了许多事件的接口，例如 IDragHandler拖拽接口、IPointerUpHandler点抬起接口。component只需要实现IDragHandler接口的OnDrag方法。那么当我们进行拖拽的时候，OnDrag方法就会被调用。其实就是在OnDrag里写发生拖拽事件的时候如何处理数据。这个时候，就可以说继承了IDragHandler的component 是处理拖拽事件的handler。</p>
+<h2 id="ExecuteEvents"><a href="#ExecuteEvents" class="headerlink" title="ExecuteEvents"></a>ExecuteEvents</h2><h3 id="一、发布事件的接口-Execute"><a href="#一、发布事件的接口-Execute" class="headerlink" title="一、发布事件的接口 Execute"></a>一、发布事件的接口 Execute</h3><p>ExecuteEvents 封装的接口非常简洁，例如，下面提供一个发布按压press事件的例子</p>
+<pre><code>ExecuteEvents.Execute
+(pointerEvent.pointerPress, pointerEvent, ExecuteEvents.pointerUpHandler);
+</code></pre><p>参数列表中，pointerEvent.pointerPress是被按压的物体，也就是targetGameObject，这个targetGameObject持有的组件存在handler，pointerEvent是对应的参数，它带有当前pointer的位置position，偏移delta等等数据。ExecuteEvents.pointerUpHandler 是EventFunction所提供的泛型委托，它会调用handler对应的接口方法，并传入pointerEvent数据。例如此例中，EventFunction是ExecuteEvents.pointerUpHandler，那么它的作用就是调用pointerPress的OnPointerUp的方法，并传入pointerEvent。后面会细谈。</p>
+<p>也就是说外部仅仅需要一句代码，就能够把按压的事件发布到对应的UI控件上了。那么来了解一下Execute的源码。</p>
+<p>Execute 这个方法首先获得targetGameObject的对应泛型的handler，也就是实现了对应接口的component，随后执行对应的接口方法。如果获得处理返回true，没有获得处理返回false。</p>
+<pre><code>//声明一个objectpool
+private static readonly ObjectPool&lt;List&lt;IEventSystemHandler&gt;&gt; s_HandlerListPool = new ObjectPool&lt;List&lt;IEventSystemHandler&gt;&gt;(null, l =&gt; l.Clear());
+
+//1、通过objectpool得到List&lt;IEventSystemHandler&gt;，所有的操作事件都是IEventSystemHandler接口的子类。
+//2、从target物体下拿到所有的实现了T操作的组件，也就是拿到handler。
+//3、handler作为第一个参数，eventData第二个参数，将参数传入到EventFunction里，
+//  EventFunction也就是泛型委托。它会调用handler中对应接口的方法。
+//  例如PointEnterHandler就是调用Handler实现的OnPointerEnter的方法
+
+public static bool Execute&lt;T&gt;(GameObject target, BaseEventData eventData, EventFunction&lt;T&gt; functor) where T : IEventSystemHandler
+{
+    var internalHandlers = s_HandlerListPool.Get();
+    GetEventList&lt;T&gt;(target, internalHandlers);
+    //  if (s_InternalHandlers.Count &gt; 0)
+    //      Debug.Log(&quot;Executinng &quot; + typeof (T) + &quot; on &quot; + target);
+
+    for (var i = 0; i &lt; internalHandlers.Count; i++)
+    {
+        T arg;
+        try
+        {
+            arg = (T)internalHandlers[i];
+        }
+        catch (Exception e)
+        {
+            var temp = internalHandlers[i];
+            Debug.LogException(new Exception(string.Format(&quot;Type {0} expected {1} received.&quot;, typeof(T).Name, temp.GetType().Name), e));
+            continue;
+        }
+
+        try
+        {
+            functor(arg, eventData);
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+        }
+    }
+
+    var handlerCount = internalHandlers.Count;
+    s_HandlerListPool.Release(internalHandlers);
+    return handlerCount &gt; 0;
+}
+</code></pre><p>获得当前targetGameObject下所有的handler</p>
+<pre><code>/// &lt;summary&gt;
+/// Get the specified object&#39;s event event.
+/// &lt;/summary&gt;
+private static void GetEventList&lt;T&gt;(GameObject go, IList&lt;IEventSystemHandler&gt; results) where T : IEventSystemHandler
+{
+    // Debug.LogWarning(&quot;GetEventList&lt;&quot; + typeof(T).Name + &quot;&gt;&quot;);
+    if (results == null)
+        throw new ArgumentException(&quot;Results array is null&quot;, &quot;results&quot;);
+
+    if (go == null || !go.activeInHierarchy)
+        return;
+
+    var components = ListPool&lt;Component&gt;.Get();
+    go.GetComponents(components);
+    for (var i = 0; i &lt; components.Count; i++)
+    {
+        if (!ShouldSendToComponent&lt;T&gt;(components[i]))
+            continue;
+
+        // Debug.Log(string.Format(&quot;{2} found! On {0}.{1}&quot;, go, s_GetComponentsScratch[i].GetType(), typeof(T)));
+        results.Add(components[i] as IEventSystemHandler);
+    }
+    ListPool&lt;Component&gt;.Release(components);
+    // Debug.LogWarning(&quot;end GetEventList&lt;&quot; + typeof(T).Name + &quot;&gt;&quot;);
+}
+</code></pre><h3 id="二、EventFunction"><a href="#二、EventFunction" class="headerlink" title="二、EventFunction"></a>二、EventFunction</h3><p>1、泛型委托定义</p>
+<pre><code>public delegate void EventFunction&lt;T1&gt;(T1 handler, BaseEventData eventData);
+</code></pre><p>声明一个泛型委托delegate，这个委托接收两个参数，第一个参数是指定泛型，也是对应的处理器handler，第二个参数是传递给处理器的eventData，返回void。</p>
+<p>2、通过委托类型构建出对应的委托对象。</p>
+<p>以下列举了ExecuteEvents提供的两个EventFunction</p>
+<pre><code>//注册委托，并实现对应的属性器
+private static readonly EventFunction&lt;IPointerEnterHandler&gt; s_PointerEnterHandler = Execute;
+private static void Execute(IPointerEnterHandler handler, BaseEventData eventData)
+{
+    handler.OnPointerEnter(ValidateEventData&lt;PointerEventData&gt;(eventData));
+}
+public static EventFunction&lt;IPointerEnterHandler&gt; pointerEnterHandler
+{
+    get { return s_PointerEnterHandler; }
+}
+
+
+private static readonly EventFunction&lt;IPointerExitHandler&gt; s_PointerExitHandler = Execute;
+private static void Execute(IPointerExitHandler handler, BaseEventData eventData)
+{
+    handler.OnPointerExit(ValidateEventData&lt;PointerEventData&gt;(eventData));
+}
+public static EventFunction&lt;IPointerExitHandler&gt; pointerExitHandler
+{
+    get { return s_PointerExitHandler; }
+}
+</code></pre><p>可以看到这个泛型委托相当于一个转发器，根据不同类型调用handler的不同事件，如果是pointerExitHandler那么就会去调用handler的OnPointerExit方法。如果是pointerEnterHandler，那么就回去调用handler的OnPointerEnter方法。</p>
+<p>这么事件的执行流程也就明了了。当外部调用Execute执行的时候，传入对应的targetGameObject，操作参数，以及functor</p>
+<pre><code>ExecuteEvents.Execute
+(pointerEvent.pointerPress, pointerEvent, ExecuteEvents.pointerUpHandler);
+</code></pre><p>functor对应一个操作接口。Execute会获取targetGameObject下所有带有这个操作接口的组件。这些组件就是handler。接着functor接收handler以及eventData操作参数，调用每个handler对应的操作接口。</p>
+<h3 id="三、另一个发布事件的接口-ExecuteHierarchy"><a href="#三、另一个发布事件的接口-ExecuteHierarchy" class="headerlink" title="三、另一个发布事件的接口 ExecuteHierarchy"></a>三、另一个发布事件的接口 ExecuteHierarchy</h3><p>当执行事件的时候，ExecuteEvents对外提供了两个泛型接口，Execute与ExecuteHierarchy。</p>
+<p>ExecuteHierarchy 这个方法与Execute的不同之处在于，Execute只会获取当前targetGameObject的对应组件，而ExecuteHierarchy顾名思义，如果在当前targetGameObject没有获得处理，那么是会沿着Hierarchy的层级关系，不断往父物体查询是否有对应的handler，直到根物体。</p>
+<pre><code>/// &lt;summary&gt;
+/// Execute the specified event on the first game object underneath the current touch.
+/// &lt;/summary&gt;
+private static readonly List&lt;Transform&gt; s_InternalTransformList = new List&lt;Transform&gt;(30);
+
+public static GameObject ExecuteHierarchy&lt;T&gt;(GameObject root, BaseEventData eventData, EventFunction&lt;T&gt; callbackFunction) where T : IEventSystemHandler
+{
+    GetEventChain(root, s_InternalTransformList);
+
+    for (var i = 0; i &lt; s_InternalTransformList.Count; i++)
+    {
+        var transform = s_InternalTransformList[i];
+        if (Execute(transform.gameObject, eventData, callbackFunction))
+            return transform.gameObject;
+    }
+    return null;
+}
+</code></pre><p>事先缓存好所有的父物体信息。</p>
+<pre><code>private static void GetEventChain(GameObject root, IList&lt;Transform&gt; eventChain)
+{
+    eventChain.Clear();
+    if (root == null)
+        return;
+
+    var t = root.transform;
+    while (t != null)
+    {
+        eventChain.Add(t);
+        t = t.parent;
+    }
+}
+</code></pre><h3 id="四、其他方法"><a href="#四、其他方法" class="headerlink" title="四、其他方法"></a>四、其他方法</h3><p>Execute与GetEventList都是在当前对象执行对应操作。ExecuteHierarchy与GetEventHandler都是在当前对象执行不了操作的时候，往上查找。</p>
+<pre><code>/// &lt;summary&gt;
+/// Bubble the specified event on the game object, figuring out which object will actually receive the event.
+/// &lt;/summary&gt;
+public static GameObject GetEventHandler&lt;T&gt;(GameObject root) where T : IEventSystemHandler
+{
+    if (root == null)
+        return null;
+
+    Transform t = root.transform;
+    while (t != null)
+    {
+        if (CanHandleEvent&lt;T&gt;(t.gameObject))
+            return t.gameObject;
+        t = t.parent;
+    }
+    return null;
+}
+</code></pre><p>CanHandleEvent:</p>
+<pre><code>/// &lt;summary&gt;
+/// Whether the specified game object will be able to handle the specified event.
+/// &lt;/summary&gt;
+public static bool CanHandleEvent&lt;T&gt;(GameObject go) where T : IEventSystemHandler
+{
+    var internalHandlers = s_HandlerListPool.Get();
+    GetEventList&lt;T&gt;(go, internalHandlers);
+    var handlerCount = internalHandlers.Count;
+    s_HandlerListPool.Release(internalHandlers);
+    return handlerCount != 0;
+}
+</code></pre>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码4-Selectable/" rel="next" title="UGUI源码4-Selectable">
+                <i class="fa fa-chevron-left"></i> UGUI源码4-Selectable
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码5-Button&Toggle/" rel="prev" title="UGUI源码5-Button&Toggle">
+                UGUI源码5-Button&Toggle <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ExecuteEvents"><span class="nav-number">2.</span> <span class="nav-text">ExecuteEvents</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#一、发布事件的接口-Execute"><span class="nav-number">2.1.</span> <span class="nav-text">一、发布事件的接口 Execute</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二、EventFunction"><span class="nav-number">2.2.</span> <span class="nav-text">二、EventFunction</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#三、另一个发布事件的接口-ExecuteHierarchy"><span class="nav-number">2.3.</span> <span class="nav-text">三、另一个发布事件的接口 ExecuteHierarchy</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#四、其他方法"><span class="nav-number">2.4.</span> <span class="nav-text">四、其他方法</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

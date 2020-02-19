@@ -209,7 +209,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码22-后记/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="BAJIAObujie">
@@ -226,7 +226,7 @@
           <h1 class="post-title" itemprop="name headline">
                 
                 
-                <a href="/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/" class="post-title-link" itemprop="url">UE4资源加载（四）UnrealPak打包</a>
+                <a href="/2020/02/10/2020-02-10-UGUI源码22-后记/" class="post-title-link" itemprop="url">UGUI源码22-后记</a>
               
             
           </h1>
@@ -245,7 +245,7 @@
                 
               
 
-              <time title="创建时间：2019-04-25 00:00:00" itemprop="dateCreated datePublished" datetime="2019-04-25T00:00:00+08:00">2019-04-25</time>
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
             </span>
           
             
@@ -258,7 +258,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-07-31 15:45:34" itemprop="dateModified" datetime="2019-07-31T15:45:34+08:00">2019-07-31</time>
+                <time title="修改时间：2020-02-19 14:31:05" itemprop="dateModified" datetime="2020-02-19T14:31:05+08:00">2020-02-19</time>
               </span>
             
           
@@ -270,7 +270,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UE4/" itemprop="url" rel="index"><span itemprop="name">UE4</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
 
                 
                 
@@ -291,13 +291,18 @@
       
           
             <p>
-              前言上一篇文章讲完了从pak中加载出资源文件的过程，那么pak是如何打包生成的呢？pak是分为游戏主体包和后续补丁包两种的，两种又有什么区别呢？这是本篇文章的内容。在UE4打包的时候会启动UAT打包工具，UAT会经历烘焙内容等阶段，最后调用UnrealPak的方法将资源文件打包成pak文件。上一篇文
+              前言花了三四个星期吧，大致过了一遍UGUI，还有一些组件没有详细去看，DropDown、ScrollRect、SliderBar等。不过感觉这几个不是很重要。稍微总结一下。
+UGUI结构
+事件系统
+
+InputModule 输入模块
+EventSystem &amp; ExecuteEvents 事
               ...
             </p>
           <!--noindex-->
           
             <div class="post-button text-center">
-              <a class="btn" href="/2019/04/25/2019-04-25-UE4资源加载（四）UnrealPak打包/#more" rel="contents">
+              <a class="btn" href="/2020/02/10/2020-02-10-UGUI源码22-后记/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -328,7 +333,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/03/27/2019-03-27-UE4资源加载（二）文件责任链/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码8-ContentSizeFitter/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="BAJIAObujie">
@@ -345,7 +350,7 @@
           <h1 class="post-title" itemprop="name headline">
                 
                 
-                <a href="/2019/03/27/2019-03-27-UE4资源加载（二）文件责任链/" class="post-title-link" itemprop="url">UE4资源加载（二）文件责任链</a>
+                <a href="/2020/02/10/2020-02-10-UGUI源码8-ContentSizeFitter/" class="post-title-link" itemprop="url">UGUI源码8-ContentSizeFitter</a>
               
             
           </h1>
@@ -364,7 +369,7 @@
                 
               
 
-              <time title="创建时间：2019-03-27 00:00:00" itemprop="dateCreated datePublished" datetime="2019-03-27T00:00:00+08:00">2019-03-27</time>
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
             </span>
           
             
@@ -377,7 +382,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-07-31 15:45:21" itemprop="dateModified" datetime="2019-07-31T15:45:21+08:00">2019-07-31</time>
+                <time title="修改时间：2020-02-19 14:31:49" itemprop="dateModified" datetime="2020-02-19T14:31:49+08:00">2020-02-19</time>
               </span>
             
           
@@ -389,7 +394,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UE4/" itemprop="url" rel="index"><span itemprop="name">UE4</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
 
                 
                 
@@ -410,14 +415,16 @@
       
           
             <p>
-              前言​        这是关于资源加载的第二篇内容，前一篇内容讲了，从StaticLoadObject出发，是如何把自身的数据以及依赖对象的数据给加载到内存中的，这一篇内容将继续讲文件读取的相关内容。
-责任链设计模式​        在进入主题之前必须先了解一下UE4为了文件读取所采用的设计模式，责
+              前言本篇文章主要来讲讲上一篇文章中聊天框中使用的另一个组件，ContentSizeFitter。
+ContentSizeFitterILayoutSelfController是实现了调节自身RectTransform宽高的接口
+/// &lt;summary&gt;
+/// Resizes a Re
               ...
             </p>
           <!--noindex-->
           
             <div class="post-button text-center">
-              <a class="btn" href="/2019/03/27/2019-03-27-UE4资源加载（二）文件责任链/#more" rel="contents">
+              <a class="btn" href="/2020/02/10/2020-02-10-UGUI源码8-ContentSizeFitter/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -448,7 +455,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/03/26/2019-03-26-UE4资源加载（一）从StaticLoadObject开始/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码12-Graphic/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="BAJIAObujie">
@@ -465,7 +472,7 @@
           <h1 class="post-title" itemprop="name headline">
                 
                 
-                <a href="/2019/03/26/2019-03-26-UE4资源加载（一）从StaticLoadObject开始/" class="post-title-link" itemprop="url">UE4资源加载（一）从StaticLoadObject开始</a>
+                <a href="/2020/02/10/2020-02-10-UGUI源码12-Graphic/" class="post-title-link" itemprop="url">UGUI源码12-Graphic</a>
               
             
           </h1>
@@ -484,7 +491,7 @@
                 
               
 
-              <time title="创建时间：2019-03-26 00:00:00" itemprop="dateCreated datePublished" datetime="2019-03-26T00:00:00+08:00">2019-03-26</time>
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
             </span>
           
             
@@ -497,7 +504,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-07-31 16:00:07" itemprop="dateModified" datetime="2019-07-31T16:00:07+08:00">2019-07-31</time>
+                <time title="修改时间：2020-02-19 14:32:25" itemprop="dateModified" datetime="2020-02-19T14:32:25+08:00">2020-02-19</time>
               </span>
             
           
@@ -509,7 +516,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UE4/" itemprop="url" rel="index"><span itemprop="name">UE4</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
 
                 
                 
@@ -530,14 +537,860 @@
       
           
             <p>
-              前言这是关于资源加载的第一篇内容，主要从StaticLoadObject出发，讨论UE是如何把序列化的数据给加载到内存中的。了解加载过程前必须先了解UPackage、uasset文件格式、FLinkerLoad。了解这三个概念之后会介绍StaticLoadObject加载过程所经过的四个步骤。
-UP
+              前言在CanvasUpdateRegistry中，介绍过需要重建的元素除了布局元素外还有Graphic元素。Selectable是所有操作组件的基类，与此类似，Graphic也是所有可视化元素的基类，任意一个UI界面上，我们可见的所有元素都是Graphic，例如Text，Image等。任意一个可视的
               ...
             </p>
           <!--noindex-->
           
             <div class="post-button text-center">
-              <a class="btn" href="/2019/03/26/2019-03-26-UE4资源加载（一）从StaticLoadObject开始/#more" rel="contents">
+              <a class="btn" href="/2020/02/10/2020-02-10-UGUI源码12-Graphic/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码7-LayoutGroup/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2020/02/10/2020-02-10-UGUI源码7-LayoutGroup/" class="post-title-link" itemprop="url">UGUI源码7-LayoutGroup</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:31:39" itemprop="dateModified" datetime="2020-02-19T14:31:39+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+            <p>
+              前言这是介绍布局的第二篇文章。第一篇文章对布局模块的各个接口都有了了解，包括ILayoutElement、ILayoutGroup、ILayoutIgnorer。这篇文章会主要来介绍LayoutGroup类。
+LayoutGroup接口及例子LayoutGroup类是所有LayoutGroup的基类
+              ...
+            </p>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/2020/02/10/2020-02-10-UGUI源码7-LayoutGroup/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码2-StandaloneInputModule/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2020/02/10/2020-02-10-UGUI源码2-StandaloneInputModule/" class="post-title-link" itemprop="url">UGUI源码2-StandaloneInputModule</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:25:11" itemprop="dateModified" datetime="2020-02-19T14:25:11+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+            <p>
+              前言在上文EventSystem中，EventSystem调用了BaseInputModule的process函数，将输入的部分交给了输入模块去处理。根据处理流程的不一样，开发者可以实现不同的BaseInputModule子类，并重写process函数。Unity则是提供了默认的Standalone
+              ...
+            </p>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/2020/02/10/2020-02-10-UGUI源码2-StandaloneInputModule/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码15-Image/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2020/02/10/2020-02-10-UGUI源码15-Image/" class="post-title-link" itemprop="url">UGUI源码15-Image</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:32:43" itemprop="dateModified" datetime="2020-02-19T14:32:43+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+            <p>
+              前言Image组件比起RawImage就复杂多了。
+SpriteRawImage组件对应的是Texture2D一整张贴图。如果在导入图片资源的时候，可以把图片资源类型设置为xx而不是Texture2D。那么这张图片资源就是Sprite资源，single表示单张资源，如果设置Multiple，一张图片
+              ...
+            </p>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/2020/02/10/2020-02-10-UGUI源码15-Image/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码11-ObjectPool/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2020/02/10/2020-02-10-UGUI源码11-ObjectPool/" class="post-title-link" itemprop="url">UGUI源码11-ObjectPool</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:32:17" itemprop="dateModified" datetime="2020-02-19T14:32:17+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+            <p>
+              ObjectPool在LayoutRebuilder中有一个存储LayoutRebuilder类型的ObjectPool，用到了对象池的技术，这里稍微提一下UGUI提供的对象池。
+通常设计对象池是为了减少对象生成销毁的过程，以提高效率。在借助对象池生成物体的过程中，实际上是从对象池中取出物体。同理，
+              ...
+            </p>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/2020/02/10/2020-02-10-UGUI源码11-ObjectPool/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2020/02/10/2020-02-10-UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry/" class="post-title-link" itemprop="url">UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:32:00" itemprop="dateModified" datetime="2020-02-19T14:32:00+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+            <p>
+              前言在LayoutGroup或者ContentSizeFitter中，都有一个SetDirty的方法。这个方法都会调用
+LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+那么这个方法是如何实现布局的重建呢？本篇文章就会来解决UGUI是如何处理布
+              ...
+            </p>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/2020/02/10/2020-02-10-UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码1-EventSystem/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2020/02/10/2020-02-10-UGUI源码1-EventSystem/" class="post-title-link" itemprop="url">UGUI源码1-EventSystem</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:24:33" itemprop="dateModified" datetime="2020-02-19T14:24:33+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+            <p>
+              前言记录自己学习UGUI的第一篇文章。
+新建一个工程吧新建工程，在添加一个UI组件后，那么Unity会自动添加上Canvas以及EventSystem两个GameObject。
+
+Canvas ( Canvas CanvasScaler GraphicRaycaster)
+UI
+… … 
+
+
+Eve
+              ...
+            </p>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/2020/02/10/2020-02-10-UGUI源码1-EventSystem/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码16-射线投射/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2020/02/10/2020-02-10-UGUI源码16-射线投射/" class="post-title-link" itemprop="url">UGUI源码16-射线投射</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:32:52" itemprop="dateModified" datetime="2020-02-19T14:32:52+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+            <p>
+              前言在讲解完Graphic之后，终于可以来谈一谈射线投射了，总结一下前面文章中涉及射线投射的部分。一是在EventSystem中，有一个RaycastAll函数。Graphic中也有一个检测射线投射的函数。
+RaycasterManager顾名思义，这是一个Raycaster的管理器类。相关代码非常
+              ...
+            </p>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/2020/02/10/2020-02-10-UGUI源码16-射线投射/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -565,7 +1418,7 @@ UP
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -598,7 +1451,7 @@ UP
         
           <a href="/archives/">
         
-          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-count">37</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -722,6 +1575,20 @@ UP
 
 
   
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
     
       
     

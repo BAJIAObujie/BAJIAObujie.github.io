@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言这是介绍布局的第二篇文章。第一篇文章对布局模块的各个接口都有了了解，包括ILayoutElement、ILayoutGroup、ILayoutIgnorer。这篇文章会主要来介绍LayoutGroup类。 LayoutGroup接口及例子LayoutGroup类是所有LayoutGroup的基类，主要包括水平、竖直、网格布局。LayoutGroup实现了ILayoutElement和ILayo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码7-LayoutGroup">
+<meta property="og:url" content="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码7-LayoutGroup/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言这是介绍布局的第二篇文章。第一篇文章对布局模块的各个接口都有了了解，包括ILayoutElement、ILayoutGroup、ILayoutIgnorer。这篇文章会主要来介绍LayoutGroup类。 LayoutGroup接口及例子LayoutGroup类是所有LayoutGroup的基类，主要包括水平、竖直、网格布局。LayoutGroup实现了ILayoutElement和ILayo">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-02-19T06:31:39.740Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码7-LayoutGroup">
+<meta name="twitter:description" content="前言这是介绍布局的第二篇文章。第一篇文章对布局模块的各个接口都有了了解，包括ILayoutElement、ILayoutGroup、ILayoutIgnorer。这篇文章会主要来介绍LayoutGroup类。 LayoutGroup接口及例子LayoutGroup类是所有LayoutGroup的基类，主要包括水平、竖直、网格布局。LayoutGroup实现了ILayoutElement和ILayo">
+  <link rel="canonical" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码7-LayoutGroup/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码7-LayoutGroup | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码7-LayoutGroup/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码7-LayoutGroup
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:31:39" itemprop="dateModified" datetime="2020-02-19T14:31:39+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这是介绍布局的第二篇文章。第一篇文章对布局模块的各个接口都有了了解，包括ILayoutElement、ILayoutGroup、ILayoutIgnorer。这篇文章会主要来介绍LayoutGroup类。</p>
+<h2 id="LayoutGroup接口及例子"><a href="#LayoutGroup接口及例子" class="headerlink" title="LayoutGroup接口及例子"></a>LayoutGroup接口及例子</h2><p>LayoutGroup类是所有LayoutGroup的基类，主要包括水平、竖直、网格布局。LayoutGroup实现了ILayoutElement和ILayoutGroup两个接口。</p>
+<pre><code>[DisallowMultipleComponent]
+[ExecuteAlways]
+[RequireComponent(typeof(RectTransform))]
+/// &lt;summary&gt;
+/// Abstract base class to use for layout groups.
+/// &lt;/summary&gt;
+public abstract class LayoutGroup : UIBehaviour, ILayoutElement, ILayoutGroup
+</code></pre><ul>
+<li><p>UIBehaviour不必说，基本UGUI所有组件都继承自这个接口。</p>
+</li>
+<li><p>ILayoutElement </p>
+<p><strong>实现了ILayoutElement接口的组件，基本上都是要求根据自身内容去计算完美宽高的</strong>，比如上文提到的Text，Image这类Graphic可视化的元素，Text需要计算显示文本内容需要多少宽高，Image需要计算显示下完整图片需要多少宽高。</p>
+</li>
+<li><p>ILayoutGroup</p>
+<p>ILayoutGroup是用于驱动子物体去设置宽高的接口。</p>
+</li>
+</ul>
+<h3 id="聊天对话框"><a href="#聊天对话框" class="headerlink" title="聊天对话框"></a>聊天对话框</h3><p>先来回答一下，为什么LayoutGroup需要实现ILayoutElement接口，前文已经提到过，<strong>实现了ILayoutElement接口的组件，基本上都是要求根据自身内容去计算完美宽高的</strong>。对于LayoutGroup也是一样有计算宽高的需求的。比如微信聊天对话框，可以用之前说的ScrollRect-Viewport-Content(UIList)的结构来实现，每一条对话就是UIList的一个ListItem元素。UIList且拥有VerticalLayoutGroup组件，这样就能保证每个ListItem竖直排序。Content也就是UIList设置的高度常常是一个定值，但是随着聊天内容的增加，ListItem不断增加，就会出现ListItem超出Content的情况。这种情况下，LayoutGroup更倾向于根据聊天内容去计算所需的高度。也就是说LayoutGroup也是有根据内容大小去修改自身大小的需求的。</p>
+<p>那么接下来应该如何实现聊天对话框的自适应呢？第一篇文章中提到，ILayoutElement和ILayoutController往往是配合使用。ILayoutElement只计算出对应的宽高，ILayoutController驱动自身或者子物体去应用宽高。LayoutGroup的ILayoutGroup接口是为了处理子元素的布局，ILayoutElement是为了计算自身的宽高数据。所以为了做到UI的高度自适应，应用了LayoutGroup组件的物体还应该加上一个ILayoutSelfController。ILayoutSelfController用于驱动自身去修改宽高，实现这个接口的有ContentSizeFitter，在给UIList添加上ContentSizeFitter这个组件后，设置高度为prefer高度，那么UIList在增加聊天对话的时候，完美高度就会发生变化，而ContentSizeFitter可以修改UIList的高度为完美高度。这样就做到了对话框的高度自适应！</p>
+<p>这只是一个应用LayoutGroup的例子，ContentSizeFitter等在之后会继续谈到。经过这个例子后再来整理上一篇文章中关于接口的内容</p>
+<p>ILayoutElement：设置最小宽高/完美宽高/灵活宽高的数据，但没有应用到RectTransform</p>
+<p>ILayoutController：两个子接口</p>
+<ol>
+<li>控制自身RectTransform - ILayoutSelfController - ContentSizeFitter</li>
+<li>控制子物体的RectTransform - ILayoutGroup - LayoutGroup</li>
+</ol>
+<h2 id="ILayoutElement部分-计算自身宽高"><a href="#ILayoutElement部分-计算自身宽高" class="headerlink" title="ILayoutElement部分 计算自身宽高"></a>ILayoutElement部分 计算自身宽高</h2><p>接下去将把LayoutGroup的内容分为ILayoutElement、ILayoutGroup两部分，也就是两个接口各一部分。第一部分是关于ILayoutElement。</p>
+<p>ILayoutElement里只有两个接口方法</p>
+<ul>
+<li>CalculateLayoutInputHorizontal</li>
+<li>CalculateLayoutInputVertical</li>
+</ul>
+<p>根据注释，<strong>在调用了CalculateLayoutInputHorizontal后，最小/完美/灵活宽度都会被计算为最新值。</strong></p>
+<p>LayoutGroup也有这两个接口方法。为了内容的连贯性，在解释这两个方法的时候，会结合VerticalLayoutGroup说明。</p>
+<p>首先需要说明的是VerticalLayoutGroup的继承结构</p>
+<ul>
+<li>LayoutGroup<ul>
+<li>GridLayoutGroup</li>
+<li>HorizontalOrVerticalLayoutGroup <ul>
+<li>VerticalLayoutGroup </li>
+<li>HorizontalLayoutGroup</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>在调用到CalculateLayoutInputHorizontal方法时，VerticalLayoutGroup会调用方法如下</p>
+<pre><code>// VerticalLayoutGroup.cs
+public override void CalculateLayoutInputHorizontal()
+{
+    base.CalculateLayoutInputHorizontal();
+    CalcAlongAxis(0, true);
+}
+
+public override void CalculateLayoutInputVertical()
+{
+    CalcAlongAxis(1, true);
+}
+</code></pre><p>CalculateLayoutInputHorizontal会首先调用到LayoutGroup的基类方法，以及HorizontalOrVerticalLayoutGroup的CalcAlongAxis方法，</p>
+<p>每个LayoutGroup都会有许多子物体，比如聊天对话框例子中的ListItem。LayoutGroup.cs的基类方法CalculateLayoutInputHorizontal，就是用来计算有多少个子物体需要被LayoutGroup所控制。</p>
+<p>CalcAlongAxis方法则是计算对应轴向的宽高，第一个参数0代表横轴，1代表纵轴，第二个参数isVertical表明是否是VerticalLayoutGroup。也就是CalcAlongAxis(0, true)是计算VerticalLayoutGroup的宽度，而CalcAlongAxis(1, true)是计算VerticalLayoutGroup的高度。</p>
+<p>CalculateLayoutInputHorizontal和CalculateLayoutInputVertical是用来计算ILayoutElement的宽高的。LayoutGroup的方法中只计算有多少个子物体，而具体的计算逻辑则被下沉到了HorizontalOrVerticalLayoutGroup的CalcAlongAxis方法中。</p>
+<p>两方法如下。</p>
+<p>LayoutGroup.cs</p>
+<pre><code>// ILayoutElement Interface
+public virtual void CalculateLayoutInputHorizontal()
+{
+    m_RectChildren.Clear();
+    var toIgnoreList = ListPool&lt;Component&gt;.Get();
+    for (int i = 0; i &lt; rectTransform.childCount; i++)
+    {
+        var rect = rectTransform.GetChild(i) as RectTransform;
+        if (rect == null || !rect.gameObject.activeInHierarchy)
+            continue;
+
+        rect.GetComponents(typeof(ILayoutIgnorer), toIgnoreList);
+
+        if (toIgnoreList.Count == 0)
+        {
+            m_RectChildren.Add(rect);
+            continue;
+        }
+
+        for (int j = 0; j &lt; toIgnoreList.Count; j++)
+        {
+            var ignorer = (ILayoutIgnorer)toIgnoreList[j];
+            if (!ignorer.ignoreLayout)
+            {
+                m_RectChildren.Add(rect);
+                break;
+            }
+        }
+    }
+    ListPool&lt;Component&gt;.Release(toIgnoreList);
+    m_Tracker.Clear();
+}
+
+public abstract void CalculateLayoutInputVertical();
+</code></pre><p>得到所有的子物体，并把需要Ignore忽略的子物体排除，剩下的子物体需要计算宽高、位置。</p>
+<p>HorizontalOrVerticalLayoutGroup</p>
+<pre><code>/// &lt;summary&gt;
+/// Calculate the layout element properties for this layout element along the given axis.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;axis&quot;&gt;The axis to calculate for. 0 is horizontal and 1 is vertical.&lt;/param&gt;
+/// &lt;param name=&quot;isVertical&quot;&gt;Is this group a vertical group?&lt;/param&gt;
+protected void CalcAlongAxis(int axis, bool isVertical)
+{
+    float combinedPadding = (axis == 0 ? padding.horizontal : padding.vertical);
+    bool controlSize = (axis == 0 ? m_ChildControlWidth : m_ChildControlHeight);
+    bool childForceExpandSize = (axis == 0 ? childForceExpandWidth : childForceExpandHeight);
+
+    float totalMin = combinedPadding;
+    float totalPreferred = combinedPadding;
+    float totalFlexible = 0;
+
+    bool alongOtherAxis = (isVertical ^ (axis == 1));
+    for (int i = 0; i &lt; rectChildren.Count; i++)
+    {
+        RectTransform child = rectChildren[i];
+        float min, preferred, flexible;
+        GetChildSizes(child, axis, controlSize, childForceExpandSize, out min, out preferred, out flexible);
+
+        if (alongOtherAxis)
+        {
+            totalMin = Mathf.Max(min + combinedPadding, totalMin);
+            totalPreferred = Mathf.Max(preferred + combinedPadding, totalPreferred);
+            totalFlexible = Mathf.Max(flexible, totalFlexible);
+        }
+        else
+        {
+            totalMin += min + spacing;
+            totalPreferred += preferred + spacing;
+
+            // Increment flexible size with element&#39;s flexible size.
+            totalFlexible += flexible;
+        }
+    }
+
+    if (!alongOtherAxis &amp;&amp; rectChildren.Count &gt; 0)
+    {
+        totalMin -= spacing;
+        totalPreferred -= spacing;
+    }
+    totalPreferred = Mathf.Max(totalMin, totalPreferred);
+    SetLayoutInputForAxis(totalMin, totalPreferred, totalFlexible, axis);
+}
+</code></pre><p>这段代码会计算出VerticalLayoutGroup的最小/完美/灵活三项数据。首先计算padding，再加上每个子物体的宽高，以及子物体之间的spacing。最后的计算结果通过SetLayoutInputForAxis赋值给VerticalLayoutGroup。（</p>
+<p>padding 布局内容需要与当前RectTransform的Rect矩形区域内容保持多少距离。spacing表示每个元素的间距。两者都可以在编辑器下直接设值。那么每个子物体的宽高是如何计算的呢？</p>
+<p>VerticalLayoutGroup存在四个变量可能会影响子物体的宽高。总共两组。</p>
+<p>1、LayoutGroup是否影响子物体宽高。m_ChildControlWidth、m_ChildControlHeight </p>
+<pre><code>/// &lt;summary&gt;
+/// Returns true if the Layout Group controls the widths of its children. Returns false if children control their own widths.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// If set to false, the layout group will only affect the positions of the children while leaving the widths untouched. The widths of the children can be set via the respective RectTransforms in this case.
+///
+/// If set to true, the widths of the children are automatically driven by the layout group according to their respective minimum, preferred, and flexible widths.This is useful if the widths of the children should change depending on how much space is available.In this case the width of each child cannot be set manually in the RectTransform, but the minimum, preferred and flexible width for each child can be controlled by adding a LayoutElement component to it.
+/// &lt;/remarks&gt;
+public bool childControlWidth { get { return m_ChildControlWidth; } set { SetProperty(ref m_ChildControlWidth, value); } }
+</code></pre><p>表明LayoutGroup是否需要控制子物体的宽高，false表示不控制宽高，仅影响子物体的位置。true表示控制宽高。</p>
+<p>2、如果存在富余空间，是否让子物体拓展宽高，也就是调整子物体位置使子物体们充满整个LayoutGroup的空间。</p>
+<ul>
+<li>childForceExpandWidth：Whether to force the children to expand to fill additional available horizontal space.</li>
+<li>childForceExpandHeight：Whether to force the children to expand to fill additional available vertical space.</li>
+</ul>
+<p>Ps：这四个选项在VerticalLayoutGroup组件的Inspector面板中有对应的勾选框。比如m_ChildControlWidth对应的就是ChildControlWidth，但是看这名字是存在歧义的，ChildControlWidth主语是Child，那如果勾选的话，就是说子物体去控制自己的大小咯？但根据代码注释，其实勾选代表LayoutGroup控制子物体大小，不勾选代表不控制使用子物体本身大小。这一点很值得让人吐槽，不看源码谁知道你啥意思啊。</p>
+<p>在GetChildSizes函数中，会获取每个子物体的大小。</p>
+<pre><code>private void GetChildSizes(RectTransform child, int axis, bool controlSize, bool childForceExpand,
+    out float min, out float preferred, out float flexible)
+{
+    if (!controlSize)
+    {
+        min = child.sizeDelta[axis];
+        preferred = min;
+        flexible = 0;
+    }
+    else
+    {
+        min = LayoutUtility.GetMinSize(child, axis);
+        preferred = LayoutUtility.GetPreferredSize(child, axis);
+        flexible = LayoutUtility.GetFlexibleSize(child, axis);
+    }
+
+    if (childForceExpand)
+        flexible = Mathf.Max(flexible, 1);
+}
+</code></pre><p>如果LayoutGroup需要控制子物体大小，LayoutUtility.GetMinSize会转化物体为ILayoutElement并取出对应数据。如果不需要控制就使用子物体本身的大小。flexible则是存在富余空间时的子物体调整位置去填充空间的比例，默认为0。如果子物体需要尽量去充满整个布局，那么flexible = Mathf.Max(flexible, 1)</p>
+<p><strong>总结：通过计算每个子物体的数据，以及padding/spacing。最后的结果就是LayoutGroup的数据。</strong>例如之前的聊天框，聊天框需要计算出自身的宽高信息，而宽高信息就是来自每个子物体的数据之和。</p>
+<h2 id="ILayoutGroup-应用子物体的大小、位置"><a href="#ILayoutGroup-应用子物体的大小、位置" class="headerlink" title="ILayoutGroup 应用子物体的大小、位置"></a>ILayoutGroup 应用子物体的大小、位置</h2><p>这是LayoutGroup的第二部分，第一部分讨论了ILayoutElement的接口、参数等。第二部分讨论ILayoutGroup的部分。</p>
+<pre><code>// ILayoutController Interface
+
+public abstract void SetLayoutHorizontal();
+public abstract void SetLayoutVertical();
+</code></pre><p>ILayoutGroup并没有额外声明接口，所以接口是和ILayoutController一样的。当调用这两个方法的时候，就会去计算并调整子物体的位置！我们仍然从VerticalLayoutGroup中的方法开始。</p>
+<h3 id="设置子物体位置"><a href="#设置子物体位置" class="headerlink" title="设置子物体位置"></a>设置子物体位置</h3><pre><code>// VerticalLayoutGroup.cs
+public override void SetLayoutHorizontal()
+{
+    SetChildrenAlongAxis(0, true);
+}
+
+public override void SetLayoutVertical()
+{
+    SetChildrenAlongAxis(1, true);
+}
+</code></pre><p>VerticalLayoutGroup将方法转发到了SetChildrenAlongAxis中。</p>
+<pre><code>// HorizontalOrVerticalLayoutGroup.cs
+
+/// &lt;summary&gt;
+/// Set the positions and sizes of the child layout elements for the given axis.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;axis&quot;&gt;The axis to handle. 0 is horizontal and 1 is vertical.&lt;/param&gt;
+/// &lt;param name=&quot;isVertical&quot;&gt;Is this group a vertical group?&lt;/param&gt;
+protected void SetChildrenAlongAxis(int axis, bool isVertical)
+{
+    float size = rectTransform.rect.size[axis];
+    bool controlSize = (axis == 0 ? m_ChildControlWidth : m_ChildControlHeight);
+    bool childForceExpandSize = (axis == 0 ? childForceExpandWidth : childForceExpandHeight);
+    float alignmentOnAxis = GetAlignmentOnAxis(axis);
+
+    bool alongOtherAxis = (isVertical ^ (axis == 1));
+    if (alongOtherAxis)
+    {
+        // alongOtherAxis 为true表明，如果是竖直布局，那本次计算是计算水平位置
+        // 如果是水平布局，则计算竖直位置。如果alongOtherAxis，那么通常这个方向
+        // 上的位置不需要考虑子物体的spacing这类因素
+    }
+    else
+    {
+        //根据子物体大小、间距，布局的padding等计算子物体位置
+    }
+}
+</code></pre><p>alongOtherAxis = true的情况</p>
+<pre><code>float innerSize = size - (axis == 0 ? padding.horizontal : padding.vertical);
+for (int i = 0; i &lt; rectChildren.Count; i++)
+{
+    RectTransform child = rectChildren[i];
+    float min, preferred, flexible;
+    GetChildSizes(child, axis, controlSize, childForceExpandSize, out min, out preferred, out flexible);
+
+    float requiredSpace = Mathf.Clamp(innerSize, min, flexible &gt; 0 ? size : preferred);
+    float startOffset = GetStartOffset(axis, requiredSpace);
+    if (controlSize)
+    {
+        SetChildAlongAxis(child, axis, startOffset, requiredSpace);
+    }
+    else
+    {
+        float offsetInCell = (requiredSpace - child.sizeDelta[axis]) * alignmentOnAxis;
+        SetChildAlongAxis(child, axis, startOffset + offsetInCell);
+    }
+}
+</code></pre><p>alongOtherAxis = false的情况</p>
+<pre><code>float pos = (axis == 0 ? padding.left : padding.top);
+if (GetTotalFlexibleSize(axis) == 0 &amp;&amp; GetTotalPreferredSize(axis) &lt; size)
+    pos = GetStartOffset(axis, GetTotalPreferredSize(axis) - (axis == 0 ? padding.horizontal : padding.vertical));
+
+float minMaxLerp = 0;
+if (GetTotalMinSize(axis) != GetTotalPreferredSize(axis))
+    minMaxLerp = Mathf.Clamp01((size - GetTotalMinSize(axis)) / (GetTotalPreferredSize(axis) - GetTotalMinSize(axis)));
+
+float itemFlexibleMultiplier = 0;
+if (size &gt; GetTotalPreferredSize(axis))
+{
+    if (GetTotalFlexibleSize(axis) &gt; 0)
+        itemFlexibleMultiplier = (size - GetTotalPreferredSize(axis)) / GetTotalFlexibleSize(axis);
+}
+
+for (int i = 0; i &lt; rectChildren.Count; i++)
+{
+    RectTransform child = rectChildren[i];
+    float min, preferred, flexible;
+    GetChildSizes(child, axis, controlSize, childForceExpandSize, out min, out preferred, out flexible);
+
+    float childSize = Mathf.Lerp(min, preferred, minMaxLerp);
+    childSize += flexible * itemFlexibleMultiplier;
+    if (controlSize)
+    {
+        SetChildAlongAxis(child, axis, pos, childSize);
+    }
+    else
+    {
+        float offsetInCell = (childSize - child.sizeDelta[axis]) * alignmentOnAxis;
+        SetChildAlongAxis(child, axis, pos + offsetInCell);
+    }
+    pos += childSize + spacing;
+}
+</code></pre><p>以宽度为例，这一段函数，首先会计算并获得每个子物体的size，随后通过SetChildAlongAxis设置每个子物体的位置。</p>
+<p>VerticalLayoutGroup将会根据最小宽度/完美宽度/灵活宽度，计算出每一个子物体对应的大小以及位置！首先先来对当前RectTransform可能出现的几种情况进行分析，当前RectTransform的宽度已经假定是不可能比最小宽度还要小，那么RectTransform的宽度可能介于最小宽度-完美宽度之间。或者大于完美宽度。</p>
+<ol>
+<li><p>当RectTransform的宽度可能介于最小宽度-完美宽度之间，那么子物体都会有一个对应的缩放比例，这个缩放比例应该是根据RectTransform的宽度、最小宽度、完美宽度三者来计算的。</p>
+<p>比例 =（RectTransform的宽度 - 最小宽度） / （完美宽度 - 最小宽度） </p>
+<p>每一个子物体只需要完美宽度乘上这个比例，最后LayoutGroup就能正好容纳下所有的子物体。</p>
+</li>
+<li><p>当RectTransform的宽度大于完美宽度。这个时候又需要考虑是否LayoutGroup勾选ForceExpandWidth，使子物体尽量充满整个布局。</p>
+<p>如果不需要expand，那么缩放比例就是1，也就是不需要缩放。</p>
+<p>如果需要expand，那么调整每个子物体的位置也需要一个缩放比例，This is where flexible width come into play! 缩放比例是根据flexible计算得来。每一个LayoutElement都有一个flexible width灵活宽度，把灵活宽度加起来，这个值再去平分富余空间，也就是富余空间被分割成相等的份数，每个LayoutElement根据自己的灵活宽度取走对应份数。也就是缩放比例 = LayoutElement的flexible width / total flexible width.</p>
+</li>
+</ol>
+<h3 id="childAlignment对齐方式"><a href="#childAlignment对齐方式" class="headerlink" title="childAlignment对齐方式"></a>childAlignment对齐方式</h3><p>下面再来讨论布局的一个变量TextAnchor，以及计算子物体位置函数中相关的几个方法。</p>
+<p>持有LayoutGroup组件的GameObject必然拥有一个RectTransform，这个RectTransform的范围也就是整个布局的范围，假设称为布局范围。所有子物体的形成的矩形范围姑且称为显示范围。</p>
+<p>当存在富余空间，也就是显示范围足够容纳所有子物体的完美宽高，且子物体不会去expand占据所有富余空间，这个时候就会存在一部分空间是空白的。那么显示范围就存在一个alignment对齐的问题。也就是显示范围可以是在布局范围的上左、上中、上右。。。总共九个位置。Unity用TextAnchor来表示这个枚举</p>
+<pre><code>public enum TextAnchor
+{
+    UpperLeft,
+    UpperCenter,
+    UpperRight,
+    MiddleLeft,
+    MiddleCenter,
+    MiddleRight,
+    LowerLeft,
+    LowerCenter,
+    LowerRight
+}
+</code></pre><p>注意从上左-下右枚举值从0递增至8。也就是</p>
+<ul>
+<li>0 1 2</li>
+<li>3 4 5</li>
+<li>6 7 8</li>
+</ul>
+<p>LayoutGroup用TextAnchor类型的childAlignment定义对齐方式。可以在编辑器下调整childAlignment为TextAnchor的各个枚举。</p>
+<pre><code>[SerializeField] protected TextAnchor m_ChildAlignment = TextAnchor.UpperLeft;
+
+/// &lt;summary&gt;
+/// The alignment to use for the child layout elements in the layout group.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+///  some child layout elements specify no flexible width and height, the children may not take up all the available space inside the layout group. The alignment setting specifies how to align them within the layout group when this is the case.
+///  &lt;/remarks&gt;
+public TextAnchor childAlignment { get { return m_ChildAlignment; } set { SetProperty(ref m_ChildAlignment, value); } }
+</code></pre><p>调整后如何生效呢，只需要调整显示范围的初始偏移即可。如下方法，仍以宽度为例，axis为0，requiredSpaceWithoutPadding即为显示范围对应的宽度（所有子物体的完美宽度相加得到的宽度）。显示范围宽度 加上padding，就是所要求的宽度requiredSpace，availableSpace是布局宽度。在存在富余空间的情况下，requiredSpace可以在availableSpace的左上、左下。这个取决于childAlignment对齐方式。如何计算偏移呢。之前说过从左上至右下的枚举值为0-8。GetAlignmentOnAxis把枚举值转化为对应的缩放比例，这个缩放比例乘上surplusSpace再加上对应方向的padding就是偏移！UGUI的这个方法还是很巧妙的！</p>
+<pre><code>/// &lt;summary&gt;
+/// Returns the calculated position of the first child layout element along the given axis.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;axis&quot;&gt;The axis index. 0 is horizontal and 1 is vertical.&lt;/param&gt;
+/// &lt;param name=&quot;requiredSpaceWithoutPadding&quot;&gt;The total space required on the given axis for all the layout elements including spacing and excluding padding.&lt;/param&gt;
+/// &lt;returns&gt;The position of the first child along the given axis.&lt;/returns&gt;
+protected float GetStartOffset(int axis, float requiredSpaceWithoutPadding)
+{
+    float requiredSpace = requiredSpaceWithoutPadding + (axis == 0 ? padding.horizontal : padding.vertical);
+    float availableSpace = rectTransform.rect.size[axis];
+    float surplusSpace = availableSpace - requiredSpace;
+    float alignmentOnAxis = GetAlignmentOnAxis(axis);
+    return (axis == 0 ? padding.left : padding.top) + surplusSpace * alignmentOnAxis;
+}
+</code></pre><p>GetAlignmentOnAxis</p>
+<pre><code>/// &lt;summary&gt;
+/// Returns the alignment on the specified axis as a fraction where 0 is left/top, 0.5 is middle, and 1 is right/bottom.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;axis&quot;&gt;The axis to get alignment along. 0 is horizontal and 1 is vertical.&lt;/param&gt;
+/// &lt;returns&gt;The alignment as a fraction where 0 is left/top, 0.5 is middle, and 1 is right/bottom.&lt;/returns&gt;
+protected float GetAlignmentOnAxis(int axis)
+{
+    if (axis == 0)
+        return ((int)childAlignment % 3) * 0.5f;
+    else
+        return ((int)childAlignment / 3) * 0.5f;
+}
+</code></pre><p>SetChildAlongAxis是设置子物体位置的具体方法</p>
+<pre><code>/// &lt;summary&gt;
+/// Set the position and size of a child layout element along the given axis.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;rect&quot;&gt;The RectTransform of the child layout element.&lt;/param&gt;
+/// &lt;param name=&quot;axis&quot;&gt;The axis to set the position and size along. 0 is horizontal and 1 is vertical.&lt;/param&gt;
+/// &lt;param name=&quot;pos&quot;&gt;The position from the left side or top.&lt;/param&gt;
+protected void SetChildAlongAxis(RectTransform rect, int axis, float pos)
+{
+    if (rect == null)
+        return;
+
+    m_Tracker.Add(this, rect,
+        DrivenTransformProperties.Anchors |
+        (axis == 0 ? DrivenTransformProperties.AnchoredPositionX : DrivenTransformProperties.AnchoredPositionY));
+
+    rect.SetInsetAndSizeFromParentEdge(axis == 0 ? RectTransform.Edge.Left : RectTransform.Edge.Top, pos, rect.sizeDelta[axis]);
+}
+</code></pre><p>SetInsetAndSizeFromParentEdge 不考虑物体的锚点anchor以及轴心pivot。具体可以参考</p>
+<p>1、<a href="https://blog.csdn.net/BeiFuDeNvWang/article/details/50838266" target="_blank" rel="noopener">https://blog.csdn.net/BeiFuDeNvWang/article/details/50838266</a></p>
+<p>2、<a href="http://www.manew.com/thread-41633-1-1.html" target="_blank" rel="noopener">http://www.manew.com/thread-41633-1-1.html</a></p>
+<h2 id="LayoutGroup的其他方法"><a href="#LayoutGroup的其他方法" class="headerlink" title="LayoutGroup的其他方法"></a>LayoutGroup的其他方法</h2><pre><code>//是否是rootLayoutGroup
+private bool isRootLayoutGroup
+{
+    get
+    {
+        Transform parent = transform.parent;
+        if (parent == null)
+            return true;
+        return transform.parent.GetComponent(typeof(ILayoutGroup)) == null;
+    }
+}
+
+//调整窗口大小时，比如缩放UnityScene大小时触发
+protected override void OnRectTransformDimensionsChange()
+{
+    base.OnRectTransformDimensionsChange();
+    if (isRootLayoutGroup)
+        SetDirty();
+}
+
+protected virtual void OnTransformChildrenChanged()
+{
+    SetDirty();
+}
+</code></pre><p>SetDirty 标记</p>
+<pre><code>/// &lt;summary&gt;
+/// Mark the LayoutGroup as dirty.
+/// &lt;/summary&gt;
+protected void SetDirty()
+{
+    if (!IsActive())
+        return;
+
+    if (!CanvasUpdateRegistry.IsRebuildingLayout())
+        LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+    else
+        StartCoroutine(DelayedSetDirty(rectTransform));
+}
+
+IEnumerator DelayedSetDirty(RectTransform rectTransform)
+{
+    yield return null;
+    LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+}
+</code></pre>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码2-StandaloneInputModule/" rel="next" title="UGUI源码2-StandaloneInputModule">
+                <i class="fa fa-chevron-left"></i> UGUI源码2-StandaloneInputModule
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码12-Graphic/" rel="prev" title="UGUI源码12-Graphic">
+                UGUI源码12-Graphic <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LayoutGroup接口及例子"><span class="nav-number">2.</span> <span class="nav-text">LayoutGroup接口及例子</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#聊天对话框"><span class="nav-number">2.1.</span> <span class="nav-text">聊天对话框</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ILayoutElement部分-计算自身宽高"><span class="nav-number">3.</span> <span class="nav-text">ILayoutElement部分 计算自身宽高</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ILayoutGroup-应用子物体的大小、位置"><span class="nav-number">4.</span> <span class="nav-text">ILayoutGroup 应用子物体的大小、位置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#设置子物体位置"><span class="nav-number">4.1.</span> <span class="nav-text">设置子物体位置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#childAlignment对齐方式"><span class="nav-number">4.2.</span> <span class="nav-text">childAlignment对齐方式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LayoutGroup的其他方法"><span class="nav-number">5.</span> <span class="nav-text">LayoutGroup的其他方法</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

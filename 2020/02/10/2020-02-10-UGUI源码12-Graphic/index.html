@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言在CanvasUpdateRegistry中，介绍过需要重建的元素除了布局元素外还有Graphic元素。Selectable是所有操作组件的基类，与此类似，Graphic也是所有可视化元素的基类，任意一个UI界面上，我们可见的所有元素都是Graphic，例如Text，Image等。任意一个可视的UI都应该继承自Graphic类。 从这篇文章开始，将开始介绍Graphic。首先介绍Graphic">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码12-Graphic">
+<meta property="og:url" content="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码12-Graphic/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言在CanvasUpdateRegistry中，介绍过需要重建的元素除了布局元素外还有Graphic元素。Selectable是所有操作组件的基类，与此类似，Graphic也是所有可视化元素的基类，任意一个UI界面上，我们可见的所有元素都是Graphic，例如Text，Image等。任意一个可视的UI都应该继承自Graphic类。 从这篇文章开始，将开始介绍Graphic。首先介绍Graphic">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-12-Graphic/1.png">
+<meta property="og:updated_time" content="2020-02-19T06:32:25.223Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码12-Graphic">
+<meta name="twitter:description" content="前言在CanvasUpdateRegistry中，介绍过需要重建的元素除了布局元素外还有Graphic元素。Selectable是所有操作组件的基类，与此类似，Graphic也是所有可视化元素的基类，任意一个UI界面上，我们可见的所有元素都是Graphic，例如Text，Image等。任意一个可视的UI都应该继承自Graphic类。 从这篇文章开始，将开始介绍Graphic。首先介绍Graphic">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-12-Graphic/1.png">
+  <link rel="canonical" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码12-Graphic/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码12-Graphic | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码12-Graphic/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码12-Graphic
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:32:25" itemprop="dateModified" datetime="2020-02-19T14:32:25+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在CanvasUpdateRegistry中，介绍过需要重建的元素除了布局元素外还有Graphic元素。Selectable是所有操作组件的基类，与此类似，Graphic也是所有可视化元素的基类，任意一个UI界面上，我们可见的所有元素都是Graphic，例如Text，Image等。任意一个可视的UI都应该继承自Graphic类。</p>
+<p>从这篇文章开始，将开始介绍Graphic。首先介绍GraphicRegistry，随后介绍Graphic。Graphic主要分为重建部分与射线检测部分。重建部分也可以说是重新渲染Graphic的过程。射线检测部分常用于点击等事件，这一部分将留给后面射线部分的文章。本文主要考虑Graphic渲染部分。渲染部分也可以分为两部分，什么时候SetDirty标记重建与重建的时候如何渲染。</p>
+<p>因此本文的主要内容主要是：</p>
+<ol>
+<li>GraphicRegistry</li>
+<li>Graphic</li>
+<li>SetDirty何时重建</li>
+<li>如何渲染</li>
+</ol>
+<h2 id="GraphicRegistry"><a href="#GraphicRegistry" class="headerlink" title="GraphicRegistry"></a>GraphicRegistry</h2><p>UGUI的设计思路是一块画布Canvas，实现ICanvasElement接口的画布元素可以画在画布上，也就是注册到画布上。最上层UIRoot为RootCanvas，同时可以存在NestedCanvas也就是子画布。GraphicRegistry的作用主要是记录每个Canvas画布上激活的Graphic。</p>
+<p>每个Canvas对应一个IndexedSet，这个数据结构能够保证元素唯一且有序。</p>
+<pre><code>// &lt;summary&gt;
+// Registry which maps a Graphic to the canvas it belongs to
+// &lt;/summary&gt;
+public class GraphicRegistry
+{
+    private readonly Dictionary&lt;Canvas, IndexedSet&lt;Graphic&gt;&gt; m_Graphics = new Dictionary&lt;Canvas, IndexedSet&lt;Graphic&gt;&gt;();
+
+    ...
+}
+</code></pre><p>每次注册/移除 Graphic都是把Graphic注册到Canvas对应的IndexedSet结构上。</p>
+<pre><code>/// &lt;summary&gt;
+/// Store a link between the given canvas and graphic in the registry.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;c&quot;&gt;The canvas the graphic will be associated to&lt;/param&gt;
+/// &lt;param name=&quot;graphic&quot;&gt;The graphic in question.&lt;/param&gt;
+public static void RegisterGraphicForCanvas(Canvas c, Graphic graphic)
+{
+    ... 
+}
+
+/// &lt;summary&gt;
+/// Deregister the given Graphic from a Canvas.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;c&quot;&gt;The canvas that should be associated with the graphic&lt;/param&gt;
+/// &lt;param name=&quot;graphic&quot;&gt;The graphic to remove.&lt;/param&gt;
+public static void UnregisterGraphicForCanvas(Canvas c, Graphic graphic)
+{
+    ...
+}
+</code></pre><p>获得画布对应的所有Graphic元素</p>
+<pre><code>private static readonly List&lt;Graphic&gt; s_EmptyList = new List&lt;Graphic&gt;();
+
+/// &lt;summary&gt;
+/// Get the list of associated graphics that are registered to a canvas.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;canvas&quot;&gt;The canvas whose Graphics we are looking for&lt;/param&gt;
+/// &lt;returns&gt;The list of all Graphics for the given Canvas.&lt;/returns&gt;
+public static IList&lt;Graphic&gt; GetGraphicsForCanvas(Canvas canvas)
+{
+    IndexedSet&lt;Graphic&gt; graphics;
+    if (instance.m_Graphics.TryGetValue(canvas, out graphics))
+        return graphics;
+
+    return s_EmptyList;
+}
+</code></pre><h2 id="Graphic"><a href="#Graphic" class="headerlink" title="Graphic"></a>Graphic</h2><pre><code>/// &lt;summary&gt;
+/// Base class for all UI components that should be derived from when creating new Graphic types.
+/// &lt;/summary&gt;
+[DisallowMultipleComponent]
+[RequireComponent(typeof(CanvasRenderer))]
+[RequireComponent(typeof(RectTransform))]
+[ExecuteAlways]
+/// &lt;summary&gt;
+///   Base class for all visual UI Component.
+///   When creating visual UI components you should inherit from this class.
+/// &lt;/summary&gt;
+
+public abstract class Graphic: UIBehaviour, ICanvasElement
+{
+   ...
+}
+</code></pre><p>Graphic继承UIBehaviour，并实现ICanvasElement接口。ICanvasElement接口之前也提过，任何live on a canvas的组件都应该实现这个接口，两大类元素之一，布局元素是用包装类Wrapped Class将自身注册到CanvasUpdateRegistry中。另一类Graphic元素则是基类实现了这个接口。</p>
+<p>Graphic的主要字段</p>
+<pre><code>//The builtin UI Components use this as their vertex color. Use this to fetch or change the Color of visual UI elements, such as an Image.
+private Color m_Color = Color.white; 
+
+private RectTransform m_RectTransform;
+private CanvasRenderer m_CanvasRenderer;
+private Canvas m_Canvas;
+
+private bool m_VertsDirty;
+private bool m_MaterialDirty;
+
+protected static Mesh s_Mesh;
+</code></pre><p>每个Graphic都会对应一个CanvasRenderer，在往一个物体添加Graphic组件的 时候，CanvasRenderer也会被添加到物体上。CanvasRenderer将负责Graphic的渲染。</p>
+<p>既然与渲染打交道，那么必不可少的就是Mesh网格（Vertex顶点）、Material。那么何时重建似乎也就有了眉目，就是Mesh、Material发生变化的时候需要重建。除此之外，当Graphic受到LayoutGroup控制的时候，自身的内容的变化（比如text的增减）或者LayoutGroup发生变化的时候，都会导致元素布局的重建，也就是位置的重建。也就是影响重建的主要有三点：</p>
+<ol>
+<li>Vertex顶点</li>
+<li>Material材质</li>
+<li>Layout布局</li>
+</ol>
+<h2 id="SetDirty何时重建"><a href="#SetDirty何时重建" class="headerlink" title="SetDirty何时重建"></a>SetDirty何时重建</h2><p>SetDirty主要就是上述的三种情况Vertex顶点、Material材质、Layout布局发生变化的情况。当Vertex或者Material变化都是会影响Graphic自身的显示的。而Layout布局的变化，只是影响Graphic的位置，并不影响自身的显示。</p>
+<h3 id><a href="#" class="headerlink" title=" "></a> </h3><p>SetLayoutDirty调用MarkLayoutForRebuild。比如Text受到布局控制，自身变化的时候，布局就会作为重建元素注册到CanvasUpdateRegistry，从而影响Text的位置。当Text不受到布局控制，那么MarkLayoutForRebuild也就没有重建元素，不必重建。</p>
+<pre><code>/// &lt;summary&gt;
+/// Mark the layout as dirty and needing rebuilt.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// Send a OnDirtyLayoutCallback notification if any elements are registered. See RegisterDirtyLayoutCallback
+/// &lt;/remarks&gt;
+public virtual void SetLayoutDirty()
+{
+    if (!IsActive())
+        return;
+
+    LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+
+    if (m_OnDirtyLayoutCallback != null)
+        m_OnDirtyLayoutCallback();
+}
+</code></pre><p>SetVerticesDirty、SetMaterialDirty差不多。修改对应的标志位并注册Graphic重建。</p>
+<pre><code>/// &lt;summary&gt;
+/// Mark the vertices as dirty and needing rebuilt.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// Send a OnDirtyVertsCallback notification if any elements are registered. See RegisterDirtyVerticesCallback
+/// &lt;/remarks&gt;
+public virtual void SetVerticesDirty()
+{
+    if (!IsActive())
+        return;
+
+    m_VertsDirty = true;
+CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
+
+    if (m_OnDirtyVertsCallback != null)
+        m_OnDirtyVertsCallback();
+}
+</code></pre><p>除此之外一些UIBehavior的方法也会导致重建，不细谈</p>
+<ul>
+<li>OnRectTransformDimensionsChange</li>
+<li>OnBeforeTransformParentChanged</li>
+<li>OnTransformParentChanged</li>
+</ul>
+<h2 id="如何渲染"><a href="#如何渲染" class="headerlink" title="如何渲染"></a>如何渲染</h2><p>如何渲染即如何重建Graphic，只需要看ICanvasElement接口方法Rebuild即可。布局的重建由Layout去驱动，Graphic只需要关心Mesh网格（Vertices顶点）与Material材质。</p>
+<pre><code>/// &lt;summary&gt;
+/// Rebuilds the graphic geometry and its material on the PreRender cycle.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;update&quot;&gt;The current step of the rendering CanvasUpdate cycle.&lt;/param&gt;
+/// &lt;remarks&gt;
+/// See CanvasUpdateRegistry for more details on the canvas update cycle.
+/// &lt;/remarks&gt;
+public virtual void Rebuild(CanvasUpdate update)
+{
+    if (canvasRenderer.cull)
+        return;
+
+    switch (update)
+    {
+        case CanvasUpdate.PreRender:
+            if (m_VertsDirty)
+            {
+                UpdateGeometry();
+                m_VertsDirty = false;
+            }
+            if (m_MaterialDirty)
+            {
+                UpdateMaterial();
+                m_MaterialDirty = false;
+            }
+            break;
+    }
+}
+</code></pre><p>当标记顶点需要重建的时候会设置对应的标志位m_VertsDirty以及m_MaterialDirty。重建的时候，如果仅顶点发生变化，那么无需关心材质，反之同理。</p>
+<h3 id="更新顶点UpdateGeometry"><a href="#更新顶点UpdateGeometry" class="headerlink" title="更新顶点UpdateGeometry"></a>更新顶点UpdateGeometry</h3><pre><code>/// &lt;summary&gt;
+/// Call to update the geometry of the Graphic onto the CanvasRenderer.
+/// &lt;/summary&gt;
+protected virtual void UpdateGeometry()
+{
+    if (useLegacyMeshGeneration)
+        DoLegacyMeshGeneration();
+    else
+        DoMeshGeneration();
+}
+</code></pre><p>Graphic中 useLegacyMeshGeneration虽然默认为true，但是基本Graphic子类都设置为false了，所以就分析DoMeshGeneration即可。</p>
+<pre><code>private void DoMeshGeneration()
+{
+    if (rectTransform != null &amp;&amp; rectTransform.rect.width &gt;= 0 &amp;&amp; rectTransform.rect.height &gt;= 0)
+        OnPopulateMesh(s_VertexHelper);
+    else
+        s_VertexHelper.Clear(); // clear the vertex helper so invalid graphics dont draw.
+
+    var components = ListPool&lt;Component&gt;.Get();
+    GetComponents(typeof(IMeshModifier), components);
+
+    for (var i = 0; i &lt; components.Count; i++)
+        ((IMeshModifier)components[i]).ModifyMesh(s_VertexHelper);
+
+    ListPool&lt;Component&gt;.Release(components);
+
+    s_VertexHelper.FillMesh(workerMesh);
+    canvasRenderer.SetMesh(workerMesh);
+}
+</code></pre><p>OnPopulateMesh计算网格，并缓存在s_VertexHelper中，随后如果有IMeshModifier，那么对Mesh数据进行修正。最后的Mesh数据填充到workerMesh并应用到CanvasRenderer中。</p>
+<p>OnPopulateMesh</p>
+<pre><code>/// &lt;summary&gt;
+/// Callback function when a UI element needs to generate vertices. Fills the vertex buffer data.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;vh&quot;&gt;VertexHelper utility.&lt;/param&gt;
+/// &lt;remarks&gt;
+/// Used by Text, UI.Image, and RawImage for example to generate vertices specific to their use case.
+/// &lt;/remarks&gt;
+protected virtual void OnPopulateMesh(VertexHelper vh)
+{
+    var r = GetPixelAdjustedRect();
+    var v = new Vector4(r.x, r.y, r.x + r.width, r.y + r.height);
+
+    Color32 color32 = color;
+    vh.Clear();
+    vh.AddVert(new Vector3(v.x, v.y), color32, new Vector2(0f, 0f));
+    vh.AddVert(new Vector3(v.x, v.w), color32, new Vector2(0f, 1f));
+    vh.AddVert(new Vector3(v.z, v.w), color32, new Vector2(1f, 1f));
+    vh.AddVert(new Vector3(v.z, v.y), color32, new Vector2(1f, 0f));
+
+    vh.AddTriangle(0, 1, 2);
+    vh.AddTriangle(2, 3, 0);
+}
+</code></pre><p>生成四个顶点以及两个三角形存入VertexHelper中，图形学中的概念，VBO、EBO、VAO。</p>
+<ul>
+<li>VBO：Vertex Buffer Object 用于缓存所有的顶点数据</li>
+<li>EBO：Element Buffer Object 用于缓存所有的三角形</li>
+<li>VAO：Vertex Array Object</li>
+</ul>
+<p>为什么要有EBO呢，就是为了顶点的复用。传入所有的VBO顶点数据，并用EBO将顶点数据串联起来成一个个三角形。一个模型正是由一个个三角形堆砌起来的。</p>
+<p>VAO是什么呢？一组VBO + 一组EBO加起来就是VAO。一个场景往往是由许多个VAO渲染出来的。VAO可以说是组装起来的提供给GPU绘制的一个单位。</p>
+<p>基于此分析一下上述代码。vh添加了四个顶点数据，v.x v.y代表左下位置，所以四个顶点的位置依次是Rect的左下、左上、右上、右下。一个矩形等于两个三角形，第一个三角形是，左下、左上、右上连接成的三角形，第二个三角形是右上、右下、左下连接成的三角形。</p>
+<p>将Unity场景的渲染模式调节到WireFrame线框模式，就能够看到每个矩形都是由这样两个三角形组成的。</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-12-Graphic/1.png"></p>
+<p>FillMesh</p>
+<pre><code>/// &lt;summary&gt;
+/// Fill the given mesh with the stream data.
+/// &lt;/summary&gt;
+public void FillMesh(Mesh mesh)
+{
+    InitializeListIfRequired();
+
+    mesh.Clear();
+
+    if (m_Positions.Count &gt;= 65000)
+        throw new ArgumentException(&quot;Mesh can not have more than 65000 vertices&quot;);
+
+    mesh.SetVertices(m_Positions);
+    mesh.SetColors(m_Colors);
+    mesh.SetUVs(0, m_Uv0S);
+    mesh.SetUVs(1, m_Uv1S);
+    mesh.SetUVs(2, m_Uv2S);
+    mesh.SetUVs(3, m_Uv3S);
+    mesh.SetNormals(m_Normals);
+    mesh.SetTangents(m_Tangents);
+    mesh.SetTriangles(m_Indices, 0);
+    mesh.RecalculateBounds();
+}
+</code></pre><p>设置顶点，颜色，UV等等</p>
+<h3 id="更新材质UpdateMaterial"><a href="#更新材质UpdateMaterial" class="headerlink" title="更新材质UpdateMaterial"></a>更新材质UpdateMaterial</h3><pre><code>/// &lt;summary&gt;
+/// Call to update the Material of the graphic onto the CanvasRenderer.
+/// &lt;/summary&gt;
+protected virtual void UpdateMaterial()
+{
+    if (!IsActive())
+        return;
+
+    canvasRenderer.materialCount = 1;
+    canvasRenderer.SetMaterial(materialForRendering, 0);
+    canvasRenderer.SetTexture(mainTexture);
+}
+</code></pre><pre><code>/// &lt;summary&gt;
+/// The material that will be sent for Rendering (Read only).
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// This is the material that actually gets sent to the CanvasRenderer. By default it&#39;s the same as [[Graphic.material]]. When extending Graphic you can override this to send a different material to the CanvasRenderer than the one set by Graphic.material. This is useful if you want to modify the user set material in a non destructive manner.
+/// &lt;/remarks&gt;
+public virtual Material materialForRendering
+{
+    get
+    {
+        var components = ListPool&lt;Component&gt;.Get();
+        GetComponents(typeof(IMaterialModifier), components);
+
+        var currentMat = material;
+        for (var i = 0; i &lt; components.Count; i++)
+            currentMat = (components[i] as IMaterialModifier).GetModifiedMaterial(currentMat);
+        ListPool&lt;Component&gt;.Release(components);
+        return currentMat;
+    }
+}
+</code></pre><p>传递给渲染管线的材质Material。如果有组件实现IMaterialModifier接口，那么需要获得修正后的Shader。比如遮罩相关就会实现这个接口。</p>
+<p>子类可以override这个材质。</p>
+<pre><code>/// &lt;summary&gt;
+/// The graphic&#39;s texture. (Read Only).
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// This is the Texture that gets passed to the CanvasRenderer, Material and then Shader _MainTex.
+///
+/// When implementing your own Graphic you can override this to control which texture goes through the UI Rendering pipeline.
+///
+/// Bear in mind that Unity tries to batch UI elements together to improve performance, so its ideal to work with atlas to reduce the number of draw calls.
+/// &lt;/remarks&gt;
+public virtual Texture mainTexture
+{
+    get
+    {
+        return s_WhiteTexture;
+    }
+}
+</code></pre><p>传递给CanvasRenderer和Shader _MainTex字段的texture，子类同样可以重写这个属性，来控制哪一个texture贴图传递到UI渲染管线。</p>
+<p>Unity会尝试对UI元素进行合批减少DrawCall，更多内容参考一些网上的UI合批文章吧。毕竟没源码，没办法做更多分析。</p>
+<h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h2><h3 id="GetPixelAdjustedRect"><a href="#GetPixelAdjustedRect" class="headerlink" title="GetPixelAdjustedRect"></a>GetPixelAdjustedRect</h3><p>GetPixelAdjustedRect 猜测这个方法获得的Rect不存在小数点，也就是如果设置的屏幕是1080 * 720，那么横竖应该是各有1080和720个像素点。UI对应的RectTransform的位置是可以存在小数点的。当Canvas不设置为PixelPerfect的时候，直接返回当前矩形。当Canvas设置PixelPerfect的时候，需要对当前RectTransform的位置做出修正。</p>
+<pre><code>/// &lt;summary&gt;
+/// Returns a pixel perfect Rect closest to the Graphic RectTransform.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// Note: This is only accurate if the Graphic root Canvas is in Screen Space.
+/// &lt;/remarks&gt;
+/// &lt;returns&gt;A Pixel perfect Rect.&lt;/returns&gt;
+public Rect GetPixelAdjustedRect()
+{
+    if (!canvas || canvas.renderMode == RenderMode.WorldSpace || canvas.scaleFactor == 0.0f || !canvas.pixelPerfect)
+        return rectTransform.rect;
+    else
+        return RectTransformUtility.PixelAdjustRect(rectTransform, canvas);
+}
+</code></pre>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码7-LayoutGroup/" rel="next" title="UGUI源码7-LayoutGroup">
+                <i class="fa fa-chevron-left"></i> UGUI源码7-LayoutGroup
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码8-ContentSizeFitter/" rel="prev" title="UGUI源码8-ContentSizeFitter">
+                UGUI源码8-ContentSizeFitter <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GraphicRegistry"><span class="nav-number">2.</span> <span class="nav-text">GraphicRegistry</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Graphic"><span class="nav-number">3.</span> <span class="nav-text">Graphic</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SetDirty何时重建"><span class="nav-number">4.</span> <span class="nav-text">SetDirty何时重建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#null"><span class="nav-number">4.1.</span> <span class="nav-text"> </span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何渲染"><span class="nav-number">5.</span> <span class="nav-text">如何渲染</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#更新顶点UpdateGeometry"><span class="nav-number">5.1.</span> <span class="nav-text">更新顶点UpdateGeometry</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#更新材质UpdateMaterial"><span class="nav-number">5.2.</span> <span class="nav-text">更新材质UpdateMaterial</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#补充"><span class="nav-number">6.</span> <span class="nav-text">补充</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#GetPixelAdjustedRect"><span class="nav-number">6.1.</span> <span class="nav-text">GetPixelAdjustedRect</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

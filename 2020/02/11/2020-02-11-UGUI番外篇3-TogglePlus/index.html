@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言TogglePlus是对UGUI中提供Toggle的一个简单拓展。先来看看Toggle。 ToggleToggle本身的内容其实不是很多，所以只摘录一些比较重要的内容稍微讲下。 基本字段  isOn：记录Toggle的状态 graphic：与Toggle组合使用的Graphic，Toggle的isOn状态为true则显示graphic，否则隐藏。 ToggleGroup：改变isOn状态的时候">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI番外篇3-TogglePlus">
+<meta property="og:url" content="http://yoursite.com/2020/02/11/2020-02-11-UGUI番外篇3-TogglePlus/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言TogglePlus是对UGUI中提供Toggle的一个简单拓展。先来看看Toggle。 ToggleToggle本身的内容其实不是很多，所以只摘录一些比较重要的内容稍微讲下。 基本字段  isOn：记录Toggle的状态 graphic：与Toggle组合使用的Graphic，Toggle的isOn状态为true则显示graphic，否则隐藏。 ToggleGroup：改变isOn状态的时候">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-02-19T07:14:04.148Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI番外篇3-TogglePlus">
+<meta name="twitter:description" content="前言TogglePlus是对UGUI中提供Toggle的一个简单拓展。先来看看Toggle。 ToggleToggle本身的内容其实不是很多，所以只摘录一些比较重要的内容稍微讲下。 基本字段  isOn：记录Toggle的状态 graphic：与Toggle组合使用的Graphic，Toggle的isOn状态为true则显示graphic，否则隐藏。 ToggleGroup：改变isOn状态的时候">
+  <link rel="canonical" href="http://yoursite.com/2020/02/11/2020-02-11-UGUI番外篇3-TogglePlus/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI番外篇3-TogglePlus | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/11/2020-02-11-UGUI番外篇3-TogglePlus/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI番外篇3-TogglePlus
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-11 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-11T00:00:00+08:00">2020-02-11</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 15:14:04" itemprop="dateModified" datetime="2020-02-19T15:14:04+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>TogglePlus是对UGUI中提供Toggle的一个简单拓展。先来看看Toggle。</p>
+<h2 id="Toggle"><a href="#Toggle" class="headerlink" title="Toggle"></a>Toggle</h2><p>Toggle本身的内容其实不是很多，所以只摘录一些比较重要的内容稍微讲下。</p>
+<p>基本字段</p>
+<ul>
+<li>isOn：记录Toggle的状态</li>
+<li>graphic：与Toggle组合使用的Graphic，Toggle的isOn状态为true则显示graphic，否则隐藏。</li>
+<li>ToggleGroup：改变isOn状态的时候，会影响ToggleGroup下的其他Toggle。同一时间只能激活一个Toggle。</li>
+</ul>
+<p>函数</p>
+<pre><code>void Set(bool value, bool sendCallback)
+{
+    if (m_IsOn == value)
+        return;
+
+    // if we are in a group and set to true, do group logic
+    m_IsOn = value;
+    if (m_Group != null &amp;&amp; IsActive())
+    {
+        if (m_IsOn || (!m_Group.AnyTogglesOn() &amp;&amp; !m_Group.allowSwitchOff))
+        {
+            m_IsOn = true;
+            m_Group.NotifyToggleOn(this);
+        }
+    }
+
+    // Always send event when toggle is clicked, even if value didn&#39;t change
+    // due to already active toggle in a toggle group being clicked.
+    // Controls like Dropdown rely on this.
+    // It&#39;s up to the user to ignore a selection being set to the same value it already was, if desired.
+    PlayEffect(toggleTransition == ToggleTransition.None);
+    if (sendCallback)
+    {
+        UISystemProfilerApi.AddMarker(&quot;Toggle.value&quot;, this);
+        onValueChanged.Invoke(m_IsOn);
+    }
+}
+</code></pre><ol>
+<li>在ToggleGroup中，且新值为true，那么ToggleGroup通知其他Toggle。不在ToggleGroup中，仅修改自身isOn。</li>
+<li>PlayEffect</li>
+<li>触发回调</li>
+</ol>
+<p>PlayEffect</p>
+<pre><code>/// &lt;summary&gt;
+/// Play the appropriate effect.
+/// &lt;/summary&gt;
+private void PlayEffect(bool instant)
+{
+    if (graphic == null)
+        return;
+
+#if UNITY_EDITOR
+    if (!Application.isPlaying)
+        graphic.canvasRenderer.SetAlpha(m_IsOn ? 1f : 0f);
+    else
+#endif
+    graphic.CrossFadeAlpha(m_IsOn ? 1f : 0f, instant ? 0f : 0.1f, true);
+}
+</code></pre><p>修改graphic的显示隐藏。显隐并非是通过GameObject.SetActive实现的，而是通过修改Graphic的alpha值。当isOn，那么graphic的alpha为1，反之为0。SetActive的方式有可能引起UI的重建，而修改透明度不会。</p>
+<h2 id="TogglePlus"><a href="#TogglePlus" class="headerlink" title="TogglePlus"></a>TogglePlus</h2><p>做TogglePlus对原生Toggle进行拓展，主要还是希望能把程序的一部分工作转交给UI策划。让一些效果的实现，策划自己就能搞定，不需要程序去修改。</p>
+<p>比如这样一个使用场景，一个是否年满18周岁的正方形框，符合显示打勾的图片，不符合则不显示。这个功能可以通过原生Toggle实现。在物体上同时挂上Toggle和Image组件，Toggle的Graphic设置为Image。isOn == true时，graphic的alpha为1，显示。isOn == false，graphic的alpha为0，隐藏。</p>
+<p>现在如果希望不符合的时候需要显示打叉，如何做呢？可以沿用graphic设置显隐的思路。TogglePlus绑定两个图片，一个图片用于isOn == true的状态，一个图片用于isOn == false的状态，当isOn状态改变的时候，同时切换两个图片的alpha值。</p>
+<p>同样的使用场景还有一个技能列表，当展开的时候，我们希望显示一个展开向下的箭头，当非展开的时候，则显示向上的箭头。还可能Toggle的状态不止能修改一个graphic而是一个GameObject，那么TogglePlus可以再加上两个GameObject的字段，在切换状态的时候，切换两个GameObject的Active状态。</p>
+<p>TogglePlus如下</p>
+<pre><code>using System.Collections.Generic;
+using UnityEngine.EventSystems;
+
+namespace UnityEngine.UI
+{
+    [DisallowMultipleComponent]
+    [AddComponentMenu(&quot;UI/TogglePlus(UGUI)&quot;)]
+    public partial class TogglePlus : Toggle
+    {
+        public Graphic unselectGraphic;
+        public GameObject targetObject;
+        public GameObject unselectTargetObject;
+        public ToggleEvent onValueChangedEx = new ToggleEvent();
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            onValueChanged.AddListener(ToggleTarget);
+            SetGraphAndObjectState(isOn);
+        }
+
+        protected override void OnDisable()
+        {
+            onValueChanged.RemoveListener(ToggleTarget);
+            base.OnDisable();
+        }
+
+        ...
+
+        private void ToggleTarget(bool isOn)
+        {
+            if (onValueChangedEx != null)
+            {
+                onValueChangedEx.Invoke(isOn);
+            }
+
+            SetGraphAndObjectState(isOn);
+        }
+
+//SelectedGameObject &amp; UnSelectedGameObject
+        private void SetGraphAndObjectState(bool isOn)
+        {
+            if (targetObject != null)
+            {
+                targetObject.SetActive(isOn);
+            }
+
+            if (unselectTargetObject != null)
+            {
+                unselectTargetObject.SetActive(!isOn);
+            }
+            ToggleUnSelectGraphic();
+        }
+
+//UnSelectedGraphic
+        private void ToggleUnSelectGraphic()
+        {
+            var instant = toggleTransition == ToggleTransition.None;
+            if (unselectGraphic == null)
+                return;
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                unselectGraphic.canvasRenderer.SetAlpha(isOn ? 0f : 1f);
+            else
+#endif
+                unselectGraphic.CrossFadeAlpha(isOn ? 0f : 1f, instant ? 0f : 0.1f, true);
+        }
+
+    }
+}
+</code></pre><p>onValueChanged为原生Toggle提供的事件监听类。在Enable的时候绑定上TogglePlus额外添加的函数，这样就能实现选中/为选中 Graphic/GameObject 总共四种的显隐切换。那么我们不希望再对onValueChanged进行改变，所以提供一个onValueChangedEx。当触发事件的时候，触发onValueChangedEx即可。</p>
+<h2 id="注册事件"><a href="#注册事件" class="headerlink" title="注册事件"></a>注册事件</h2><pre><code>[Serializable]
+/// &lt;summary&gt;
+/// UnityEvent callback for when a toggle is toggled.
+/// &lt;/summary&gt;
+public class ToggleEvent : UnityEvent&lt;bool&gt;
+
+public ToggleEvent onValueChanged = new ToggleEvent();
+</code></pre><p>稍微提一下吧，其实这种写法在UGUI中是非常常见的。首先是UnityAction是官方提供的一个泛型事件类，可以把函数注册到事件类中，在触发的时候回调事件。也就是观察者模式，老生常谈了。UnityAction并没有开放源码，不过大概也能猜到应该只是对泛型委托做了一个Wrapped Class包装类。Unity针对泛型数量不同，提供了几个不同的版本。</p>
+<ol>
+<li>UnityAction 无泛型。比如用在Button的OnClick事件。不需要带有参数，也就没有泛型。</li>
+<li>UnityAction<t> 一个泛型。</t></li>
+<li>UnityActino<t, u> 两个泛型。</t,></li>
+</ol>
+<p>在使用的时候，只需要继承这些泛型类，实现一个新类。并new出一个对象即可。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/11/2020-02-11-UGUI番外篇2-VerticalCurveLayoutGroup/" rel="next" title="UGUI番外篇2-VerticalCurveLayoutGroup">
+                <i class="fa fa-chevron-left"></i> UGUI番外篇2-VerticalCurveLayoutGroup
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/11/2020-02-11-UGUI番外篇4-Canvas的OverrideSorting/" rel="prev" title="UGUI番外篇4-Canvas的OverrideSorting">
+                UGUI番外篇4-Canvas的OverrideSorting <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Toggle"><span class="nav-number">2.</span> <span class="nav-text">Toggle</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TogglePlus"><span class="nav-number">3.</span> <span class="nav-text">TogglePlus</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#注册事件"><span class="nav-number">4.</span> <span class="nav-text">注册事件</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

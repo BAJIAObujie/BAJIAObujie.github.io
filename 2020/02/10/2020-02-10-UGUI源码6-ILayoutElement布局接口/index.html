@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言从这篇文章开始，算正式进入UGUI中布局模块吧。了解UGUI的布局使用方法首先必须了解其对布局模块的设计思路。ILayoutElement.cs这个文件里，有所有布局相关的接口，以及详细的注释，对理解布局的设计思路非常有帮助，因此第一篇文章就是从介绍这些接口开始的。 ILayoutElement.cs的接口这个文件下的借口主要分为三部分，先对这三个部分的做一个大致的描述  ILayoutEle">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码6-ILayoutElement布局接口">
+<meta property="og:url" content="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码6-ILayoutElement布局接口/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言从这篇文章开始，算正式进入UGUI中布局模块吧。了解UGUI的布局使用方法首先必须了解其对布局模块的设计思路。ILayoutElement.cs这个文件里，有所有布局相关的接口，以及详细的注释，对理解布局的设计思路非常有帮助，因此第一篇文章就是从介绍这些接口开始的。 ILayoutElement.cs的接口这个文件下的借口主要分为三部分，先对这三个部分的做一个大致的描述  ILayoutEle">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-02-19T06:26:24.691Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码6-ILayoutElement布局接口">
+<meta name="twitter:description" content="前言从这篇文章开始，算正式进入UGUI中布局模块吧。了解UGUI的布局使用方法首先必须了解其对布局模块的设计思路。ILayoutElement.cs这个文件里，有所有布局相关的接口，以及详细的注释，对理解布局的设计思路非常有帮助，因此第一篇文章就是从介绍这些接口开始的。 ILayoutElement.cs的接口这个文件下的借口主要分为三部分，先对这三个部分的做一个大致的描述  ILayoutEle">
+  <link rel="canonical" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码6-ILayoutElement布局接口/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码6-ILayoutElement布局接口 | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码6-ILayoutElement布局接口/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码6-ILayoutElement布局接口
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:26:24" itemprop="dateModified" datetime="2020-02-19T14:26:24+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>从这篇文章开始，算正式进入UGUI中布局模块吧。了解UGUI的布局使用方法首先必须了解其对布局模块的设计思路。ILayoutElement.cs这个文件里，有所有布局相关的接口，以及详细的注释，对理解布局的设计思路非常有帮助，因此第一篇文章就是从介绍这些接口开始的。</p>
+<h2 id="ILayoutElement-cs的接口"><a href="#ILayoutElement-cs的接口" class="headerlink" title="ILayoutElement.cs的接口"></a>ILayoutElement.cs的接口</h2><p>这个文件下的借口主要分为三部分，先对这三个部分的做一个大致的描述</p>
+<ul>
+<li>ILayoutElement：定义当前RectTransform的最小宽高/完美宽高/灵活宽高以及优先度总共7项数据。</li>
+<li>ILayoutController：驱动自身或子物体的RectTransform去应用 ILayoutElement 定义的数据。</li>
+<li>ILayoutIgnorer：是否物体需要被布局系统忽略。</li>
+</ul>
+<p>ILayoutElement 仅仅是对RectTransform计算出对应的数据，比如一个text文本组件，它的minWidth最小宽度是0，而preferred完美宽度则是这个文本组件能够显示完整文本时候应该使用的宽度。当在布局的时候，比如VerticalLayoutGroup，那么如果VerticalLayoutGroup提供了比preferredWidth更大的宽度。那么总宽度减去所有text的完美宽度，剩下的宽度被称为富余空间，富余空间将根据每个text的灵活宽度来等比例安排。<strong>再强调一次实现了ILayoutElement接口的组件仅仅计算出这些数据，并没有应用这些数据到RectTransform上。</strong></p>
+<p>ILayoutController 是与 ILayoutElement 搭配使用的组件。ILayoutController可以根据编辑器上的设置，选择ILayoutElement的最小宽高/完美宽高/灵活宽高 三组中其中一组数据，并应用到对应的RectTransform上。根据计算后每个子物体的宽高再计算对应的位置。根据应用主体RectTransform的不同，ILayoutController又分化出两个子类接口，ILayoutGroup、ILayoutSelfController。</p>
+<ul>
+<li>ILayoutGroup：这个接口将会控制子物体的宽高、位置。常见的组件VerticalLayoutGroup或者HorizontalLayoutGroup。</li>
+<li>ILayoutSelfController：这个接口将会控制自身的宽高、位置。常见于ContentSizeFitter。</li>
+</ul>
+<p>ILayoutIgnorer 略。</p>
+<p>以下将给出各个接口的源码，因为注释对理解布局的思路非常有帮助，所以每个接口的注释也一并放了上来。</p>
+<h2 id="ILayoutElement"><a href="#ILayoutElement" class="headerlink" title="ILayoutElement"></a>ILayoutElement</h2><p>字段：minWidth preferredWidth flexibleWidth minHeight preferredHeight flexibleHeight layoutPriority</p>
+<p>方法：CalculateLayoutInputHorizontal、CalculateLayoutInputVertical</p>
+<pre><code>/// &lt;summary&gt;
+/// After this method is invoked, layout horizontal input properties should return up-to-date values.
+///  Children will already have up-to-date layout horizontal inputs when this methods is called.
+/// &lt;/summary&gt;
+void CalculateLayoutInputHorizontal();
+
+/// &lt;summary&gt;
+///After this method is invoked, layout vertical input properties should return up-to-date values.
+///Children will already have up-to-date layout vertical inputs when this methods is called.
+/// &lt;/summary&gt;
+void CalculateLayoutInputVertical();
+</code></pre><p>在调用这两个方法后，minWidth preferredWidth flexibleWidth minHeight preferredHeight flexibleHeight都会更到最新值。</p>
+<pre><code>/// &lt;summary&gt;
+/// The minimum width this layout element may be allocated.
+/// &lt;/summary&gt;
+float minWidth { get; }
+
+/// &lt;summary&gt;
+/// The preferred width this layout element should be allocated if there is sufficient space.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// PreferredWidth can be set to -1 to remove the size.
+/// &lt;/remarks&gt;
+float preferredWidth { get; }
+
+/// &lt;summary&gt;
+/// The extra relative width this layout element should be allocated if there is additional available space.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// Setting preferredWidth to -1 removed the preferredWidth.
+/// &lt;/remarks&gt;
+float flexibleWidth { get; }
+</code></pre><p>宽度、高度的计算是一样的。所以只介绍高度的数据不重复介绍。</p>
+<ul>
+<li>minWidth：这个元素被分配的最少空间</li>
+<li>preferredWidth：在空间充足的情况下，元素的最优分配空间是多少</li>
+<li>flexibleWidth：在空间存在富余的情况下，富余空间将根据比例分配给元素。</li>
+</ul>
+<pre><code>/// &lt;summary&gt;
+/// The layout priority of this component.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// If multiple components on the same GameObject implement the ILayoutElement interface, the values provided by components that return a higher priority value are given priority. However, values less than zero are ignored. This way a component can override only select properties by leaving the remaning values to be -1 or other values less than zero.
+/// &lt;/remarks&gt;
+int layoutPriority { get; }
+</code></pre><p>当存在多个组件都实现了ILayoutElement的时候，根据layoutPriority来选择使用哪一个组件。</p>
+<h2 id="ILayoutController"><a href="#ILayoutController" class="headerlink" title="ILayoutController"></a>ILayoutController</h2><p>component组件实现这个接口并用来控制布局物体的RectTransform。ILayoutController是base interface也就是基类接口，这个基类接口有两个子类接口，分别是ILayoutSelfController、ILayoutGroup，实现了ILayoutSelfController接口的组件是驱动自己这个物体的RectTransform，而ILayoutGroup用来驱动子类物体的RectTransform。</p>
+<pre><code>/// &lt;summary&gt;
+///   Base interface to implement by components that control the layout of RectTransforms.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// If a component is driving its own RectTransform it should implement the interface [[ILayoutSelfController]].
+/// If a component is driving the RectTransforms of its children, it should implement [[ILayoutGroup]].
+///
+/// The layout system will first invoke SetLayoutHorizontal and then SetLayoutVertical.
+///
+/// In the SetLayoutHorizontal call it is valid to call LayoutUtility.GetMinWidth, LayoutUtility.GetPreferredWidth, and LayoutUtility.GetFlexibleWidth on the RectTransform of itself or any of its children.
+/// In the SetLayoutVertical call it is valid to call LayoutUtility.GetMinHeight, LayoutUtility.GetPreferredHeight, and LayoutUtility.GetFlexibleHeight on the RectTransform of itself or any of its children.
+///
+/// The component may use this information to determine the width and height to use for its own RectTransform or the RectTransforms of its children.
+/// &lt;/remarks&gt;
+
+public interface ILayoutController
+{
+    /// &lt;summary&gt;
+    /// Callback invoked by the auto layout system which handles horizontal aspects of the layout.
+    /// &lt;/summary&gt;
+    void SetLayoutHorizontal();
+
+    /// &lt;summary&gt;
+    /// Callback invoked by the auto layout system which handles vertical aspects of the layout.
+    /// &lt;/summary&gt;
+    void SetLayoutVertical();
+}
+</code></pre><p>两个接口方法用来设置元素的水平/竖直方向的位置。</p>
+<h3 id="ILayoutGroup"><a href="#ILayoutGroup" class="headerlink" title="ILayoutGroup"></a>ILayoutGroup</h3><pre><code>/// &lt;summary&gt;
+/// ILayoutGroup is an ILayoutController that should drive the RectTransforms of its children.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// ILayoutGroup derives from ILayoutController and requires the same members to be implemented.
+/// &lt;/remarks&gt;
+public interface ILayoutGroup : ILayoutController
+{
+}
+</code></pre><h3 id="ILayoutSelfController"><a href="#ILayoutSelfController" class="headerlink" title="ILayoutSelfController"></a>ILayoutSelfController</h3><pre><code>/// &lt;summary&gt;
+/// ILayoutSelfController is an ILayoutController that should drive its own RectTransform.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// The iLayoutSelfController derives from the base controller [[ILayoutController]] and controls the layout of a RectTransform.
+///
+/// Use the ILayoutSelfController to manipulate a GameObject’s own RectTransform component, which you attach in the Inspector.Use ILayoutGroup to manipulate RectTransforms belonging to the children of the GameObject.
+///
+/// Call ILayoutController.SetLayoutHorizontal to handle horizontal parts of the layout, and call ILayoutController.SetLayoutVertical to handle vertical parts.
+/// You can change the height, width, position and rotation of the RectTransform.
+/// &lt;/remarks&gt;
+
+public interface ILayoutSelfController : ILayoutController
+{
+}
+</code></pre><h2 id="ILayoutIgnorer-忽略布局的组件"><a href="#ILayoutIgnorer-忽略布局的组件" class="headerlink" title="ILayoutIgnorer 忽略布局的组件"></a>ILayoutIgnorer 忽略布局的组件</h2><pre><code>/// &lt;summary&gt;
+/// A RectTransform will be ignored by the layout system if it has a component which implements ILayoutIgnorer.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// A components that implements ILayoutIgnorer can be used to make a parent layout group component not consider this RectTransform part of the group. The RectTransform can then be manually positioned despite being a child GameObject of a layout group.
+/// &lt;/remarks&gt;
+public interface ILayoutIgnorer
+{
+    /// &lt;summary&gt;
+    /// Should this RectTransform be ignored bvy the layout system?
+    /// &lt;/summary&gt;
+    /// &lt;remarks&gt;
+    /// Setting this property to true will make a parent layout group component not consider this RectTransform part of the group. The RectTransform can then be manually positioned despite being a child GameObject of a layout group.
+    /// &lt;/remarks&gt;
+    bool ignoreLayout { get; }
+}
+</code></pre>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码13-MaskableGraphic/" rel="next" title="UGUI源码13-MaskableGraphic">
+                <i class="fa fa-chevron-left"></i> UGUI源码13-MaskableGraphic
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码4-Selectable/" rel="prev" title="UGUI源码4-Selectable">
+                UGUI源码4-Selectable <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ILayoutElement-cs的接口"><span class="nav-number">2.</span> <span class="nav-text">ILayoutElement.cs的接口</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ILayoutElement"><span class="nav-number">3.</span> <span class="nav-text">ILayoutElement</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ILayoutController"><span class="nav-number">4.</span> <span class="nav-text">ILayoutController</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ILayoutGroup"><span class="nav-number">4.1.</span> <span class="nav-text">ILayoutGroup</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ILayoutSelfController"><span class="nav-number">4.2.</span> <span class="nav-text">ILayoutSelfController</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ILayoutIgnorer-忽略布局的组件"><span class="nav-number">5.</span> <span class="nav-text">ILayoutIgnorer 忽略布局的组件</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

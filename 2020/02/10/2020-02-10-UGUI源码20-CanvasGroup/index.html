@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言CanvasGroup是UGUI中用于调整整体性质的UI，它会影响所有子物体的部分性质，从而不需要对每个元素进行逐个调整。如下  Alpha 影响整体透明度 Interactable 是否可交互 Block Raycasts：如果需要图形射线(GraphicRaycaster)检测。勾选后，可将此组件作为一个射线碰撞盒。注意，不适用于Physics.Raycast。true就是接收点击事件，f">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码20-CanvasGroup">
+<meta property="og:url" content="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码20-CanvasGroup/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言CanvasGroup是UGUI中用于调整整体性质的UI，它会影响所有子物体的部分性质，从而不需要对每个元素进行逐个调整。如下  Alpha 影响整体透明度 Interactable 是否可交互 Block Raycasts：如果需要图形射线(GraphicRaycaster)检测。勾选后，可将此组件作为一个射线碰撞盒。注意，不适用于Physics.Raycast。true就是接收点击事件，f">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-02-19T06:33:25.585Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码20-CanvasGroup">
+<meta name="twitter:description" content="前言CanvasGroup是UGUI中用于调整整体性质的UI，它会影响所有子物体的部分性质，从而不需要对每个元素进行逐个调整。如下  Alpha 影响整体透明度 Interactable 是否可交互 Block Raycasts：如果需要图形射线(GraphicRaycaster)检测。勾选后，可将此组件作为一个射线碰撞盒。注意，不适用于Physics.Raycast。true就是接收点击事件，f">
+  <link rel="canonical" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码20-CanvasGroup/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码20-CanvasGroup | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码20-CanvasGroup/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码20-CanvasGroup
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:33:25" itemprop="dateModified" datetime="2020-02-19T14:33:25+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>CanvasGroup是UGUI中用于调整整体性质的UI，它会影响所有子物体的部分性质，从而不需要对每个元素进行逐个调整。如下</p>
+<ul>
+<li>Alpha 影响整体透明度</li>
+<li>Interactable 是否可交互</li>
+<li>Block Raycasts：如果需要图形射线(GraphicRaycaster)检测。勾选后，可将此组件作为一个射线碰撞盒。注意，不适用于Physics.Raycast。true就是接收点击事件，false就是不接受。</li>
+<li>Ignore Parent Groups：是否需要忽略父级对象中的CanvasGroup的设置。(勾选则忽略)</li>
+</ul>
+<p>官方文档：<a href="https://docs.unity3d.com/Packages/com.unity.ugui@1.0/manual/class-CanvasGroup.html" target="_blank" rel="noopener">https://docs.unity3d.com/Packages/com.unity.ugui@1.0/manual/class-CanvasGroup.html</a></p>
+<p>虽然CanvasGroup的组件的源码并没有放出来，但是在Selectable与Graphic中有CanvasGroup关于交互与射线投射的相关代码。</p>
+<h2 id="Selectable-Interactable"><a href="#Selectable-Interactable" class="headerlink" title="Selectable-Interactable"></a>Selectable-Interactable</h2><p>Selectable中关于交互的字段，包括</p>
+<ul>
+<li>m_GroupsAllowInteraction 受CanvasGroup组影响</li>
+<li>m_Interactable 当前Selectable的设置</li>
+</ul>
+<p>只有当两者同时满足的时候，Selectable才是可交互的。Selectable包括Button、Toggle等，当这些组件不可交互的时候，就无法触发点击事件。</p>
+<p>当CanvasGroup改变的时候，Selectable会接收到OnCanvasGroupChanged的回调，重新计算当前Selectable的m_GroupsAllowInteraction字段。</p>
+<p>代码并不复杂，从当前组件算起，不断往父物体查找CanvasGroup，直到没有父物体或者有一个CanvasGroup勾选了Ignore Parent Groups。在查找的这些父物体中，只要有一个勾选了不可交互，那么当前Selectable就应该是不可交互的。</p>
+<pre><code>protected override void OnCanvasGroupChanged()
+{
+    // Figure out if parent groups allow interaction
+    // If no interaction is alowed... then we need
+    // to not do that :)
+    var groupAllowInteraction = true;
+    Transform t = transform;
+    while (t != null)
+    {
+        t.GetComponents(m_CanvasGroupCache);
+        bool shouldBreak = false;
+        for (var i = 0; i &lt; m_CanvasGroupCache.Count; i++)
+        {
+            // if the parent group does not allow interaction
+            // we need to break
+            if (!m_CanvasGroupCache[i].interactable)
+            {
+                groupAllowInteraction = false;
+                shouldBreak = true;
+            }
+            // if this is a &#39;fresh&#39; group, then break
+            // as we should not consider parents
+            if (m_CanvasGroupCache[i].ignoreParentGroups)
+                shouldBreak = true;
+        }
+        if (shouldBreak)
+            break;
+
+        t = t.parent;
+    }
+
+    if (groupAllowInteraction != m_GroupsAllowInteraction)
+    {
+        m_GroupsAllowInteraction = groupAllowInteraction;
+        OnSetProperty();
+    }
+}
+</code></pre><h2 id="Graphic-Block-Raycasts"><a href="#Graphic-Block-Raycasts" class="headerlink" title="Graphic-Block Raycasts"></a>Graphic-Block Raycasts</h2><p>思路和Selectable差不多，从当前物体不断往父物体进行追溯，直到rootCanvas或者Override Sorting的Canvas。每个物体查找是否有实现了ICanvasRaycastFilter接口的组件，如果没有这个接口，那么直接返回。如果存在接口就说明当前Graphic的检测，需要再一次经过ICanvasRaycastFilter的检测。</p>
+<p>CanvasGroup也是实现了ICanvasRaycastFilter接口的一个组件。如果当前组件不是CanvasGroup，那么调用这个组件实现ICanvasRaycastFilter的方法。比如RectMask2D等其他组件。如果当前组件是CanvasGroup，需要分两种情况。是否已经忽略了父CanvasGroup的影响。不过虽然分了情况，后面检测的代码都是调用filter.IsRaycastLocationValid。CanvasGroup应该内部有针对这两种情况做出不同处理。</p>
+<pre><code>/// &lt;summary&gt;
+/// When a GraphicRaycaster is raycasting into the scene it does two things. First it filters the elements using their RectTransform rect. Then it uses this Raycast function to determine the elements hit by the raycast.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;sp&quot;&gt;Screen point being tested&lt;/param&gt;
+/// &lt;param name=&quot;eventCamera&quot;&gt;Camera that is being used for the testing.&lt;/param&gt;
+/// &lt;returns&gt;True if the provided point is a valid location for GraphicRaycaster raycasts.&lt;/returns&gt;
+public virtual bool Raycast(Vector2 sp, Camera eventCamera)
+{
+    if (!isActiveAndEnabled)
+        return false;
+
+    var t = transform;
+    var components = ListPool&lt;Component&gt;.Get();
+
+    bool ignoreParentGroups = false;
+    bool continueTraversal = true;
+
+    while (t != null)
+    {
+        t.GetComponents(components);
+        for (var i = 0; i &lt; components.Count; i++)
+        {
+            var canvas = components[i] as Canvas;
+            if (canvas != null &amp;&amp; canvas.overrideSorting)
+                continueTraversal = false;
+
+            var filter = components[i] as ICanvasRaycastFilter;
+
+            if (filter == null)
+                continue;
+
+            var raycastValid = true;
+
+            var group = components[i] as CanvasGroup;
+            if (group != null)
+            {
+                if (ignoreParentGroups == false &amp;&amp; group.ignoreParentGroups)
+                {
+                    ignoreParentGroups = true;
+                    raycastValid = filter.IsRaycastLocationValid(sp, eventCamera);
+                }
+                else if (!ignoreParentGroups)
+                    raycastValid = filter.IsRaycastLocationValid(sp, eventCamera);
+            }
+            else
+            {
+                raycastValid = filter.IsRaycastLocationValid(sp, eventCamera);
+            }
+
+            if (!raycastValid)
+            {
+                ListPool&lt;Component&gt;.Release(components);
+                return false;
+            }
+        }
+        t = continueTraversal ? t.parent : null;
+    }
+    ListPool&lt;Component&gt;.Release(components);
+    return true;
+}
+</code></pre><h2 id="Alpha"><a href="#Alpha" class="headerlink" title="Alpha"></a>Alpha</h2><p>alpha值是CanvasGroup最后的一个字段了，UGUI代码中并没有相关的使用。不过猜测一下内部如何使用的并不难。canvasRenderer存在一个SetAlpha的方法，用于设置Graphic的透明度。只需要在渲染的时候，取一下CanvasGroup的alpha值即可。</p>
+<p>这个字段经常可以用于UI动画，比如弹出/隐藏窗口的时候，窗口渐隐渐现。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码21-Slider/" rel="next" title="UGUI源码21-Slider">
+                <i class="fa fa-chevron-left"></i> UGUI源码21-Slider
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码19-CoroutineTween/" rel="prev" title="UGUI源码19-CoroutineTween">
+                UGUI源码19-CoroutineTween <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Selectable-Interactable"><span class="nav-number">2.</span> <span class="nav-text">Selectable-Interactable</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Graphic-Block-Raycasts"><span class="nav-number">3.</span> <span class="nav-text">Graphic-Block Raycasts</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Alpha"><span class="nav-number">4.</span> <span class="nav-text">Alpha</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

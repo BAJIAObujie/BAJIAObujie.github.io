@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言Image组件比起RawImage就复杂多了。 SpriteRawImage组件对应的是Texture2D一整张贴图。如果在导入图片资源的时候，可以把图片资源类型设置为xx而不是Texture2D。那么这张图片资源就是Sprite资源，single表示单张资源，如果设置Multiple，一张图片还可以被切割为多张Sprite的组合。  计算顶点数据-OnPopulateMesh/// &amp;lt;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码15-Image">
+<meta property="og:url" content="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码15-Image/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言Image组件比起RawImage就复杂多了。 SpriteRawImage组件对应的是Texture2D一整张贴图。如果在导入图片资源的时候，可以把图片资源类型设置为xx而不是Texture2D。那么这张图片资源就是Sprite资源，single表示单张资源，如果设置Multiple，一张图片还可以被切割为多张Sprite的组合。  计算顶点数据-OnPopulateMesh/// &amp;lt;">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/1.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/2.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/3.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/4.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/5.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/6.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/7.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/8.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/9.png">
+<meta property="og:updated_time" content="2020-02-19T06:32:43.718Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码15-Image">
+<meta name="twitter:description" content="前言Image组件比起RawImage就复杂多了。 SpriteRawImage组件对应的是Texture2D一整张贴图。如果在导入图片资源的时候，可以把图片资源类型设置为xx而不是Texture2D。那么这张图片资源就是Sprite资源，single表示单张资源，如果设置Multiple，一张图片还可以被切割为多张Sprite的组合。  计算顶点数据-OnPopulateMesh/// &amp;lt;">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/1.png">
+  <link rel="canonical" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码15-Image/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码15-Image | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码15-Image/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码15-Image
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:32:43" itemprop="dateModified" datetime="2020-02-19T14:32:43+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>Image组件比起RawImage就复杂多了。</p>
+<h2 id="Sprite"><a href="#Sprite" class="headerlink" title="Sprite"></a>Sprite</h2><p>RawImage组件对应的是Texture2D一整张贴图。如果在导入图片资源的时候，可以把图片资源类型设置为xx而不是Texture2D。那么这张图片资源就是Sprite资源，single表示单张资源，如果设置Multiple，一张图片还可以被切割为多张Sprite的组合。</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/1.png"></p>
+<h2 id="计算顶点数据-OnPopulateMesh"><a href="#计算顶点数据-OnPopulateMesh" class="headerlink" title="计算顶点数据-OnPopulateMesh"></a>计算顶点数据-OnPopulateMesh</h2><pre><code>/// &lt;summary&gt;
+/// Update the UI renderer mesh.
+/// &lt;/summary&gt;
+protected override void OnPopulateMesh(VertexHelper toFill)
+{
+    if (activeSprite == null)
+    {
+        base.OnPopulateMesh(toFill);
+        return;
+    }
+
+    switch (type)
+    {
+        case Type.Simple:
+            if (!useSpriteMesh)
+                GenerateSimpleSprite(toFill, m_PreserveAspect);
+            else
+                GenerateSprite(toFill, m_PreserveAspect);
+            break;
+        case Type.Sliced:
+            GenerateSlicedSprite(toFill);
+            break;
+        case Type.Tiled:
+            GenerateTiledSprite(toFill);
+            break;
+        case Type.Filled:
+            GenerateFilledSprite(toFill, m_PreserveAspect);
+            break;
+    }
+}
+</code></pre><p>Graphic渲染的时候会进行顶点和材质的重建。Image重写了OnPopulateMesh 计算顶点的方法。使用方式Type分为四种。这四种使用方式对应的方法，会给VertexHelper中传入顶点数据。</p>
+<ul>
+<li>Type.Simple 渲染普通图片资源</li>
+<li>Type.Sliced 渲染九宫格式图片</li>
+<li>Type.Tiled 平铺模式</li>
+<li>Type.Filled 填充模式</li>
+</ul>
+<h3 id="GenerateSimpleSprite"><a href="#GenerateSimpleSprite" class="headerlink" title="GenerateSimpleSprite"></a>GenerateSimpleSprite</h3><pre><code>/// &lt;summary&gt;
+/// Generate vertices for a simple Image.
+/// &lt;/summary&gt;
+void GenerateSimpleSprite(VertexHelper vh, bool lPreserveAspect)
+{
+    Vector4 v = GetDrawingDimensions(lPreserveAspect);
+    var uv = (activeSprite != null) ? Sprites.DataUtility.GetOuterUV(activeSprite) : Vector4.zero;
+
+    var color32 = color;
+    vh.Clear();
+    vh.AddVert(new Vector3(v.x, v.y), color32, new Vector2(uv.x, uv.y));
+    vh.AddVert(new Vector3(v.x, v.w), color32, new Vector2(uv.x, uv.w));
+    vh.AddVert(new Vector3(v.z, v.w), color32, new Vector2(uv.z, uv.w));
+    vh.AddVert(new Vector3(v.z, v.y), color32, new Vector2(uv.z, uv.y));
+
+    vh.AddTriangle(0, 1, 2);
+    vh.AddTriangle(2, 3, 0);
+}
+</code></pre><p>GetDrawingDimensions 获得这个图片的左下角、右上角顶点的位置，v.x/v.y对应左下角，v.z/v.w对应右上角。得到数据后AddVert、AddTriangle。处理方式基本和RawImage的方式一样。</p>
+<pre><code>/// Image&#39;s dimensions used for drawing. X = left, Y = bottom, Z = right, W = top.
+private Vector4 GetDrawingDimensions(bool shouldPreserveAspect)
+{
+    var padding = activeSprite == null ? Vector4.zero : Sprites.DataUtility.GetPadding(activeSprite);
+    ...
+}
+</code></pre><p>GetDrawingDimensions 里使用到了Sprite的Padding这个字段，这个字段找了很多地方没有见到哪里设置，自己也尝试打印过在运行时打Log，输出也是Vector.zero。然后尝试找了一下官方文档。文档的说明如下：</p>
+<ul>
+<li>Return the padding on the sprite.</li>
+<li>If the sprite has been packed it is possible that edges have been cliped from the source sprite. This will give the edge clipped size in pixels for each edge (x=left, y=bottom, z=right, w=top).</li>
+<li><a href="https://docs.unity3d.com/ScriptReference/Sprites.DataUtility.GetPadding.html" target="_blank" rel="noopener">https://docs.unity3d.com/ScriptReference/Sprites.DataUtility.GetPadding.html</a></li>
+</ul>
+<p>猜测可能是在打包的时候为了节约空间的目的，所以Unity会对Sprite资源做进一步裁减，这个Padding就是用来表示裁减后的矩形。既然在编辑器下都是Vector.zero，那么就暂时不考虑这个字段了。剩下的代码也仅仅是返回Sprite资源的顶点位置数据，略过不提。</p>
+<p>如下，在SpriteEditor可以编辑Sprite的区域，在打包后，可能导出的资源只有内层Rect的范围，Padding的部分就被裁减掉了。这个时候GetDrawingDimensions就会返回内层Rect的左下角A和右上角B两个顶点的位置。</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/2.png"></p>
+<h3 id="GenerateSlicedSprite"><a href="#GenerateSlicedSprite" class="headerlink" title="GenerateSlicedSprite"></a>GenerateSlicedSprite</h3><p>把GenerateSlicedSprite的代码分为三部分。</p>
+<p>第一部分如下，计算activeSprite数据。第二部分，根据activeSprite数据，也就是Vector4 outer, inner, padding, border四项，计算关键点的位置及uv数据。第三部分根据这些关键点的数据生成对应的顶点数据，并添加到VertexHelper中。</p>
+<pre><code>private void GenerateSlicedSprite(VertexHelper toFill)
+{
+    ...
+
+    Vector4 outer, inner, padding, border;
+
+    if (activeSprite != null)
+    {
+        outer = Sprites.DataUtility.GetOuterUV(activeSprite);
+        inner = Sprites.DataUtility.GetInnerUV(activeSprite);
+        padding = Sprites.DataUtility.GetPadding(activeSprite);
+        border = activeSprite.border;
+    }
+
+    ... 计算关键点位置与uv数据
+
+    ... 添加顶点数据
+
+}
+</code></pre><p>除了padding已经解释过外，还需要明确outer、inner、border。</p>
+<ul>
+<li>outer 外层Rect顶点的uv</li>
+<li>inner 内层Rect顶点的uv</li>
+<li>border 内层Rect与外层Rect的距离。</li>
+</ul>
+<p>如下图OuterRect即在SpriteEditor中编辑的Sprite。减去Padding部分后，剩下的部分就是用来显示的内容。</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/3.png"></p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/4.png"></p>
+<p>GenerateSlicedSprite方法是用来生成九宫格的Sprite的，如上图，外层Rect就是指包括了整个九宫格的Rect矩形，内层Rect即中间的Rect。在显示的时候，除了边缘的四个矩形外，剩下五个矩形都会受到不同程度的拉伸。outer.xy即左下角顶点A的uv数据，outer.zw即右上角的顶点D的uv数据。inner同理。border的大小与我们在SpriteEditor中的设置有关。在SpriteEditor中，我们可以设置内层Rect与外层Rect的距离。</p>
+<p>如图，设置Texture资源为Sprite，且SpriteMode为Multiple，就可以在SpriteEditor中对图片进行切割，如下为切割对话框的九宫格数据。Border表示绿色框也就是InnerRect与蓝色框OuterRect的距离。</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/5.png"></p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/6.png"></p>
+<p><strong>第二部分-计算关键点位置与uv数据</strong></p>
+<p>对九宫格的矩形来说哪些点是关键点。表现一个矩形只需要两个顶点的位置数据即可，正如定义的Rect一样，即左下角和右上角。对于九宫格矩形来说关键点有四个，从左下到右上的四个顶点。</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/7.png"></p>
+<p>如下代码，只是对这四个顶点的位置、uv赋值而已。</p>
+<pre><code>Rect rect = GetPixelAdjustedRect();
+Vector4 adjustedBorders = GetAdjustedBorders(border / pixelsPerUnit, rect);
+padding = padding / pixelsPerUnit;
+
+s_VertScratch[0] = new Vector2(padding.x, padding.y);
+s_VertScratch[3] = new Vector2(rect.width - padding.z, rect.height - padding.w);
+
+s_VertScratch[1].x = adjustedBorders.x;
+s_VertScratch[1].y = adjustedBorders.y;
+
+s_VertScratch[2].x = rect.width - adjustedBorders.z;
+s_VertScratch[2].y = rect.height - adjustedBorders.w;
+
+for (int i = 0; i &lt; 4; ++i)
+{
+    s_VertScratch[i].x += rect.x;
+    s_VertScratch[i].y += rect.y;
+}
+
+s_UVScratch[0] = new Vector2(outer.x, outer.y);
+s_UVScratch[1] = new Vector2(inner.x, inner.y);
+s_UVScratch[2] = new Vector2(inner.z, inner.w);
+s_UVScratch[3] = new Vector2(outer.z, outer.w);
+</code></pre><p><strong>第三部分-添加顶点数据</strong></p>
+<pre><code>toFill.Clear();
+
+for (int x = 0; x &lt; 3; ++x)
+{
+    int x2 = x + 1;
+
+    for (int y = 0; y &lt; 3; ++y)
+    {
+        if (!m_FillCenter &amp;&amp; x == 1 &amp;&amp; y == 1)
+            continue;
+
+        int y2 = y + 1;
+
+
+        AddQuad(toFill,
+            new Vector2(s_VertScratch[x].x, s_VertScratch[y].y),
+            new Vector2(s_VertScratch[x2].x, s_VertScratch[y2].y),
+            color,
+            new Vector2(s_UVScratch[x].x, s_UVScratch[y].y),
+            new Vector2(s_UVScratch[x2].x, s_UVScratch[y2].y));
+    }
+}
+</code></pre><p>从下至上从左到右，总共九个矩形，逐个添加矩形AddQuad，AddQuad方法会把矩形的数据转化为两个三角形数据添加到VertexHelper中。</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/8.png"></p>
+<p>如图，显示模式为Slice九宫格时，最后Image组件实际上是生成了总共9个Quad四边形，18个三角形。</p>
+<h3 id="GenerateTiledSprite"><a href="#GenerateTiledSprite" class="headerlink" title="GenerateTiledSprite"></a>GenerateTiledSprite</h3><p>不想看了，几百行。</p>
+<h3 id="GenerateFilledSprite"><a href="#GenerateFilledSprite" class="headerlink" title="GenerateFilledSprite"></a>GenerateFilledSprite</h3><p>GenerateFilledSprite用于显示图片的一部分。Fill的方式有多种，这里只谈水平方向。</p>
+<pre><code>void GenerateFilledSprite(VertexHelper toFill, bool preserveAspect)
+{
+    ...
+    Vector4 v = GetDrawingDimensions(preserveAspect);
+    Vector4 outer = activeSprite != null ? Sprites.DataUtility.GetOuterUV(activeSprite) : Vector4.zero;
+    UIVertex uiv = UIVertex.simpleVert;
+    uiv.color = color;
+
+    float tx0 = outer.x;
+    float ty0 = outer.y;
+    float tx1 = outer.z;
+    float ty1 = outer.w;
+
+    // Horizontal and vertical filled sprites are simple -- just end the Image prematurely
+    if (m_FillMethod == FillMethod.Horizontal || m_FillMethod == FillMethod.Vertical)
+    {
+        if (fillMethod == FillMethod.Horizontal)
+        {
+            float fill = (tx1 - tx0) * m_FillAmount;
+
+            if (m_FillOrigin == 1)
+            {
+                v.x = v.z - (v.z - v.x) * m_FillAmount;
+                tx0 = tx1 - fill;
+            }
+            else
+            {
+                v.z = v.x + (v.z - v.x) * m_FillAmount;
+                tx1 = tx0 + fill;
+            }
+        }
+    }
+    s_Xy[0] = new Vector2(v.x, v.y);
+    s_Xy[1] = new Vector2(v.x, v.w);
+    s_Xy[2] = new Vector2(v.z, v.w);
+    s_Xy[3] = new Vector2(v.z, v.y);
+
+    s_Uv[0] = new Vector2(tx0, ty0);
+    s_Uv[1] = new Vector2(tx0, ty1);
+    s_Uv[2] = new Vector2(tx1, ty1);
+    s_Uv[3] = new Vector2(tx1, ty0);
+
+    AddQuad(...)
+}
+</code></pre><ul>
+<li>v 矩形左下角以及右上角两个顶点的位置数据</li>
+<li>outer 左下角右上角的uv数据</li>
+<li>m_FillAmount 表示填充率，类似于进度条的比例</li>
+<li>m_FillOrigin == 1 表示从右向左，m_FillOrigin == 0 表示从左向右。</li>
+</ul>
+<p>这一段计算是计算顶点的位置与uv。当m_FillOrigin == 0时，左边的顶点数据保持不变，相当于只需要修改右边顶点的位置与uv。</p>
+<pre><code>float fill = (ty1 - ty0) * m_FillAmount;
+v.z = v.x + (v.z - v.x) * m_FillAmount;
+tx1 = tx0 + fill;
+</code></pre><ul>
+<li>右边的位置等于宽度乘上比例再加上左边的位置。</li>
+<li>右边的uv同理，等于左边点的uv加上uv差乘上比例。</li>
+</ul>
+<h2 id="其他方法"><a href="#其他方法" class="headerlink" title="其他方法"></a>其他方法</h2><h3 id="PreserveSpriteAspectRatio保持比例"><a href="#PreserveSpriteAspectRatio保持比例" class="headerlink" title="PreserveSpriteAspectRatio保持比例"></a>PreserveSpriteAspectRatio保持比例</h3><pre><code>private void PreserveSpriteAspectRatio(ref Rect rect, Vector2 spriteSize)
+{
+    var spriteRatio = spriteSize.x / spriteSize.y;
+    var rectRatio = rect.width / rect.height;
+
+    if (spriteRatio &gt; rectRatio)
+    {
+        var oldHeight = rect.height;
+        rect.height = rect.width * (1.0f / spriteRatio);
+        rect.y += (oldHeight - rect.height) * rectTransform.pivot.y;
+    }
+    else
+    {
+        var oldWidth = rect.width;
+        rect.width = rect.height * spriteRatio;
+        rect.x += (oldWidth - rect.width) * rectTransform.pivot.x;
+    }
+}
+</code></pre><p>spriteRatio和rectRatio分别用来记录Sprite和RectTransform的比例。当调用这个函数的时候，说明两者的比例应该是要相等的。也就是等式 rect.width / rect.height = spriteSize.x / spriteSize.y 必须成立。Sprite资源无法修改。那么就必须修改RectTransform的数据。</p>
+<p>当Sprite在宽度上更加的”修长”时，rect.height = rect.width * ( spriteSize.y / spriteSize.x )，保持RectTransform宽度不变，修改高度，并调整rect.y 高度位置。高度上的计算同理。</p>
+<h3 id="pixelsPerUnit"><a href="#pixelsPerUnit" class="headerlink" title="pixelsPerUnit"></a>pixelsPerUnit</h3><pre><code>public float pixelsPerUnit
+{
+    get
+    {
+        float spritePixelsPerUnit = 100;
+        if (activeSprite)
+            spritePixelsPerUnit = activeSprite.pixelsPerUnit;
+
+        float referencePixelsPerUnit = 100;
+        if (canvas)
+            referencePixelsPerUnit = canvas.referencePixelsPerUnit;
+
+        return spritePixelsPerUnit / referencePixelsPerUnit;
+    }
+}
+</code></pre><p>这个字段其实自己也不是很了解，所以猜测一下意思。</p>
+<p>pixelsPerUnit翻译大致意思是每单位显示多少的像素。跟这个字段有关的地方在CanvasScaler里。在CanvasScaler中会设置参考值referencePixelsPerUnit为100，并赋值给canvas.referencePixelsPerUnit。Sprite的参考值也为100，两者相除为1。表示UI上的一个单位显示Sprite的一个像素点，CanvasScaler的注释如下</p>
+<pre><code>/// &lt;summary&gt;
+/// If a sprite has this &#39;Pixels Per Unit&#39; setting, then one pixel in the sprite will cover one unit in the UI.
+/// &lt;/summary&gt;
+public float referencePixelsPerUnit { get { return m_ReferencePixelsPerUnit; } set { m_ReferencePixelsPerUnit = value; } }
+</code></pre><h3 id="GetPixelAdjustedRect"><a href="#GetPixelAdjustedRect" class="headerlink" title="GetPixelAdjustedRect"></a>GetPixelAdjustedRect</h3><p>通过GetPixelAdjustedRect获得符合像素位置的矩形。也是看不到源码。所以稍微猜测一下。</p>
+<p>比如RectTransform在Inspector面板显示的数据左下角顶点为(100.6, 100.3)，右上角为xx。在显示的时候，需要将这个值转化为整数点，也就是像素点的位置，方便后续的渲染。</p>
+<p>(100.6, 100.3) 猜测可能是计算相邻的四个像素点的距离，最近的点即为PixelAdjusted的位置。如下ABCD即为P点的相邻四像素点，D点为P修改后的位置。</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-15-Image/9.png"></p>
+<h2 id="Rect"><a href="#Rect" class="headerlink" title="Rect"></a>Rect</h2><p>最后想提一下Rect这个数据结构。<a href="https://docs.unity3d.com/ScriptReference/Rect.html" target="_blank" rel="noopener">https://docs.unity3d.com/ScriptReference/Rect.html</a></p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th><a href="https://docs.unity3d.com/ScriptReference/Rect-center.html" target="_blank" rel="noopener">center</a></th>
+<th>The position of the center of the rectangle.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://docs.unity3d.com/ScriptReference/Rect-height.html" target="_blank" rel="noopener">height</a></td>
+<td>The height of the rectangle, measured from the Y position.</td>
+</tr>
+<tr>
+<td><a href="https://docs.unity3d.com/ScriptReference/Rect-max.html" target="_blank" rel="noopener">max</a></td>
+<td>The position of the maximum corner of the rectangle.</td>
+</tr>
+<tr>
+<td><a href="https://docs.unity3d.com/ScriptReference/Rect-min.html" target="_blank" rel="noopener">min</a></td>
+<td>The position of the minimum corner of the rectangle.</td>
+</tr>
+<tr>
+<td><a href="https://docs.unity3d.com/ScriptReference/Rect-position.html" target="_blank" rel="noopener">position</a></td>
+<td>The X and Y position of the rectangle.</td>
+</tr>
+<tr>
+<td><a href="https://docs.unity3d.com/ScriptReference/Rect-size.html" target="_blank" rel="noopener">size</a></td>
+<td>The width and height of the rectangle.</td>
+</tr>
+<tr>
+<td><a href="https://docs.unity3d.com/ScriptReference/Rect-width.html" target="_blank" rel="noopener">width</a></td>
+<td>The width of the rectangle, measured from the X position.</td>
+</tr>
+<tr>
+<td><a href="https://docs.unity3d.com/ScriptReference/Rect-x.html" target="_blank" rel="noopener">x</a></td>
+<td>The X coordinate of the rectangle.</td>
+</tr>
+<tr>
+<td><a href="https://docs.unity3d.com/ScriptReference/Rect-xMax.html" target="_blank" rel="noopener">xMax</a></td>
+<td>The maximum X coordinate of the rectangle.</td>
+</tr>
+<tr>
+<td><a href="https://docs.unity3d.com/ScriptReference/Rect-xMin.html" target="_blank" rel="noopener">xMin</a></td>
+<td>The minimum X coordinate of the rectangle.</td>
+</tr>
+<tr>
+<td><a href="https://docs.unity3d.com/ScriptReference/Rect-y.html" target="_blank" rel="noopener">y</a></td>
+<td>The Y coordinate of the rectangle.</td>
+</tr>
+<tr>
+<td><a href="https://docs.unity3d.com/ScriptReference/Rect-yMax.html" target="_blank" rel="noopener">yMax</a></td>
+<td>The maximum Y coordinate of the rectangle.</td>
+</tr>
+<tr>
+<td><a href="https://docs.unity3d.com/ScriptReference/Rect-yMin.html" target="_blank" rel="noopener">yMin</a></td>
+<td>The minimum Y coordinate of the rectangle.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>不管属性的set，在调用属性的get的时候</p>
+<ul>
+<li>min = position</li>
+<li>x = xMin , y = yMin</li>
+<li>… </li>
+</ul>
+<p>很多字段是相等或者加减后相等。感觉只保留其中几个就ok了，xMin/xMax/yMin/yMax，其他的xy position统统砍掉。反正也是一个意思。</p>
+<p>在官方的参考文档中，是以左上角为坐标原点，右下为xy的正轴，OpenGL标准。不过在自己MacBook的Unity中设置RectTransform的位置是以左下角为坐标原点，右上为xy正轴，Direct3D标准。所以上述的图片可能和官方文档里的图片的矩形有出入。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码11-ObjectPool/" rel="next" title="UGUI源码11-ObjectPool">
+                <i class="fa fa-chevron-left"></i> UGUI源码11-ObjectPool
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码2-StandaloneInputModule/" rel="prev" title="UGUI源码2-StandaloneInputModule">
+                UGUI源码2-StandaloneInputModule <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Sprite"><span class="nav-number">2.</span> <span class="nav-text">Sprite</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#计算顶点数据-OnPopulateMesh"><span class="nav-number">3.</span> <span class="nav-text">计算顶点数据-OnPopulateMesh</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#GenerateSimpleSprite"><span class="nav-number">3.1.</span> <span class="nav-text">GenerateSimpleSprite</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GenerateSlicedSprite"><span class="nav-number">3.2.</span> <span class="nav-text">GenerateSlicedSprite</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GenerateTiledSprite"><span class="nav-number">3.3.</span> <span class="nav-text">GenerateTiledSprite</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GenerateFilledSprite"><span class="nav-number">3.4.</span> <span class="nav-text">GenerateFilledSprite</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#其他方法"><span class="nav-number">4.</span> <span class="nav-text">其他方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#PreserveSpriteAspectRatio保持比例"><span class="nav-number">4.1.</span> <span class="nav-text">PreserveSpriteAspectRatio保持比例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#pixelsPerUnit"><span class="nav-number">4.2.</span> <span class="nav-text">pixelsPerUnit</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GetPixelAdjustedRect"><span class="nav-number">4.3.</span> <span class="nav-text">GetPixelAdjustedRect</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Rect"><span class="nav-number">5.</span> <span class="nav-text">Rect</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
