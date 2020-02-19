@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言对于UI画布上的可视化元素，包括Image/RawImage/Text，存在一个共同的基类Graphic。对于事件系统，每一个可执行操作的元素，例如Button/Toggle等，也存在一个基类Selectable。 本文会谈谈Selectable的实现。 Selectable一、Selectable接口、主要变量public class Selectable :     UIBehaviour">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码4-Selectable">
+<meta property="og:url" content="http://yoursite.com/2020/01/29/2020-01-29-UGUI源码4-Selectable/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言对于UI画布上的可视化元素，包括Image/RawImage/Text，存在一个共同的基类Graphic。对于事件系统，每一个可执行操作的元素，例如Button/Toggle等，也存在一个基类Selectable。 本文会谈谈Selectable的实现。 Selectable一、Selectable接口、主要变量public class Selectable :     UIBehaviour">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-4-Selectable/1.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-4-Selectable/2.png">
+<meta property="og:updated_time" content="2020-02-19T09:12:26.333Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码4-Selectable">
+<meta name="twitter:description" content="前言对于UI画布上的可视化元素，包括Image/RawImage/Text，存在一个共同的基类Graphic。对于事件系统，每一个可执行操作的元素，例如Button/Toggle等，也存在一个基类Selectable。 本文会谈谈Selectable的实现。 Selectable一、Selectable接口、主要变量public class Selectable :     UIBehaviour">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-4-Selectable/1.png">
+  <link rel="canonical" href="http://yoursite.com/2020/01/29/2020-01-29-UGUI源码4-Selectable/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码4-Selectable | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/29/2020-01-29-UGUI源码4-Selectable/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码4-Selectable
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-01-29 00:00:00" itemprop="dateCreated datePublished" datetime="2020-01-29T00:00:00+08:00">2020-01-29</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 17:12:26" itemprop="dateModified" datetime="2020-02-19T17:12:26+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>对于UI画布上的可视化元素，包括Image/RawImage/Text，存在一个共同的基类Graphic。对于事件系统，每一个可执行操作的元素，例如Button/Toggle等，也存在一个基类Selectable。 本文会谈谈Selectable的实现。</p>
+<h2 id="Selectable"><a href="#Selectable" class="headerlink" title="Selectable"></a>Selectable</h2><h3 id="一、Selectable接口、主要变量"><a href="#一、Selectable接口、主要变量" class="headerlink" title="一、Selectable接口、主要变量"></a>一、Selectable接口、主要变量</h3><pre><code>public class Selectable :
+    UIBehaviour,
+    IMoveHandler,
+    IPointerDownHandler, IPointerUpHandler,
+    IPointerEnterHandler, IPointerExitHandler,
+    ISelectHandler, IDeselectHandler
+{
+    /// List of all the selectable objects currently active in the scene.
+    private static List&lt;Selectable&gt; s_List = new List&lt;Selectable&gt;();
+    public static List&lt;Selectable&gt; allSelectables { get { return s_List; } }
+
+    ...
+
+    private Graphic m_TargetGraphic;
+}
+</code></pre><p>Selectable实现了许多操作的接口，包括移动，按下抬起，Enter/Exit，Select/Deselect。</p>
+<p>s_List储存了所有active状态为true的Selectable。</p>
+<p>一个Selectable往往带有一个TargetGraphic，例如Button的TargetGraphic就是按钮对应的图案。</p>
+<h3 id="二、Navigation-导航"><a href="#二、Navigation-导航" class="headerlink" title="二、Navigation 导航"></a>二、Navigation 导航</h3><p>说实话，在Selectable这个类中看到Navigation其实一开始并不理解什么意思，操作跟导航能有什么关系呢？其实可以这么理解，当我们处于方向键操作的时候，可以通过上下左右的操作，从当前按钮移动至下一个按钮，就是从一个Selectable移动到下一个Selectable，只不过这些按钮可能是Button或者其他操作子类。例如按下左方向键的时候，就从当前按钮向左导航至下一个按钮。这就是Navigation导航起名的由来。</p>
+<p>在前文StandaloneInputModule标准输入模块中，提到过如下代码</p>
+<pre><code>public override void Process()
+{
+    if (!eventSystem.isFocused &amp;&amp; ShouldIgnoreEventsOnNoFocus())
+        return;
+
+    bool usedEvent = SendUpdateEventToSelectedObject();
+
+    if (eventSystem.sendNavigationEvents)
+    {
+        if (!usedEvent)
+            usedEvent |= SendMoveEventToSelectedObject();
+
+        if (!usedEvent)
+            SendSubmitEventToSelectedObject();
+    }
+
+    // touch needs to take precedence because of the mouse emulation layer
+    if (!ProcessTouchEvents() &amp;&amp; input.mousePresent)
+        ProcessMouseEvent();
+}
+</code></pre><p>在Process函数中SendMoveEventToSelectedObject、SendSubmitEventToSelectedObject用来处理上下左右的移动以及Submit/Cancel事件。</p>
+<p>EventSystem会缓存一个当前选中的对象，也就是一个Selectable对象。SendMoveEventToSelectedObject的操作对象就是事件系统缓存的这个对象。当按下方向键的时候，缓存的Selectable对象就会调用对应的OnMove事件。Submit/Cancel同理。OnMove函数会根据方向的不同，导航至下一个方向的Selectable。</p>
+<pre><code>public virtual void OnMove(AxisEventData eventData)
+{
+    switch (eventData.moveDir)
+    {
+        case MoveDirection.Right:
+            Navigate(eventData, FindSelectableOnRight());
+            break;
+
+        case MoveDirection.Up:
+            Navigate(eventData, FindSelectableOnUp());
+            break;
+
+        case MoveDirection.Left:
+            Navigate(eventData, FindSelectableOnLeft());
+            break;
+
+        case MoveDirection.Down:
+            Navigate(eventData, FindSelectableOnDown());
+            break;
+    }
+}
+
+// Convenience function -- change the selection to the specified object if it&#39;s not null and happens to be active.
+void Navigate(AxisEventData eventData, Selectable sel)
+{
+    if (sel != null &amp;&amp; sel.IsActive())
+        eventData.selectedObject = sel.gameObject;
+}
+</code></pre><p>FindSelectableOnRight四个函数 就是用来查找当前Selectable对应方向的下一个Selectable。当查找到后，就根据方向的不同，就会导航至对应方向的下一个Selectable。</p>
+<p>在Unity中，可以为每一个Selectable设定Navigation的策略。如下</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-4-Selectable/1.png"></p>
+<p>Navigation可以选择发生Move事件的时候，如何导航至下一个Selectable。</p>
+<ol>
+<li>None表明不能切换到下一个按钮</li>
+<li>Horizontal、Vertical表明只能竖直或者水平方向上的进行切换Selectable</li>
+<li>Automatic 表明可在竖直或者水平切换Selectable</li>
+<li>Explicit 表明应该对当前按钮的四个方向分别专门指定一个Selectable，当发生切换的时候，直接跳转至对应Selectable</li>
+</ol>
+<p>代码中有对应的枚举字段。</p>
+<pre><code>public enum Mode
+{
+    /// No navigation is allowed from this object.
+    None        = 0,
+
+    /// Horizontal Navigation.
+    /// Navigation should only be allowed when left / right move events happen.
+    Horizontal  = 1,
+
+    /// Vertical navigation.
+    /// Navigation should only be allowed when up / down move events happen.
+    Vertical    = 2,
+
+    /// Automatic navigation.
+    /// Attempt to find the &#39;best&#39; next object to select. This should be based on a sensible heuristic.
+
+    Automatic   = 3,
+
+    /// Explicit navigation.
+    /// User should explicitly specify what is selected by each move event.
+    Explicit    = 4,
+}
+</code></pre><p>以一个FindSelectableOnXX为例：</p>
+<pre><code>public virtual Selectable FindSelectableOnDown()
+{
+    if (m_Navigation.mode == Navigation.Mode.Explicit)
+    {
+        return m_Navigation.selectOnDown;
+    }
+    if ((m_Navigation.mode &amp; Navigation.Mode.Vertical) != 0)
+    {
+        return FindSelectable(transform.rotation * Vector3.down);
+    }
+    return null;
+}
+</code></pre><p>当mode为Explicit指定模式，那么直接跳转至指定的Selectable即可。否则与对应方向进行比较，如果允许对应方向切换才可以切换。这里利用了位操作符 &amp; 进行判断。Horizontal的二进制表示为 01，Vertical为10，也就是从右至左，第一位表示允许水平方向的切换，第二位表示允许竖直方向的切换。Automatic的值的二进制表示位11，与Vertical和Horizontal &amp;操作后的值均不等于0，也就是Automatic表示可同时在竖直或者水平切换Selectable。</p>
+<h3 id="三、状态切换及对应的表现"><a href="#三、状态切换及对应的表现" class="headerlink" title="三、状态切换及对应的表现"></a>三、状态切换及对应的表现</h3><pre><code>/// &lt;summary&gt;
+/// An enumeration of selected states of objects
+/// &lt;/summary&gt;
+protected enum SelectionState
+{
+    /// &lt;summary&gt;
+    /// The UI object can be selected.
+    /// &lt;/summary&gt;
+    Normal,
+
+    /// &lt;summary&gt;
+    /// The UI object is highlighted.
+    /// &lt;/summary&gt;
+    Highlighted,
+
+    /// &lt;summary&gt;
+    /// The UI object is pressed.
+    /// &lt;/summary&gt;
+    Pressed,
+
+    /// &lt;summary&gt;
+    /// The UI object cannot be selected.
+    /// &lt;/summary&gt;
+    Disabled
+}
+</code></pre><p>每个Selectable分为四种状态</p>
+<ol>
+<li>Normal：正常状态，未被选中</li>
+<li>Highlighted：多种情况都属于Highlighted，例如其中一种，Pointer Enter的时候，也就是鼠标移动进入这个Selectable的范围的时候</li>
+<li>Pressed：处于按压状态的时候，也就是从PointerDown开始到Released之前</li>
+<li>Disabled：禁用</li>
+</ol>
+<p>Selectable会记录当前的SelectionState，并且当发生操作的时候，会记录操作的状态。Selectable会根据操作状态在这几个SelectionState之间进行切换。</p>
+<p>例如Selectable实现IPointerDown接口，当触发OnPointerDown方法的时候，就会标记操作状态isPointerDown = true；反之OnPointerUp就标记isPointerDown = false；</p>
+<ul>
+<li>OnPointerDown/Up -&gt; isPointerDown = true/false</li>
+<li>OnPointerEnter/Exit -&gt; isPointerInside = true/false</li>
+<li>OnSelect/OnDeselect -&gt; hasSelection = true/false</li>
+</ul>
+<p>记录好操作的状态后，接着调用EvaluateAndTransitionToSelectionState。这个函数会根据操作的状态，让Selectable在不同的SelectionState之间进行切换。首先通过UpdateSelectionState更新当前的SelectionState，随后InternalEvaluateAndTransitionToSelectionState从当前SelectionState转换至新的SelectionState。</p>
+<pre><code>// Change the button to the correct state
+private void EvaluateAndTransitionToSelectionState(BaseEventData eventData)
+{
+    if (!IsActive() || !IsInteractable())
+        return;
+
+    UpdateSelectionState(eventData);
+    InternalEvaluateAndTransitionToSelectionState(false);
+}
+</code></pre><pre><code>/// &lt;summary&gt;
+/// Internally update the selection state of the Selectable.
+/// &lt;/summary&gt;
+protected void UpdateSelectionState(BaseEventData eventData)
+{
+    if (IsPressed())
+    {
+        m_CurrentSelectionState = SelectionState.Pressed;
+        return;
+    }
+
+    if (IsHighlighted(eventData))
+    {
+        m_CurrentSelectionState = SelectionState.Highlighted;
+        return;
+    }
+
+    m_CurrentSelectionState = SelectionState.Normal;
+}
+
+private void InternalEvaluateAndTransitionToSelectionState(bool instant)
+{
+    var transitionState = m_CurrentSelectionState;
+    if (IsActive() &amp;&amp; !IsInteractable())
+        transitionState = SelectionState.Disabled;
+    DoStateTransition(transitionState, instant);
+}
+</code></pre><p>SelectionState的切换往往涉及视觉的表现，DoStateTransition是用来处理视觉表现切换的函数。</p>
+<pre><code>/// &lt;summary&gt;
+/// Transition the Selectable to the entered state.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;state&quot;&gt;State to transition to&lt;/param&gt;
+/// &lt;param name=&quot;instant&quot;&gt;Should the transition occur instantly.&lt;/param&gt;
+protected virtual void DoStateTransition(SelectionState state, bool instant)
+{
+    Color tintColor;
+    Sprite transitionSprite;
+    string triggerName;
+
+    switch (state)
+    {
+        case SelectionState.Normal:
+            tintColor = m_Colors.normalColor;
+            transitionSprite = null;
+            triggerName = m_AnimationTriggers.normalTrigger;
+            break;
+        case SelectionState.Highlighted:
+            tintColor = m_Colors.highlightedColor;
+            transitionSprite = m_SpriteState.highlightedSprite;
+            triggerName = m_AnimationTriggers.highlightedTrigger;
+            break;
+        case SelectionState.Pressed:
+            tintColor = m_Colors.pressedColor;
+            transitionSprite = m_SpriteState.pressedSprite;
+            triggerName = m_AnimationTriggers.pressedTrigger;
+            break;
+        case SelectionState.Disabled:
+            tintColor = m_Colors.disabledColor;
+            transitionSprite = m_SpriteState.disabledSprite;
+            triggerName = m_AnimationTriggers.disabledTrigger;
+            break;
+        default:
+            tintColor = Color.black;
+            transitionSprite = null;
+            triggerName = string.Empty;
+            break;
+    }
+
+    if (gameObject.activeInHierarchy)
+    {
+        switch (m_Transition)
+        {
+            case Transition.ColorTint:
+                StartColorTween(tintColor * m_Colors.colorMultiplier, instant);
+                break;
+            case Transition.SpriteSwap:
+                DoSpriteSwap(transitionSprite);
+                break;
+            case Transition.Animation:
+                TriggerAnimation(triggerName);
+                break;
+        }
+    }
+}
+</code></pre><p>表现切换也是分为三种，ColorTint颜色切换、SpriteSwap图片切换、Animation动画。DoStateTransition首先更新SelectionState的切换后数据，随后在根据不同的切换类型，根据数据进行修改。</p>
+<p>表现切换可以在Inspector面板中的Transition进行设置。例如当为ColorTint的时候，Inspector面板会出现额外的信息，通过修改这些数据，在做SelectionState切换的时候，DoStateTransition就会调用StartColorTween，进行颜色的过渡。</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-4-Selectable/2.png"></p>
+<p>Ps：当gameObject disable的时候清理状态</p>
+<pre><code>protected virtual void InstantClearState()
+{
+    string triggerName = m_AnimationTriggers.normalTrigger;
+
+    isPointerInside = false;
+    isPointerDown = false;
+    hasSelection = false;
+
+    switch (m_Transition)
+    {
+        case Transition.ColorTint:
+            StartColorTween(Color.white, true);
+            break;
+        case Transition.SpriteSwap:
+            DoSpriteSwap(null);
+            break;
+        case Transition.Animation:
+            TriggerAnimation(triggerName);
+            break;
+    }
+}
+</code></pre><h3 id="四、OnCanvasGroupChanged"><a href="#四、OnCanvasGroupChanged" class="headerlink" title="四、OnCanvasGroupChanged"></a>四、OnCanvasGroupChanged</h3><p>CanvasGroup组件能够对一组UI进行整体操作，例如禁用Interactable，设置alpha透明度等等。当Selectable所处的CanvasGroup发生变化的时候，需要重新判断CanvasGroup的Interactable。</p>
+<p>关于CanvasGroup将在后续部分进行补充。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/01/18/2020-01-18-UGUI源码3-ExecuteEvents/" rel="next" title="UGUI源码3-ExecuteEvents">
+                <i class="fa fa-chevron-left"></i> UGUI源码3-ExecuteEvents
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/01/30/2020-01-30-UGUI源码5-Button&Toggle/" rel="prev" title="UGUI源码5-Button&Toggle">
+                UGUI源码5-Button&Toggle <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Selectable"><span class="nav-number">2.</span> <span class="nav-text">Selectable</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#一、Selectable接口、主要变量"><span class="nav-number">2.1.</span> <span class="nav-text">一、Selectable接口、主要变量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二、Navigation-导航"><span class="nav-number">2.2.</span> <span class="nav-text">二、Navigation 导航</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#三、状态切换及对应的表现"><span class="nav-number">2.3.</span> <span class="nav-text">三、状态切换及对应的表现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#四、OnCanvasGroupChanged"><span class="nav-number">2.4.</span> <span class="nav-text">四、OnCanvasGroupChanged</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

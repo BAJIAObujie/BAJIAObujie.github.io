@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言UIRoot总共有三个组件，包括RootCanvas，以及Canvas对应的GraphicRaycater。最后一个组件就是CanvasScaler。CanvasScaler是用来处理画布大小与实际设备的屏幕大小比例的一个组件。 CanvasScaler1、 /// &amp;lt;summary&amp;gt; /// The Canvas Scaler component is used for cont">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码17-CanvasScaler">
+<meta property="og:url" content="http://yoursite.com/2020/02/12/2020-02-12-UGUI源码17-CanvasScaler/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言UIRoot总共有三个组件，包括RootCanvas，以及Canvas对应的GraphicRaycater。最后一个组件就是CanvasScaler。CanvasScaler是用来处理画布大小与实际设备的屏幕大小比例的一个组件。 CanvasScaler1、 /// &amp;lt;summary&amp;gt; /// The Canvas Scaler component is used for cont">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-02-19T09:18:06.675Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码17-CanvasScaler">
+<meta name="twitter:description" content="前言UIRoot总共有三个组件，包括RootCanvas，以及Canvas对应的GraphicRaycater。最后一个组件就是CanvasScaler。CanvasScaler是用来处理画布大小与实际设备的屏幕大小比例的一个组件。 CanvasScaler1、 /// &amp;lt;summary&amp;gt; /// The Canvas Scaler component is used for cont">
+  <link rel="canonical" href="http://yoursite.com/2020/02/12/2020-02-12-UGUI源码17-CanvasScaler/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码17-CanvasScaler | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/12/2020-02-12-UGUI源码17-CanvasScaler/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码17-CanvasScaler
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-12 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-12T00:00:00+08:00">2020-02-12</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 17:18:06" itemprop="dateModified" datetime="2020-02-19T17:18:06+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>UIRoot总共有三个组件，包括RootCanvas，以及Canvas对应的GraphicRaycater。最后一个组件就是CanvasScaler。CanvasScaler是用来处理画布大小与实际设备的屏幕大小比例的一个组件。</p>
+<h2 id="CanvasScaler"><a href="#CanvasScaler" class="headerlink" title="CanvasScaler"></a>CanvasScaler</h2><p>1、</p>
+<pre><code>/// &lt;summary&gt;
+/// The Canvas Scaler component is used for controlling the overall scale and pixel density of UI elements in the Canvas. This scaling affects everything under the Canvas, including font sizes and image borders.
+/// &lt;/summary&gt;
+public class CanvasScaler : UIBehaviour
+{
+   ...
+}
+</code></pre><p>CanvasScaler组件是用来控制Canvas下所有UIElement的大小以及像素密度的组件。这个缩放会影响所有UIElement，包括字体大小以及图像的边界。</p>
+<p>2、</p>
+<pre><code>[Tooltip(&quot;The resolution the UI layout is designed for. If the screen resolution is larger, the UI will be scaled up, and if it&#39;s smaller, the UI will be scaled down. This is done in accordance with the Screen Match Mode.&quot;)]
+[SerializeField] protected Vector2 m_ReferenceResolution = new Vector2(800, 600);
+</code></pre><p>ReferenceResolution</p>
+<p>3、</p>
+<pre><code>/// &lt;summary&gt;
+/// Determines how UI elements in the Canvas are scaled.
+/// &lt;/summary&gt;
+public enum ScaleMode
+{
+    /// &lt;summary&gt;
+    /// Using the Constant Pixel Size mode, positions and sizes of UI elements are specified in pixels on the screen.
+    /// &lt;/summary&gt;
+    ConstantPixelSize,
+
+    /// &lt;summary&gt;
+    /// Using the Scale With Screen Size mode, positions and sizes can be specified according to the pixels of a specified reference resolution.
+    /// If the current screen resolution is larger than the reference resolution, the Canvas will keep having only the resolution of the reference resolution, but will scale up in order to fit the screen. If the current screen resolution is smaller than the reference resolution, the Canvas will similarly be scaled down to fit.
+    /// &lt;/summary&gt;
+    ScaleWithScreenSize,
+
+    /// &lt;summary&gt;
+    /// Using the Constant Physical Size mode, positions and sizes of UI elements are specified in physical units, such as millimeters, points, or picas.
+    /// &lt;/summary&gt;
+    ConstantPhysicalSize
+}
+</code></pre><p>ScaleMode缩放模式包括三种</p>
+<ol>
+<li>ConstantPixelSize 一个常量，ReferenceResolution乘上这个常量后最后的大小就是画布的大小，画布可能会超出屏幕。一般这个还是比较少用的。</li>
+<li>ScaleWithScreenSize 根据屏幕大小进行缩放。</li>
+<li>ConstantPhysicalSize UI元素使用物理单位。</li>
+</ol>
+<p>4、主函数，根据画布RenderMode以及ScaleMode使用不同的处理逻辑。</p>
+<pre><code>///&lt;summary&gt;
+///Method that handles calculations of canvas scaling.
+///&lt;/summary&gt;
+protected virtual void Handle()
+{
+    if (m_Canvas == null || !m_Canvas.isRootCanvas)
+        return;
+
+    if (m_Canvas.renderMode == RenderMode.WorldSpace)
+    {
+        HandleWorldCanvas();
+        return;
+    }
+
+    switch (m_UiScaleMode)
+    {
+        case ScaleMode.ConstantPixelSize: HandleConstantPixelSize(); break;
+        case ScaleMode.ScaleWithScreenSize: HandleScaleWithScreenSize(); break;
+        case ScaleMode.ConstantPhysicalSize: HandleConstantPhysicalSize(); break;
+    }
+}
+</code></pre><h3 id="HandleConstantPixelSize对元素直接设置一个缩放值"><a href="#HandleConstantPixelSize对元素直接设置一个缩放值" class="headerlink" title="HandleConstantPixelSize对元素直接设置一个缩放值"></a>HandleConstantPixelSize对元素直接设置一个缩放值</h3><pre><code>/// &lt;summary&gt;
+/// Handles canvas scaling for a constant pixel size.
+/// &lt;/summary&gt;
+protected virtual void HandleConstantPixelSize()
+{
+    SetScaleFactor(m_ScaleFactor);
+    SetReferencePixelsPerUnit(m_ReferencePixelsPerUnit);
+}
+</code></pre><h3 id="HandleScaleWithScreenSize"><a href="#HandleScaleWithScreenSize" class="headerlink" title="HandleScaleWithScreenSize"></a>HandleScaleWithScreenSize</h3><pre><code>/// &lt;summary&gt;
+/// Handles canvas scaling that scales with the screen size.
+/// &lt;/summary&gt;
+protected virtual void HandleScaleWithScreenSize()
+{
+    ... ...
+
+    float scaleFactor = 0;
+    switch (m_ScreenMatchMode)
+    {
+        case ScreenMatchMode.MatchWidthOrHeight:
+        {
+            ...
+        }
+        case ScreenMatchMode.Expand:
+        {
+            ...
+        }
+        case ScreenMatchMode.Shrink:
+        {
+            ...
+        }
+    }
+
+    SetScaleFactor(scaleFactor);
+    SetReferencePixelsPerUnit(m_ReferencePixelsPerUnit);
+}
+</code></pre><p>根据ScaleMode的不同会计算出scaleFactor缩放比例以及m_ReferencePixelsPerUnit，并赋值。</p>
+<pre><code>case ScreenMatchMode.MatchWidthOrHeight:
+{
+    // We take the log of the relative width and height before taking the average.
+    // Then we transform it back in the original space.
+    // the reason to transform in and out of logarithmic space is to have better behavior.
+    // If one axis has twice resolution and the other has half, it should even out if widthOrHeight value is at 0.5.
+    // In normal space the average would be (0.5 + 2) / 2 = 1.25
+    // In logarithmic space the average is (-1 + 1) / 2 = 0
+    float logWidth = Mathf.Log(screenSize.x / m_ReferenceResolution.x, kLogBase);
+    float logHeight = Mathf.Log(screenSize.y / m_ReferenceResolution.y, kLogBase);
+    float logWeightedAverage = Mathf.Lerp(logWidth, logHeight, m_MatchWidthOrHeight);
+    scaleFactor = Mathf.Pow(kLogBase, logWeightedAverage);
+    break;
+}
+</code></pre><p>相当于做一个对数的处理</p>
+<p>屏幕宽度与参考宽度做对数处理得到logWidth，同理得logHeight。在MatchWidthOrHeight模式下，可以设置一个比例，这个比例将在logWidth与logHeight之间进行插值。插值后的结果再次作为kLogBase的幂。</p>
+<p>当比例m_MatchWidthOrHeight == 0 的时候</p>
+<p>scaleFactor = screenSize.x / m_ReferenceResolution.x</p>
+<p>屏幕将优先进行宽度的匹配，不考虑高度的匹配。宽度被缩放至屏幕大小，高度同比例缩放，有可能导致高度超出屏幕高度。</p>
+<p>当比例m_MatchWidthOrHeight == 1 的时候</p>
+<p>scaleFactor = screenSize.y / m_ReferenceResolution.y</p>
+<p>同理有可能导致宽度超出屏幕宽度。</p>
+<pre><code>case ScreenMatchMode.Expand:
+{
+    scaleFactor = Mathf.Min(screenSize.x / m_ReferenceResolution.x, screenSize.y / m_ReferenceResolution.y);
+    break;
+}
+case ScreenMatchMode.Shrink:
+{
+    scaleFactor = Mathf.Max(screenSize.x / m_ReferenceResolution.x, screenSize.y / m_ReferenceResolution.y);
+    break;
+}
+</code></pre><p>Expand取缩放比例的最小值。比如屏幕1920 <em> 1080，参考宽度为960 </em> 600，那么宽度比例为2:1，高度比例为9:5。高度比例较少，那么缩放值就会取1.8。其实可以这么理解，在Canvas画布逐渐放大的过程中，宽度或者高度谁先达到屏幕宽高，那么停止缩放。也就是屏幕总是能够容纳下Canvas。</p>
+<p>Shrink取缩放比例的最大值。和MatchWidthOrHeight一样，有可能导致超出屏幕的问题。</p>
+<h3 id="HandleConstantPhysicalSize"><a href="#HandleConstantPhysicalSize" class="headerlink" title="HandleConstantPhysicalSize"></a>HandleConstantPhysicalSize</h3><p>没用上过、略。</p>
+<p>做一个图来显示切换的吧。</p>
+<p>如图，假设内层矩形为参考分辨率ReferenceResolution。外层矩形为实际屏幕的分辨率。</p>
+<p>让我们按照三种缩放模式来比较。</p>
+<p>首先第二种，宽高去最小，也就是这样</p>
+<p>第三种最大也就是这样</p>
+<p>第一种 两者之间变化，只不过这个变化并非线性插值，而至对数变化。</p>
+<p>不过问题也不是很大。</p>
+<p>一般都是用第二种。</p>
+<p>Reference Pixels Per Unit</p>
+<p>每单元里有多少像素，默认都是100</p>
+<p>Image里默认也是100.</p>
+<p>如果把图片里的改到10，那么本来一单元的内容，现在需要10单元。也就是图片会放大10倍</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/11/2020-02-11-UGUI源码16-射线投射/" rel="next" title="UGUI源码16-射线投射">
+                <i class="fa fa-chevron-left"></i> UGUI源码16-射线投射
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/13/2020-02-13-UGUI源码18-IMeshModifier/" rel="prev" title="UGUI源码18-IMeshModifier">
+                UGUI源码18-IMeshModifier <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CanvasScaler"><span class="nav-number">2.</span> <span class="nav-text">CanvasScaler</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#HandleConstantPixelSize对元素直接设置一个缩放值"><span class="nav-number">2.1.</span> <span class="nav-text">HandleConstantPixelSize对元素直接设置一个缩放值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HandleScaleWithScreenSize"><span class="nav-number">2.2.</span> <span class="nav-text">HandleScaleWithScreenSize</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HandleConstantPhysicalSize"><span class="nav-number">2.3.</span> <span class="nav-text">HandleConstantPhysicalSize</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
