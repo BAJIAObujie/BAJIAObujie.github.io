@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言在上文EventSystem中，EventSystem调用了BaseInputModule的process函数，将输入的部分交给了输入模块去处理。根据处理流程的不一样，开发者可以实现不同的BaseInputModule子类，并重写process函数。Unity则是提供了默认的StandaloneInputModule类。这一篇文章先来了解BaseInputModule的继承结构，随后以proc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码2-StandaloneInputModule">
+<meta property="og:url" content="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码2-StandaloneInputModule/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言在上文EventSystem中，EventSystem调用了BaseInputModule的process函数，将输入的部分交给了输入模块去处理。根据处理流程的不一样，开发者可以实现不同的BaseInputModule子类，并重写process函数。Unity则是提供了默认的StandaloneInputModule类。这一篇文章先来了解BaseInputModule的继承结构，随后以proc">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-02-19T06:25:11.679Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码2-StandaloneInputModule">
+<meta name="twitter:description" content="前言在上文EventSystem中，EventSystem调用了BaseInputModule的process函数，将输入的部分交给了输入模块去处理。根据处理流程的不一样，开发者可以实现不同的BaseInputModule子类，并重写process函数。Unity则是提供了默认的StandaloneInputModule类。这一篇文章先来了解BaseInputModule的继承结构，随后以proc">
+  <link rel="canonical" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码2-StandaloneInputModule/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码2-StandaloneInputModule | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码2-StandaloneInputModule/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码2-StandaloneInputModule
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:25:11" itemprop="dateModified" datetime="2020-02-19T14:25:11+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在上文EventSystem中，EventSystem调用了BaseInputModule的process函数，将输入的部分交给了输入模块去处理。根据处理流程的不一样，开发者可以实现不同的BaseInputModule子类，并重写process函数。Unity则是提供了默认的StandaloneInputModule类。这一篇文章先来了解BaseInputModule的继承结构，随后以process函数为入口，继续了解事件系统。</p>
+<h2 id="BaseInputModule继承结构"><a href="#BaseInputModule继承结构" class="headerlink" title="BaseInputModule继承结构"></a>BaseInputModule继承结构</h2><ul>
+<li>BaseInputModule<ul>
+<li>PointerInputModule<ul>
+<li>StandaloneInputModule</li>
+<li>TouchInputModule （Obsolete）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>BaseInputModule作为基类，定义了各种接口以及变量，由子类去负责具体的逻辑实现。</p>
+<p>用户的各种操作都可以当作是点的操作，例如鼠标点击或者手指触屏相当于点的生成。鼠标拖动或者手指拖动相当于点的拖动。所以PointerInputModule继承自BaseInputModule，并且定义了点输入相关的变量、方法。</p>
+<p>以上两类都是抽象类，并不能直接使用，Unity提供的可以直接使用的默认输入类是StandaloneInputModule。StandaloneInputModule继承自PointerInputModule，实现了process函数，用来处理用户输入。同样继承自PointerInputModule还有TouchInputModule，但在UGUI代码中已经被标记为Obsolete。其功能已经合并到了StandaloneInputModule，所以StandaloneInputModule包含有鼠标操作的方法，也有Touch触屏的相关方法。</p>
+<p>本篇文章会简单介绍BaseInputModule与PointerInputModule。最后在从StandaloneInputModule的process函数开始，介绍StandaloneInputModule是如何处理游戏中输入与事件处理的相关操作。其中在StandaloneInputModule会用到一些基类的方法，为了说明的连贯性，这些方法将主要在StandaloneInputModule中说明。</p>
+<h3 id="BaseInputModule"><a href="#BaseInputModule" class="headerlink" title="BaseInputModule"></a>BaseInputModule</h3><p>BaseInputModule定义了输入模块的一些函数以及变量。</p>
+<pre><code>public abstract class BaseInputModule : UIBehaviour
+{
+    [NonSerialized]
+    protected List&lt;RaycastResult&gt; m_RaycastResultCache = new List&lt;RaycastResult&gt;();
+    private EventSystem m_EventSystem;
+}
+</code></pre><ul>
+<li>m_RaycastResultCache 用来缓存射线投射后的取得的结果</li>
+<li>m_EventSystem 是当前同物体下的EventSystem组件。</li>
+</ul>
+<p>AxisEventData 轴向相关的数据</p>
+<pre><code>private AxisEventData m_AxisEventData;
+
+/// &lt;summary&gt;
+/// Given some input data generate an AxisEventData that can be used by the event system.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;x&quot;&gt;X movement.&lt;/param&gt;
+/// &lt;param name=&quot;y&quot;&gt;Y movement.&lt;/param&gt;
+/// &lt;param name=&quot;deadZone&quot;&gt;Dead zone.&lt;/param&gt;
+protected virtual AxisEventData GetAxisEventData(float x, float y, float moveDeadZone)
+{
+    if (m_AxisEventData == null)
+        m_AxisEventData = new AxisEventData(eventSystem);
+
+    m_AxisEventData.Reset();
+    m_AxisEventData.moveVector = new Vector2(x, y);
+    m_AxisEventData.moveDir = DetermineMoveDirection(x, y, moveDeadZone);
+    return m_AxisEventData;
+}
+</code></pre><p>BaseEventData </p>
+<pre><code>private BaseEventData m_BaseEventData;
+/// &lt;summary&gt;
+/// Generate a BaseEventData that can be used by the EventSystem.
+/// &lt;/summary&gt;
+protected virtual BaseEventData GetBaseEventData()
+{
+    if (m_BaseEventData == null)
+        m_BaseEventData = new BaseEventData(eventSystem);
+
+    m_BaseEventData.Reset();
+    return m_BaseEventData;
+}
+</code></pre><p>EventSystem调用Process接口处理输入以及事件。由子类去实现这个方法。</p>
+<pre><code>/// &lt;summary&gt;
+/// Process the current tick for the module.
+/// &lt;/summary&gt;
+public abstract void Process();
+</code></pre><p>BaseInputModule的每帧更新函数，由EventSystem驱动。</p>
+<pre><code>/// &lt;summary&gt;
+/// Update the internal state of the Module.
+/// &lt;/summary&gt;
+public virtual void UpdateModule()
+{}
+</code></pre><h3 id="PointerInputModule"><a href="#PointerInputModule" class="headerlink" title="PointerInputModule"></a>PointerInputModule</h3><p>PointerInputModule定义了一些点操作的变量以及方法。</p>
+<p>m_PointerData用来记录当前点的数据，每有一个Touch输入，那么会缓存在m_PointerData记录中。</p>
+<pre><code>protected Dictionary&lt;int, PointerEventData&gt; m_PointerData = new Dictionary&lt;int, PointerEventData&gt;();
+
+/// &lt;summary&gt;
+/// Search the cache for currently active pointers, return true if found.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;id&quot;&gt;Touch ID&lt;/param&gt;
+/// &lt;param name=&quot;data&quot;&gt;Found data&lt;/param&gt;
+/// &lt;param name=&quot;create&quot;&gt;If not found should it be created&lt;/param&gt;
+/// &lt;returns&gt;True if pointer is found.&lt;/returns&gt;
+protected bool GetPointerData(int id, out PointerEventData data, bool create)
+{
+    if (!m_PointerData.TryGetValue(id, out data) &amp;&amp; create)
+    {
+        data = new PointerEventData(eventSystem)
+        {
+            pointerId = id,
+        };
+        m_PointerData.Add(id, data);
+        return true;
+    }
+    return false;
+}
+</code></pre><p>处理手指操作与鼠标操作的方法。StandaloneInputModule会重写这两个方法。</p>
+<pre><code>GetTouchPointerEventData()
+GetMousePointerEventData()
+</code></pre><h2 id="标准输入模块-Process"><a href="#标准输入模块-Process" class="headerlink" title="标准输入模块 Process"></a>标准输入模块 Process</h2><p>Process是StandaloneInputModule的入口函数，EventSystem通过这个函数将输入转发给StandaloneInputModule处理。</p>
+<pre><code>public override void Process()
+{
+    if (!eventSystem.isFocused &amp;&amp; ShouldIgnoreEventsOnNoFocus())
+        return;
+
+    bool usedEvent = SendUpdateEventToSelectedObject();
+
+    if (eventSystem.sendNavigationEvents)
+    {
+        if (!usedEvent)
+            usedEvent |= SendMoveEventToSelectedObject();
+
+        if (!usedEvent)
+            SendSubmitEventToSelectedObject();
+    }
+
+    // touch needs to take precedence because of the mouse emulation layer
+    if (!ProcessTouchEvents() &amp;&amp; input.mousePresent)
+        ProcessMouseEvent();
+}
+</code></pre><ol>
+<li><p>首先检查当前应用是否是focus状态，如果是非focus状态，且在该状态下是忽略事件处理的，那么跳过处理。</p>
+</li>
+<li><p>SelectedObject代表EventSystem当前记录的选中的UI。SendXXSelectedObject表示，是否要对当前的选中UI发送Update/Move/Submit/Cancel事件。Process会首先尝试执行update事件，同时记录usedEvent。usedEvent代表是否已经执行过事件，如果执行过，后续不执行，也就是同一帧里仅执行一次事件。如果未执行过事件且sendNavigationEvents，那么尝试继续处理Move事件以及Submit/Cancel事件。</p>
+</li>
+<li><p>sendNavigationEvents代表什么呢？主机游戏常用手柄操作，PC游戏常用键盘。它们都有上下左右，以及确认、取消，常用的六个按钮。sendNavigationEvents表示当按下手柄的方向键的时候，会尝试调用被选中UI的Move事件。当前选中UI会deselect，并且在当前选中UI的某一个方向上的UI会被Select选中。在游戏中这是非常常见的，比如在设置面板中有很多玩家可设置的选项，方向键就可以用来在这些选项中进行切换。</p>
+<p>Move: 当按下上下左右方向键的时候，会根据当前SelectableObject的位置，查找对应方向的下一个SelectableObject，并Move至对应SelectableObject</p>
+<p>Submit、Cancel: 对当前SelectableObject发送对应事件，例如当前SelectableObject是一个Button，那么按下Submit事件，就会触发Button的OnSubmit接口。</p>
+</li>
+<li><p>如果没有触发以上事件的话，那么Process会尝试处理鼠标或者触摸事件。代码是首先去处理Touch事件，如果没有点击事件，且存在鼠标，那么去处理鼠标事件。（其实感觉用个if else会稍微好点）</p>
+</li>
+</ol>
+<h2 id="处理Touch事件-ProcessTouchEvents"><a href="#处理Touch事件-ProcessTouchEvents" class="headerlink" title="处理Touch事件 ProcessTouchEvents"></a>处理Touch事件 ProcessTouchEvents</h2><p>ProcessTouchEvents主要负责处理手指触屏的相关操作。</p>
+<pre><code>private bool ProcessTouchEvents()
+{
+    for (int i = 0; i &lt; input.touchCount; ++i)
+    {
+        Touch touch = input.GetTouch(i);
+
+        if (touch.type == TouchType.Indirect)
+            continue;
+
+        bool released;
+        bool pressed;
+        var pointer = GetTouchPointerEventData(touch, out pressed, out released);
+
+        ProcessTouchPress(pointer, pressed, released);
+
+        if (!released)
+        {
+            ProcessMove(pointer);
+            ProcessDrag(pointer);
+        }
+        else
+            RemovePointerData(pointer);
+    }
+    return input.touchCount &gt; 0;
+}
+</code></pre><p>每一根手指触摸屏幕，就对应一个Touch实例对象。遍历每一个Touch获得对应的PointerEventData数据，PointerEventData会记录手指触屏后的信息，包括位置、拖动信息等。除了PointerEventData之外，<strong>触屏操作包括从第一帧到最后一帧，也就是手指的按下到离开。第一帧手指刚按下的时候pressed = true，最后一帧释放的时候released = true。</strong>通过这两个变量变量，就可以处理三种状态，按下，释放，按下与释放中间的过程（可能存在移动或者静止）。</p>
+<h3 id="1、获得PointerEventData以及Touch状态"><a href="#1、获得PointerEventData以及Touch状态" class="headerlink" title="1、获得PointerEventData以及Touch状态"></a>1、获得PointerEventData以及Touch状态</h3><pre><code>/// &lt;summary&gt;
+/// Given a touch populate the PointerEventData and return if we are pressed or released.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;input&quot;&gt;Touch being processed&lt;/param&gt;
+/// &lt;param name=&quot;pressed&quot;&gt;Are we pressed this frame&lt;/param&gt;
+/// &lt;param name=&quot;released&quot;&gt;Are we released this frame&lt;/param&gt;
+/// &lt;returns&gt;&lt;/returns&gt;
+protected PointerEventData GetTouchPointerEventData(Touch input, out bool pressed, out bool released)
+{
+    PointerEventData pointerData;
+    var created = GetPointerData(input.fingerId, out pointerData, true);
+
+    pointerData.Reset();
+
+    pressed = created || (input.phase == TouchPhase.Began);
+    released = (input.phase == TouchPhase.Canceled) || (input.phase == TouchPhase.Ended);
+
+    if (created)
+        pointerData.position = input.position;
+
+    if (pressed)
+        pointerData.delta = Vector2.zero;
+    else
+        pointerData.delta = input.position - pointerData.position;
+
+    pointerData.position = input.position;
+
+    pointerData.button = PointerEventData.InputButton.Left;
+
+    if (input.phase == TouchPhase.Canceled)
+    {
+        pointerData.pointerCurrentRaycast = new RaycastResult();
+    }
+    else
+    {
+        eventSystem.RaycastAll(pointerData, m_RaycastResultCache);
+
+        var raycast = FindFirstRaycast(m_RaycastResultCache);
+        pointerData.pointerCurrentRaycast = raycast;
+        m_RaycastResultCache.Clear();
+    }
+    return pointerData;
+}
+</code></pre><p>1、取得PointerData数据及Touch状态</p>
+<pre><code>PointerEventData pointerData;
+var created = GetPointerData(input.fingerId, out pointerData, true);
+
+pointerData.Reset();
+
+pressed = created || (input.phase == TouchPhase.Began);
+released = (input.phase == TouchPhase.Canceled) || (input.phase == TouchPhase.Ended);
+</code></pre><p>上述代码首先通过Touch实例对象，取得对应的PointerData的数据，created代表是否是新创建的PointerData数据。如果true，就表示PointerData是刚刚生成的数据。如果是新创建的数据，或者这个Touch处于Began阶段的数据，那么就表示Touch是处于Press按压状态。如果Touch处于Ended或者Canceled阶段，那么就表明这个Touch是处于释放阶段。</p>
+<p>Ps1：TouchPhase文档 <a href="https://docs.unity3d.com/ScriptReference/TouchPhase.html" target="_blank" rel="noopener">https://docs.unity3d.com/ScriptReference/TouchPhase.html</a></p>
+<p>TouchPhase is an enum type that contains the states of possible finger touches. The states represent each action the finger can take on the most recent frame update. Since a touch is tracked over its “lifetime” by the device, the start and end of a touch and movements in between can be reported on the frames they occur.</p>
+<p>TouchPhase是一个枚举，包含了手指触摸的所有可能的阶段。阶段表示手指在最近的一帧那所采取的动作。touch在它的生命周期内被设备追踪，一旦发生改变，那么在对应的帧内，开始、结束以及期间的移动都被记录。</p>
+<ol>
+<li>TouchPhase.Began : touch第一次被检测到的时候</li>
+<li>TouchPhase.Moved : 移动</li>
+<li>TouchPhase.Stationary : 触摸屏幕但没有移动</li>
+<li>TouchPhase.Ended : 离开屏幕的时候 touch的最后阶段</li>
+<li>TouchPhase.Canceled : System取消追踪touch </li>
+</ol>
+<pre><code>namespace UnityEngine
+{
+    public enum TouchPhase
+    {
+        Began,
+        Moved,
+        Stationary,
+        Ended,
+        Canceled
+    }
+}
+</code></pre><p>Ps2: 这里感觉注释写错了。</p>
+<p>正确的意思应该是如果没有找到数据且新创建，那么返回true，如果先前已经存在数据，那么返回false。</p>
+<pre><code>/// &lt;summary&gt;
+/// Search the cache for currently active pointers, return true if found.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;id&quot;&gt;Touch ID&lt;/param&gt;
+/// &lt;param name=&quot;data&quot;&gt;Found data&lt;/param&gt;
+/// &lt;param name=&quot;create&quot;&gt;If not found should it be created&lt;/param&gt;
+/// &lt;returns&gt;True if pointer is found.&lt;/returns&gt;
+protected bool GetPointerData(int id, out PointerEventData data, bool create)
+{
+    if (!m_PointerData.TryGetValue(id, out data) &amp;&amp; create)
+    {
+        data = new PointerEventData(eventSystem)
+        {
+            pointerId = id,
+        };
+        m_PointerData.Add(id, data);
+        return true;
+    }
+    return false;
+}
+</code></pre><p>2、记录pointerData数据，位置、偏移等</p>
+<pre><code>if (created)
+    pointerData.position = input.position;
+
+if (pressed)
+    pointerData.delta = Vector2.zero;
+else
+pointerData.delta = input.position - pointerData.position;
+
+pointerData.position = input.position;
+</code></pre><p>如果新创建的数据，那么赋值position。delta表示当前帧与上一帧的位置偏移。如果处于pressed刚按下的阶段，那么就表明delta = Vector2.zero。如果不是pressed阶段，也就是可能手指偏移了，那么用当前帧记录的位置减去上一帧的位置，也就是pointerData的位置，结果就是delta值。</p>
+<p>3、得到射线投射的结果。比如当前点击，那么就会从摄像机中发出一条射线，如果有Button或者Image被点击到就会被记录到这个缓存中。详细的射线投射代码会在之后的文章补充。</p>
+<pre><code>if (input.phase == TouchPhase.Canceled)
+{
+    pointerData.pointerCurrentRaycast = new RaycastResult();
+}
+else
+{
+    eventSystem.RaycastAll(pointerData, m_RaycastResultCache);
+
+    var raycast = FindFirstRaycast(m_RaycastResultCache);
+    pointerData.pointerCurrentRaycast = raycast;
+    m_RaycastResultCache.Clear();
+}
+</code></pre><h4 id="2、根据Touch状态处理三种情况，包含按下，释放，中间过程。"><a href="#2、根据Touch状态处理三种情况，包含按下，释放，中间过程。" class="headerlink" title="2、根据Touch状态处理三种情况，包含按下，释放，中间过程。"></a>2、根据Touch状态处理三种情况，包含按下，释放，中间过程。</h4><p>通过上述过程我们就得到了完整的PointerEventData点的数据。这个数据包括点的位置、偏移等等，还有射线投射后的结果。接下来的处理就是根据PointerEventData，处理事件相关的操作。</p>
+<pre><code>ProcessTouchPress(pointer, pressed, released);
+if (!released)
+{
+    ProcessMove(pointer);
+    ProcessDrag(pointer);
+}
+else
+    RemovePointerData(pointer);
+</code></pre><p>根据注释，可以知道。一个touch event的第一帧，pressed是为true的，thereafter随后的时间就是false。也就是在touch event的生命周期内，只有第一帧按下的时候，pressed为true。同理released是生命周期内的最后一帧，仅在最后一帧的时间内才为true。ProcessTouchPress这个函数只处理touch event的第一帧和最后一帧，即按下和释放的状态。</p>
+<p>当touch为非released的时候，也就是按下以及按下-结束的中间过程。这一段时间内还需要处理Move以及Drag事件。</p>
+<p>也就是三个阶段的事件如下：</p>
+<ol>
+<li>第一帧: 处理pressed、move、drag</li>
+<li>中间：处理move、drag</li>
+<li>最后一帧：处理released</li>
+</ol>
+<p>三个阶段总共四个事件，其中pressed与released阶段主要用于处理PointerEventData的初始化以及释放。以下将对四个事件逐个分析。</p>
+<pre><code>/// &lt;summary&gt;
+/// This method is called by Unity whenever a touch event is processed. Override this method with a custom implementation to process touch events yourself.
+/// &lt;/summary&gt;
+
+/// &lt;param name=&quot;pointerEvent&quot;&gt;Event data relating to the touch event, such as position and ID to be passed to the touch event destination object.&lt;/param&gt;
+/// &lt;param name=&quot;pressed&quot;&gt;This is true for the first frame of a touch event, and false thereafter. This can therefore be used to determine the instant a touch event occurred.&lt;/param&gt;
+/// &lt;param name=&quot;released&quot;&gt;This is true only for the last frame of a touch event.&lt;/param&gt;
+
+/// &lt;remarks&gt;
+/// This method can be overridden in derived classes to change how touch press events are handled.
+/// &lt;/remarks&gt;
+
+protected void ProcessTouchPress(PointerEventData pointerEvent, bool pressed, bool released)
+{
+    var currentOverGo = pointerEvent.pointerCurrentRaycast.gameObject;
+    // PointerDown notification
+    if (pressed)
+    { ... }
+    if (released)
+    { ... }
+}
+</code></pre><h4 id="按下事件-Pressed"><a href="#按下事件-Pressed" class="headerlink" title="按下事件 Pressed"></a>按下事件 Pressed</h4><p>对按下事件只记录两段代码。</p>
+<pre><code>var currentOverGo = pointerEvent.pointerCurrentRaycast.gameObject;
+
+... ...
+
+if (pointerEvent.pointerEnter != currentOverGo)
+{
+// send a pointer enter to the touched element if it isn&#39;t the one to select...
+HandlePointerExitAndEnter(pointerEvent, currentOverGo);
+pointerEvent.pointerEnter = currentOverGo;
+}
+
+// search for the control that will receive the press
+// if we can&#39;t find a press handler set the press
+// handler to be what would receive a click.
+var newPressed = ExecuteEvents.ExecuteHierarchy(currentOverGo, pointerEvent, ExecuteEvents.pointerDownHandler);
+
+// didnt find a press handler... search for a click handler
+if (newPressed == null)
+newPressed = ExecuteEvents.GetEventHandler&lt;IPointerClickHandler&gt;(currentOverGo);
+</code></pre><p>currentOverGo是通过射线检测到的gameObject，如果不同于先前记录的pointerEnter，那么需要处理gameObject的exit和enter事件（在鼠标滑动过Button的时候，经常会触发exit和enter事件）。</p>
+<p>随后是ExecuteHierarchy执行pointerDown事件。ExecuteHierarchy如果在当前物体无法找到handler会沿着Hierarchy的层级一直往上知道找到一个handler。如果还没有handler的话，说明没有实现IPointerDownHandler接口的物体，那么就会转而去查找实现IPointerClickHandler接口的物体，注意并不是调用Click，而是查找实现IPointerClickHandler接口的物体作为newPressed对象。（与ExecuteHierarchy类似的是Execute方法，这个方法只会在当前物体进行查找，看是否能调用对应方法，如果找不到，不会在Hierarchy层级上继续查找）</p>
+<p><strong>Ps：什么是Handler呢？事件系统会发布事件的时候，需要有一个对应的Handler处理器来接收这个事件并处理相关逻辑。例如一个Button继承了IPointClick接口，当EventSystem.ExecuteHierarchy( … Click) 的时候，就称事件系统发布了点击事件，并且Button作为Handler处理了这个事件。</strong></p>
+<p>Click与PointerDown 操作是不一样的，PointerDown是一按下就触发，与PointerDown相对的是PointerUp，PointerUp会在released阶段触发，只有按下与抬起时，操作的物体时同一个，才会发布Click事件，可以稍后在released阶段查看。</p>
+<pre><code>// Save the drag handler as well
+pointerEvent.pointerDrag = ExecuteEvents.GetEventHandler&lt;IDragHandler&gt;(currentOverGo);
+
+if (pointerEvent.pointerDrag != null)
+ExecuteEvents.Execute(pointerEvent.pointerDrag, pointerEvent, ExecuteEvents.initializePotentialDrag);
+</code></pre><p>第二段代码是关于拖拽的函数。例如存在UIList，结构为ScrollRect-Viewport-UIList，如果每个UIList的元素都是button，当拖动ScrollRect里非button的部分，那么显然ScrollRect会跟着滑动，那么如果按下button，过了一会再拖动，这个时候能否滑动呢？前文提过，操作分为Execute和ExecuteHierarchy。GetEventHandler是和ExecuteHierarchy类似的方法。当按下的时候，会沿着第一个射线检测到的物体也就是currentOverGo，向上查找DragHandler，并赋值给pointerDrag。当pointerDrag不为null，我们就知道，当前虽然按下了button，但是button处于scroll范围内，之后的操作可能会带有滑动。click操作和drag操作是各自记录的。</p>
+<h4 id="移动事件-ProcessMove"><a href="#移动事件-ProcessMove" class="headerlink" title="移动事件 ProcessMove"></a>移动事件 ProcessMove</h4><pre><code>/// &lt;summary&gt;
+/// Process movement for the current frame with the given pointer event.
+/// &lt;/summary&gt;
+protected virtual void ProcessMove(PointerEventData pointerEvent)
+{
+    var targetGO = (Cursor.lockState == CursorLockMode.Locked ? null : pointerEvent.pointerCurrentRaycast.gameObject);
+    HandlePointerExitAndEnter(pointerEvent, targetGO);
+}
+</code></pre><pre><code>// walk up the tree till a common root between the last entered and the current entered is foung
+// send exit events up to (but not inluding) the common root. Then send enter events up to
+// (but not including the common root).
+protected void HandlePointerExitAndEnter(PointerEventData currentPointerData, GameObject newEnterTarget)
+{
+    // if we have no target / pointerEnter has been deleted
+    // just send exit events to anything we are tracking
+    // then exit
+    if (newEnterTarget == null || currentPointerData.pointerEnter == null)
+    {
+        for (var i = 0; i &lt; currentPointerData.hovered.Count; ++i)
+            ExecuteEvents.Execute(currentPointerData.hovered[i], currentPointerData, ExecuteEvents.pointerExitHandler);
+
+        currentPointerData.hovered.Clear();
+
+        if (newEnterTarget == null)
+        {
+            currentPointerData.pointerEnter = null;
+            return;
+        }
+    }
+
+    // if we have not changed hover target
+    if (currentPointerData.pointerEnter == newEnterTarget &amp;&amp; newEnterTarget)
+        return;
+
+    GameObject commonRoot = FindCommonRoot(currentPointerData.pointerEnter, newEnterTarget);
+
+    // and we already an entered object from last time
+    if (currentPointerData.pointerEnter != null)
+    {
+        // send exit handler call to all elements in the chain
+        // until we reach the new target, or null!
+        Transform t = currentPointerData.pointerEnter.transform;
+
+        while (t != null)
+        {
+            // if we reach the common root break out!
+            if (commonRoot != null &amp;&amp; commonRoot.transform == t)
+                break;
+
+            ExecuteEvents.Execute(t.gameObject, currentPointerData, ExecuteEvents.pointerExitHandler);
+            currentPointerData.hovered.Remove(t.gameObject);
+            t = t.parent;
+        }
+    }
+
+    // now issue the enter call up to but not including the common root
+    currentPointerData.pointerEnter = newEnterTarget;
+    if (newEnterTarget != null)
+    {
+        Transform t = newEnterTarget.transform;
+
+        while (t != null &amp;&amp; t.gameObject != commonRoot)
+        {
+            ExecuteEvents.Execute(t.gameObject, currentPointerData, ExecuteEvents.pointerEnterHandler);
+            currentPointerData.hovered.Add(t.gameObject);
+            t = t.parent;
+        }
+    }
+}
+</code></pre><p>移动事件最主要的函数就是HandlePointerExitAndEnter，这个函数主要就是来处理PointerEnter以及Exit的事件。当处于按下状态的时候，手指移动可能会进入某些handler以及离开某些handler。参数列表的第一个参数PointerData会记录之前的enter的GameObject（oldEnterObject），第二个参数则是新enter的GameObject（newEnterTarget）。</p>
+<ol>
+<li>如果newEnterTarget为null，那么直接对oldEnterObject调用Exit即可。</li>
+<li>如果newEnterTarget不为null，那么查找两个物体的CommonRoot，也就是在Hierarchy上的公共根。对于公共根到oldEnterObject层级的物体调用exit，对公共根到newEnterTarget的物体调用enter。</li>
+</ol>
+<h4 id="拖拽事件-ProcessDrag"><a href="#拖拽事件-ProcessDrag" class="headerlink" title="拖拽事件 ProcessDrag"></a>拖拽事件 ProcessDrag</h4><pre><code>/// &lt;summary&gt;
+/// Process the drag for the current frame with the given pointer event.
+/// &lt;/summary&gt;
+protected virtual void ProcessDrag(PointerEventData pointerEvent)
+{
+    if (!pointerEvent.IsPointerMoving() ||
+        Cursor.lockState == CursorLockMode.Locked ||
+        pointerEvent.pointerDrag == null)
+        return;
+
+    if (!pointerEvent.dragging
+        &amp;&amp; ShouldStartDrag(pointerEvent.pressPosition, pointerEvent.position, eventSystem.pixelDragThreshold, pointerEvent.useDragThreshold))
+    {
+        ExecuteEvents.Execute(pointerEvent.pointerDrag, pointerEvent, ExecuteEvents.beginDragHandler);
+        pointerEvent.dragging = true;
+    }
+
+    // Drag notification
+    if (pointerEvent.dragging)
+    {
+        // Before doing drag we should cancel any pointer down state
+        // And clear selection!
+        if (pointerEvent.pointerPress != pointerEvent.pointerDrag)
+        {
+            ExecuteEvents.Execute(pointerEvent.pointerPress, pointerEvent, ExecuteEvents.pointerUpHandler);
+
+            pointerEvent.eligibleForClick = false;
+            pointerEvent.pointerPress = null;
+            pointerEvent.rawPointerPress = null;
+        }
+        ExecuteEvents.Execute(pointerEvent.pointerDrag, pointerEvent, ExecuteEvents.dragHandler);
+    }
+}
+</code></pre><p>这段代码也不难理解</p>
+<ol>
+<li>如果pointerDrag为null，那么就表明压根不需要处理拖拽的事件，直接返回即可。</li>
+<li>如果pointerDrag存在，那么检查是否dragging标志位是否为true，如果不为true，且当前touch的位置与press第一次按下的位置的偏移超过一定值，那么就判定需要开始滑动。</li>
+<li>如果操作为拖动，那么需要先取消掉先前pointerDown的状态，随后再发布拖动事件。</li>
+</ol>
+<h4 id="Released释放事件"><a href="#Released释放事件" class="headerlink" title="Released释放事件"></a>Released释放事件</h4><pre><code>// Debug.Log(&quot;Executing pressup on: &quot; + pointer.pointerPress);
+ExecuteEvents.Execute(pointerEvent.pointerPress, pointerEvent, ExecuteEvents.pointerUpHandler);
+
+// Debug.Log(&quot;KeyCode: &quot; + pointer.eventData.keyCode);
+
+// see if we mouse up on the same element that we clicked on...
+var pointerUpHandler = ExecuteEvents.GetEventHandler&lt;IPointerClickHandler&gt;(currentOverGo);
+
+// PointerClick and Drop events
+if (pointerEvent.pointerPress == pointerUpHandler &amp;&amp; pointerEvent.eligibleForClick)
+{
+    ExecuteEvents.Execute(pointerEvent.pointerPress, pointerEvent, ExecuteEvents.pointerClickHandler);
+}
+else if (pointerEvent.pointerDrag != null &amp;&amp; pointerEvent.dragging)
+{
+    ExecuteEvents.ExecuteHierarchy(currentOverGo, pointerEvent, ExecuteEvents.dropHandler);
+}
+
+pointerEvent.eligibleForClick = false;
+pointerEvent.pointerPress = null;
+pointerEvent.rawPointerPress = null;
+
+if (pointerEvent.pointerDrag != null &amp;&amp; pointerEvent.dragging)
+    ExecuteEvents.Execute(pointerEvent.pointerDrag, pointerEvent, ExecuteEvents.endDragHandler);
+
+pointerEvent.dragging = false;
+pointerEvent.pointerDrag = null;
+
+// send exit events as we need to simulate this on touch up on touch device
+ExecuteEvents.ExecuteHierarchy(pointerEvent.pointerEnter, pointerEvent, ExecuteEvents.pointerExitHandler);
+pointerEvent.pointerEnter = null;
+
+m_InputPointerEvent = pointerEvent;
+</code></pre><p>也不难，首先发布PointerUp事件。PointerDown和PointerUp是基础事件，Click等都是在这之上拓展的。随后判断如果按下和抬起的gameObject一样，就发布click事件。如果操作不是点击click事件，那么可能就是拖拽事件，拖拽释放的事件为IDropHandler。</p>
+<p>随后如果是拖拽事件还需要调用EndDrag事件。感觉EndDrag和Drop很重复。。。</p>
+<p>最后release之后，还需要调用对pointerEnter调用exit事件。结束。</p>
+<p>总结：这样四个处理的部分pressed/moved/drag/released就完成了，熟悉这一套流程，还是需要源码反复读几遍的。这一套事件处理的机制感觉也没那么快搞懂，总体写的挺好的，但是部分地方还是存在重复。鼠标的操作事件就先不记录了吧，目前用的还比较少。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码15-Image/" rel="next" title="UGUI源码15-Image">
+                <i class="fa fa-chevron-left"></i> UGUI源码15-Image
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码7-LayoutGroup/" rel="prev" title="UGUI源码7-LayoutGroup">
+                UGUI源码7-LayoutGroup <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BaseInputModule继承结构"><span class="nav-number">2.</span> <span class="nav-text">BaseInputModule继承结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#BaseInputModule"><span class="nav-number">2.1.</span> <span class="nav-text">BaseInputModule</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PointerInputModule"><span class="nav-number">2.2.</span> <span class="nav-text">PointerInputModule</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#标准输入模块-Process"><span class="nav-number">3.</span> <span class="nav-text">标准输入模块 Process</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#处理Touch事件-ProcessTouchEvents"><span class="nav-number">4.</span> <span class="nav-text">处理Touch事件 ProcessTouchEvents</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1、获得PointerEventData以及Touch状态"><span class="nav-number">4.1.</span> <span class="nav-text">1、获得PointerEventData以及Touch状态</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2、根据Touch状态处理三种情况，包含按下，释放，中间过程。"><span class="nav-number">4.1.1.</span> <span class="nav-text">2、根据Touch状态处理三种情况，包含按下，释放，中间过程。</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#按下事件-Pressed"><span class="nav-number">4.1.2.</span> <span class="nav-text">按下事件 Pressed</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#移动事件-ProcessMove"><span class="nav-number">4.1.3.</span> <span class="nav-text">移动事件 ProcessMove</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#拖拽事件-ProcessDrag"><span class="nav-number">4.1.4.</span> <span class="nav-text">拖拽事件 ProcessDrag</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Released释放事件"><span class="nav-number">4.1.5.</span> <span class="nav-text">Released释放事件</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

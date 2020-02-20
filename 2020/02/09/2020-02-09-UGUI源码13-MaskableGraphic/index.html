@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言上一篇文章对Graphic，也就是可视化UI的基类做了介绍。本篇文章将来介绍MaskableGraphic，MaskableGraphic是与裁减、遮罩相关的Graphic。 Graphic的继承结构如下  Graphic MaskableGraphic Text Image RawImage      也就是继承了Graphic的，可以使用的UI组件，基本也都继承了MaskableGraph">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码13-MaskableGraphic">
+<meta property="og:url" content="http://yoursite.com/2020/02/09/2020-02-09-UGUI源码13-MaskableGraphic/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言上一篇文章对Graphic，也就是可视化UI的基类做了介绍。本篇文章将来介绍MaskableGraphic，MaskableGraphic是与裁减、遮罩相关的Graphic。 Graphic的继承结构如下  Graphic MaskableGraphic Text Image RawImage      也就是继承了Graphic的，可以使用的UI组件，基本也都继承了MaskableGraph">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-02-19T09:16:20.171Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码13-MaskableGraphic">
+<meta name="twitter:description" content="前言上一篇文章对Graphic，也就是可视化UI的基类做了介绍。本篇文章将来介绍MaskableGraphic，MaskableGraphic是与裁减、遮罩相关的Graphic。 Graphic的继承结构如下  Graphic MaskableGraphic Text Image RawImage      也就是继承了Graphic的，可以使用的UI组件，基本也都继承了MaskableGraph">
+  <link rel="canonical" href="http://yoursite.com/2020/02/09/2020-02-09-UGUI源码13-MaskableGraphic/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码13-MaskableGraphic | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/09/2020-02-09-UGUI源码13-MaskableGraphic/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码13-MaskableGraphic
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-09 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-09T00:00:00+08:00">2020-02-09</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 17:16:20" itemprop="dateModified" datetime="2020-02-19T17:16:20+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一篇文章对Graphic，也就是可视化UI的基类做了介绍。本篇文章将来介绍MaskableGraphic，MaskableGraphic是与裁减、遮罩相关的Graphic。</p>
+<p>Graphic的继承结构如下</p>
+<ul>
+<li>Graphic<ul>
+<li>MaskableGraphic<ul>
+<li>Text</li>
+<li>Image</li>
+<li>RawImage</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>也就是继承了Graphic的，可以使用的UI组件，基本也都继承了MaskableGraphic。</p>
+<h2 id="MaskableGraphic"><a href="#MaskableGraphic" class="headerlink" title="MaskableGraphic"></a>MaskableGraphic</h2><pre><code>/// &lt;summary&gt;
+/// A Graphic that is capable of being masked out.
+/// &lt;/summary&gt;
+public abstract class MaskableGraphic : Graphic, IClippable, IMaskable, IMaterialModifier
+{
+    ...
+}
+</code></pre><p>理解UGUI的类，经常可以从理解类实现的接口入手，UGUI对接口都提供了详细的注释，对理解非常有帮助。MaskableGraphic实现IClippable、IMaskable、IMaterialModifier三个接口。</p>
+<p>从作用上分类可以IClippable归一类，实现这个接口的类表示能够被裁减，与IClippable被裁减对应的是IClipper裁减者，实现IClipper接口的只有RectMask2D。例如在之前的UIList中提过，ScrollRect-Vierport-UIList(Content)的结构中，UIList表示能够拖动的内容，为了让UIList的范围在超出ScrollRect边界的时候能够被裁减掉，需要在Vierport一级中加入RectMask2D。</p>
+<p>IMaskable、IMaterialModifier归一类。在PS中有一个常用技巧，遮罩。在内容上叠加一层遮罩，那么遮罩的每个像素点从黑至白，由0-1表示当前像素点显示内容的多少，0代表隐藏内容，1代表显示内容。IMaskable表示可被遮罩，也就是当前Graphic允许叠加上一个遮罩。IClippable与IClipper是一组表示被裁减与裁减者，IMaskable同理也有一个遮罩者，不过并不是以接口的方式提供的，而是Mask类。</p>
+<p>下文将依次解释这两部分内容，第一部分是裁减，第二部分是遮罩。</p>
+<h2 id="裁减"><a href="#裁减" class="headerlink" title="裁减"></a>裁减</h2><h3 id="裁减接口"><a href="#裁减接口" class="headerlink" title="裁减接口"></a>裁减接口</h3><p>首先是上文提到的IClipper裁减者与被裁减者IClippable的接口</p>
+<pre><code>/// &lt;summary&gt;
+///   Interface that can be used to recieve clipping callbacks as part of the canvas update loop.
+/// &lt;/summary&gt;
+public interface IClipper
+{
+    /// &lt;summary&gt;
+    /// Function to to cull / clip children elements.
+    /// &lt;/summary&gt;
+    /// &lt;remarks&gt;
+    /// Called after layout and before Graphic update of the Canvas update loop.
+    /// &lt;/remarks&gt;
+
+    void PerformClipping();
+}
+</code></pre><pre><code>/// &lt;summary&gt;
+///   Interface for elements that can be clipped if they are under an IClipper
+/// &lt;/summary&gt;
+public interface IClippable
+{
+    ...
+
+    /// &lt;summary&gt;
+    /// Will be called when the state of a parent IClippable changed.
+    /// &lt;/summary&gt;
+    void RecalculateClipping();
+
+    /// &lt;summary&gt;
+    /// Clip and cull the IClippable given a specific clipping rect
+    /// &lt;/summary&gt;
+    /// &lt;param name=&quot;clipRect&quot;&gt;The Rectangle in which to clip against.&lt;/param&gt;
+    /// &lt;param name=&quot;validRect&quot;&gt;Is the Rect valid. If not then the rect has 0 size.&lt;/param&gt;
+    void Cull(Rect clipRect, bool validRect);
+
+    /// &lt;summary&gt;
+    /// Set the clip rect for the IClippable.
+    /// &lt;/summary&gt;
+    /// &lt;param name=&quot;value&quot;&gt;The Rectangle for the clipping&lt;/param&gt;
+    /// &lt;param name=&quot;validRect&quot;&gt;Is the rect valid.&lt;/param&gt;
+    void SetClipRect(Rect value, bool validRect);
+}
+</code></pre><ol>
+<li>RecalculateClipping 裁减状态改变，重新计算</li>
+<li>Cull 是否该Graphic需要被裁减</li>
+<li>SetClipRect 设置裁减矩形</li>
+</ol>
+<h3 id="裁减的思路"><a href="#裁减的思路" class="headerlink" title="裁减的思路"></a>裁减的思路</h3><p>其实裁减就是裁减者RectMask2D设置一个裁减矩形给被裁减者MaskableGraphic。被裁减者计算自身矩形与裁减矩形的是否存在重合，如何存在重合，重合部分就是应该显示的部分。一个RectMask2D往往裁减多个MaskableGraphic。因此RectMask2D有一个ClipTarget的HashSet数据结构，专门用来缓存被IClippable。</p>
+<p>那么裁减矩形如何计算呢？RectMask2D就有一个裁减范围，也就是对应的RectTransform的大小。之前提过的，典型的应用场景就是Viewport将视窗外的元素剔除在外，Viewport的RectTransform大小就是裁减的应用范围。但是在实际使用的时候裁剪举行不一定能够直接套用RectTransform的大小，因为RectMask2D可能存在嵌套，所以RectMask2D需要计算出一个实际使用的Rect。这个Rect也就是MaskableGraphic所有父物体的RectMask2D组件的交集。</p>
+<ul>
+<li>RectMask2D_1<ul>
+<li>MaskableGraphic_1</li>
+<li>MaskableGraphic_2</li>
+<li>RectMask2D_2<ul>
+<li>MaskableGraphic_3</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>假设存在这样一个Hierarchy的结构，那么对于RectMask2D_2来说，它的应用范围和缓存ClipTarget只有MaskableGraphic_3。对于RectMask2D_1来说，应用的范围应该包括MaskableGraphic_1-3。但是它缓存的ClipTarget只有MaskableGraphic_1-2。因为RectMask2D_2会与所有的父物体RectMask2D做交集，这个交集矩形就是裁减矩形，最后会应用到MaskableGraphic_3。虽然RectMask2D_1的ClipTarget不包括MaskableGraphic_3，但是仍然能够影响MaskableGraphic_3的裁减。</p>
+<p>当发生”裁减重建”的时候，比如</p>
+<ol>
+<li>MaskableGraphic_2移动到MaskableGraphic_3之下。</li>
+<li>RectMask2D_2禁用，导致裁减MaskableGraphic_3的变成RectMask2D_1。</li>
+</ol>
+<p>重建的过程大致如下：</p>
+<ol>
+<li><p>更新RectMask2D的ClipTarget裁剪目标</p>
+<p>比如UIList的裁减目标就是将所有UIListItem的Graphic组件。</p>
+</li>
+<li><p>RectMask2D SetDirty标记需要重新计算裁减矩形，并等待CanvasUpdateRegistry每帧更新的时候PerformClipping。PerformClipping分为两部分。</p>
+</li>
+<li><p>第一部分 重新计算RectMask2D的裁减矩形。</p>
+</li>
+<li><p>第二部分 应用裁减矩形到ClipTarget上。</p>
+</li>
+</ol>
+<h3 id="更新RectMask2D的ClipTarget裁剪目标"><a href="#更新RectMask2D的ClipTarget裁剪目标" class="headerlink" title="更新RectMask2D的ClipTarget裁剪目标"></a>更新RectMask2D的ClipTarget裁剪目标</h3><p>RectMask2D类用HashSet来存储ClipTarget。每次子元素增加，例如一个Image组件的enable、disable。或者RectMask2D自身的状态发生改变，例如一个RectMask2D enable、disable。那么就会更新这个裁剪目标。</p>
+<pre><code> private HashSet&lt;IClippable&gt; m_ClipTargets = new HashSet&lt;IClippable&gt;();
+</code></pre><p>1、当子元素变化，对应的RectMask2D增加一个新的Clippable裁减目标</p>
+<pre><code>public virtual void RecalculateClipping()
+{
+    UpdateClipParent();
+}
+
+private void UpdateClipParent()
+{
+    var newParent = (maskable &amp;&amp; IsActive()) ? MaskUtilities.GetRectMaskForClippable(this) : null;
+
+    // if the new parent is different OR is now inactive
+    if (m_ParentMask != null &amp;&amp; (newParent != m_ParentMask || !newParent.IsActive()))
+    {
+        m_ParentMask.RemoveClippable(this);
+        UpdateCull(false);
+    }
+
+    // don&#39;t re-add it if the newparent is inactive
+    if (newParent != null &amp;&amp; newParent.IsActive())
+        newParent.AddClippable(this);
+
+    m_ParentMask = newParent;
+}
+</code></pre><p>2、当RectMask2D变化，通知所有子物体更新。也是将方法转发到UpdateClipParent。</p>
+<pre><code>/// &lt;summary&gt;
+/// Notify all IClippables under the given component that they need to recalculate clipping.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;mask&quot;&gt;The object thats changed for whose children should be notified.&lt;/param&gt;
+public static void Notify2DMaskStateChanged(Component mask)
+{
+    var components = ListPool&lt;Component&gt;.Get();
+    mask.GetComponentsInChildren(components);
+    for (var i = 0; i &lt; components.Count; i++)
+    {
+        if (components[i] == null || components[i].gameObject == mask.gameObject)
+            continue;
+
+        var toNotify = components[i] as IClippable;
+        if (toNotify != null)
+            toNotify.RecalculateClipping();
+    }
+    ListPool&lt;Component&gt;.Release(components);
+}
+</code></pre><p>例如AddClippable如下，AddClippable先标记Dirty，表示需要重新计算裁减矩阵，随后把IClippable添加到RectMask2D的裁减目标中。</p>
+<pre><code>/// &lt;summary&gt;
+/// Add a IClippable to be tracked by the mask.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;clippable&quot;&gt;Add the clippable object for this mask&lt;/param&gt;
+public void AddClippable(IClippable clippable)
+{
+    if (clippable == null)
+        return;
+    m_ShouldRecalculateClipRects = true;
+    if (!m_ClipTargets.Contains(clippable))
+        m_ClipTargets.Add(clippable);
+
+    m_ForceClip = true;
+}
+</code></pre><h3 id="主函数更新中执行裁减"><a href="#主函数更新中执行裁减" class="headerlink" title="主函数更新中执行裁减"></a>主函数更新中执行裁减</h3><p>CanvasUpdateRegistry的PerformUpdate函数用于当前帧的重建操作。在布局重建后，Graphic重建前，会执行裁减操作。</p>
+<pre><code>... //布局重建
+
+// now layout is complete do culling...
+ClipperRegistry.instance.Cull();
+
+... //Graphic重建
+</code></pre><p>ClipperRegistry注册了所有IClipper，因为实现IClipper接口的只有RectMask2D组件，所以实际上是缓存了所有enable的RectMask2D组件。每个实现IClipper接口的组件可以Register/Unregister自身到ClipperRegistry中。当执行裁减的时候，CanvasUpdateRegistry只是调用IClipper的裁减接口PerformClipping。</p>
+<p>也就是ClipperRegistry注册所有IClipper，IClipper注册所有IClippable。执行裁减的时候，由CanvasUpdateRegistry发起，所有IClipper对IClippable执行裁减。</p>
+<pre><code>/// &lt;summary&gt;
+/// Registry class to keep track of all IClippers that exist in the scene
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// This is used during the CanvasUpdate loop to cull clippable elements. The clipping is called after layout, but before Graphic update.
+/// &lt;/remarks&gt;
+public class ClipperRegistry
+{
+    readonly IndexedSet&lt;IClipper&gt; m_Clippers = new IndexedSet&lt;IClipper&gt;();
+
+    /// &lt;summary&gt;
+    /// Perform the clipping on all registered IClipper
+    /// &lt;/summary&gt;
+    public void Cull()
+    {
+        for (var i = 0; i &lt; m_Clippers.Count; ++i)
+        {
+            m_Clippers[i].PerformClipping();
+        }
+    }
+
+    //Register
+    //Unregister
+
+}
+</code></pre><p>PerformClipping</p>
+<pre><code>public virtual void PerformClipping()
+{
+    ... 重新计算裁减矩形 ...
+
+    ... 计算是否在rootCanvas显示范围内 ...
+
+    ... 遍历裁减对象，并且设置裁减矩形、是否cull被裁减 ...
+}
+</code></pre><p>这一段函数主要分为三部分</p>
+<ol>
+<li>重新计算裁减矩形clipRect，并且这个时候会得到一个validRect，如果所有的RectMask2D没有重合的区域，那么validRect为false。</li>
+<li>计算clipRect与rootCanvas的重合区域得到maskIsCulled。</li>
+<li>裁减矩形应用到裁减目标上。</li>
+</ol>
+<h3 id="RectMask2D计算裁减范围"><a href="#RectMask2D计算裁减范围" class="headerlink" title="RectMask2D计算裁减范围"></a>RectMask2D计算裁减范围</h3><pre><code>if (m_ShouldRecalculateClipRects)
+{
+    MaskUtilities.GetRectMasksForClip(this, m_Clippers); //从自身网上查找到所有RectMask2D
+    m_ShouldRecalculateClipRects = false;
+}
+
+// get the compound rects from
+// the clippers that are valid
+bool validRect = true;
+//计算所有RectMask2D的重合范围，如何重合范围为Rect.Zero，说明这是一个无效的裁减矩形，MaskableGraphic一定不显示。
+Rect clipRect = Clipping.FindCullAndClipWorldRect(m_Clippers, out validRect);
+</code></pre><h3 id="计算clipRect与rootCanvas的重合区域"><a href="#计算clipRect与rootCanvas的重合区域" class="headerlink" title="计算clipRect与rootCanvas的重合区域"></a>计算clipRect与rootCanvas的重合区域</h3><p>如果是在RenderMode是屏幕空间，那么判断上文计算出来的裁减矩形与rootCanvas是否Overlaps存在重合。如果不重合，说明显示范围是在rootCanvas之外的，这个时候会被标记为maskIsCulled。</p>
+<p>即validRect表示所有RectMask2D组成的显示范围是否存在，如果存在说明MaskableGraphic存在显示范围。maskIsCulled表示显示范围是否与rootCanvas存在重合，如果不重合，那么说明显示范围在屏幕之外，也是没用的。</p>
+<pre><code>// If the mask is in ScreenSpaceOverlay/Camera render mode, its content is only rendered when its rect
+// overlaps that of the root canvas.
+RenderMode renderMode = Canvas.rootCanvas.renderMode;
+bool maskIsCulled =
+    (renderMode == RenderMode.ScreenSpaceCamera || renderMode == RenderMode.ScreenSpaceOverlay) &amp;&amp;
+    !clipRect.Overlaps(rootCanvasRect, true);
+</code></pre><h3 id="应用裁剪矩形"><a href="#应用裁剪矩形" class="headerlink" title="应用裁剪矩形"></a>应用裁剪矩形</h3><pre><code>// Avoid looping multiple times.
+foreach (IClippable clipTarget in m_ClipTargets)
+{
+    if (clipRectChanged || forceClip)
+    {
+        clipTarget.SetClipRect(clipRect, validRect);
+    }
+
+    var maskable = clipTarget as MaskableGraphic;
+    if (maskable != null &amp;&amp; !maskable.canvasRenderer.hasMoved &amp;&amp; !clipRectChanged)
+        continue;
+
+    // Children are only displayed when inside the mask. If the mask is culled, then the children
+    // inside the mask are also culled. In that situation, we pass an invalid rect to allow callees
+    // to avoid some processing.
+    clipTarget.Cull(
+        maskIsCulled ? Rect.zero : clipRect,
+        maskIsCulled ? false : validRect);
+}
+</code></pre><p>SetClipRect</p>
+<p>MaskableGraphic将裁减矩形发送到canvasRenderer渲染器中。</p>
+<pre><code>/// &lt;summary&gt;
+/// See IClippable.SetClipRect
+/// &lt;/summary&gt;
+public virtual void SetClipRect(Rect clipRect, bool validRect)
+{
+    if (validRect)
+        canvasRenderer.EnableRectClipping(clipRect);
+    else
+        canvasRenderer.DisableRectClipping();
+}
+</code></pre><p>clipTarget.Cull</p>
+<pre><code>/// &lt;summary&gt;
+/// See IClippable.Cull
+/// &lt;/summary&gt;
+public virtual void Cull(Rect clipRect, bool validRect)
+{
+    var cull = !validRect || !clipRect.Overlaps(rootCanvasRect, true);
+    UpdateCull(cull);
+}
+
+private void UpdateCull(bool cull)
+{
+    if (canvasRenderer.cull != cull)
+    {
+        canvasRenderer.cull = cull;
+        UISystemProfilerApi.AddMarker(&quot;MaskableGraphic.cullingChanged&quot;, this);
+        m_OnCullStateChanged.Invoke(cull);
+        OnCullingChanged();
+    }
+}
+</code></pre><h2 id="遮罩"><a href="#遮罩" class="headerlink" title="遮罩"></a>遮罩</h2><p>遮罩效果如何实现呢？在Unity中，在父物体添加Mask组件，Mask组件指定一个同物体下的一个MaskableGraphic作为遮罩（这两者是绑定的！！）。子物体的Graphic在渲染的时候，只有遮罩允许的范围才能显示。</p>
+<p>裁剪有一个裁减者RectMask2D和被裁减者IClippable，也就是MaskableGraphic。在遮罩中，IMaskable同样表示被遮罩者，表示被Mask组件所遮罩。但是Mask也需要一个Graphic来记录显示的范围。所以Mask必须绑定一个Graphic。之前说过提过Graphic的继承结构，尴尬的是所有Graphic都是MaskableGraphic，所以MaskableGraphic在遮罩的情况下要与Mask联用，作为遮罩者，作为Text、Image负责显示的时候又是被遮罩者。所以看着MaskableGraphic的代码结构会稍显耦合。（MaskableGraphic：我太难了）</p>
+<p>Graphic继承结构：</p>
+<ul>
+<li>Graphic<ul>
+<li>MaskableGraphic<ul>
+<li>Text</li>
+<li>Image</li>
+<li>RawImage</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>和裁减类似，当Mask enable/disable或者MaskableGraphic（且同物体下存在Mask组件） enable/disable的时候，会通知所有实现了IMaskable的子物体重新计算遮罩。</p>
+<pre><code>/// &lt;summary&gt;
+/// Notify all IMaskable under the given component that they need to recalculate masking.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;mask&quot;&gt;The object thats changed for whose children should be notified.&lt;/param&gt;
+public static void NotifyStencilStateChanged(Component mask)
+{
+    var components = ListPool&lt;Component&gt;.Get();
+    mask.GetComponentsInChildren(components);
+    for (var i = 0; i &lt; components.Count; i++)
+    {
+        if (components[i] == null || components[i].gameObject == mask.gameObject)
+            continue;
+
+        var toNotify = components[i] as IMaskable;
+        if (toNotify != null)
+            toNotify.RecalculateMasking();
+    }
+    ListPool&lt;Component&gt;.Release(components);
+}
+</code></pre><p>RecalculateMasking主要是记录标志位m_ShouldRecalculateStencil，标记模版值StencilValue发生变化。SetMaterialDirty会把当前注册自身去重建。也就是启用Mask的时候，会让所有IMaskable子物体的StencilValue发生变化，并标记重建。</p>
+<pre><code>/// &lt;summary&gt;
+/// See IMaskable.RecalculateMasking
+/// &lt;/summary&gt;
+public virtual void RecalculateMasking()
+{
+    // Remove the material reference as either the graphic of the mask has been enable/ disabled.
+    // This will cause the material to be repopulated from the original if need be. (case 994413)
+    StencilMaterial.Remove(m_MaskMaterial);
+    m_MaskMaterial = null;
+    m_ShouldRecalculateStencil = true;
+    SetMaterialDirty();
+}
+</code></pre><pre><code>/// &lt;summary&gt;
+/// Mark the material as dirty and needing rebuilt.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// Send a OnDirtyMaterialCallback notification if any elements are registered. See RegisterDirtyMaterialCallback
+/// &lt;/remarks&gt;
+public virtual void SetMaterialDirty()
+{
+    if (!IsActive())
+        return;
+
+    m_MaterialDirty = true;
+    CanvasUpdateRegistry.RegisterCanvasElementForGraphicRebuild(this);
+
+    if (m_OnDirtyMaterialCallback != null)
+        m_OnDirtyMaterialCallback();
+}
+</code></pre><p>那么重建的时候是如何实现遮罩效果的呢？</p>
+<p>Graphic</p>
+<pre><code>public virtual void Rebuild(CanvasUpdate update)
+{
+    if (canvasRenderer.cull)
+        return;
+
+    switch (update)
+    {
+        case CanvasUpdate.PreRender:
+            if (m_VertsDirty)
+            {
+                UpdateGeometry();
+                m_VertsDirty = false;
+            }
+            if (m_MaterialDirty)
+            {
+                UpdateMaterial();
+                m_MaterialDirty = false;
+            }
+            break;
+    }
+}
+</code></pre><p>重建需要修改Graphic的顶点数据以及材质数据。遮罩效果正是通过材质实现的。这也是MaskableGraphic实现IMaterialModifier的原因。</p>
+<pre><code>/// &lt;summary&gt;
+/// See IMaterialModifier.GetModifiedMaterial
+/// &lt;/summary&gt;
+public virtual Material GetModifiedMaterial(Material baseMaterial)
+{
+    var toUse = baseMaterial;
+
+    if (m_ShouldRecalculateStencil)
+    {
+        var rootCanvas = MaskUtilities.FindRootSortOverrideCanvas(transform);
+        m_StencilValue = maskable ? MaskUtilities.GetStencilDepth(transform, rootCanvas) : 0;
+        m_ShouldRecalculateStencil = false;
+    }
+
+    // if we have a enabled Mask component then it will
+    // generate the mask material. This is an optimisation
+    // it adds some coupling between components though :(
+    Mask maskComponent = GetComponent&lt;Mask&gt;();
+    if (m_StencilValue &gt; 0 &amp;&amp; (maskComponent == null || !maskComponent.IsActive()))
+    {
+        var maskMat = StencilMaterial.Add(toUse, (1 &lt;&lt; m_StencilValue) - 1, StencilOp.Keep, CompareFunction.Equal, ColorWriteMask.All, (1 &lt;&lt; m_StencilValue) - 1, 0);
+        StencilMaterial.Remove(m_MaskMaterial);
+        m_MaskMaterial = maskMat;
+        toUse = m_MaskMaterial;
+    }
+    return toUse;
+}
+</code></pre><p>获得材质首先需要计算出对应的StencilValue模版值。MaskUtilities.FindRootSortOverrideCanvas(transform)会找到对应的Canvas，要么是rootCanvas要么是勾选了Override Sort的Canvas。（一直对Override Sort这个属性有些疑问，自己是理解成rootCanvas下另一个独立的Canvas，而不是nestedCanvas。），在canvas下查找当前MaskableGraphic处于第几层Mask遮罩下。</p>
+<p>一个MaskableGraphic可以受到多个RectMask2D的影响，同样可以受到多个Mask组件的影响。根据Mask层次的不同，StencilValue不同。</p>
+<pre><code>/// &lt;summary&gt;
+/// Find the stencil depth for a given element.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;transform&quot;&gt;The starting transform to search.&lt;/param&gt;
+/// &lt;param name=&quot;stopAfter&quot;&gt;Where the search of parents should stop&lt;/param&gt;
+/// &lt;returns&gt;What the proper stencil buffer index should be.&lt;/returns&gt;
+public static int GetStencilDepth(Transform transform, Transform stopAfter)
+{
+    var depth = 0;
+    if (transform == stopAfter)
+        return depth;
+
+    var t = transform.parent;
+    var components = ListPool&lt;Mask&gt;.Get();
+    while (t != null)
+    {
+        t.GetComponents&lt;Mask&gt;(components);
+        for (var i = 0; i &lt; components.Count; ++i)
+        {
+            if (components[i] != null &amp;&amp; components[i].MaskEnabled() &amp;&amp; components[i].graphic.IsActive())
+            {
+                ++depth;
+                break;
+            }
+        }
+
+        if (t == stopAfter)
+            break;
+
+        t = t.parent;
+    }
+    ListPool&lt;Mask&gt;.Release(components);
+    return depth;
+}
+</code></pre><p>大致效果如下</p>
+<ul>
+<li>Canvas<ul>
+<li>Image_1                            StencilValue = 0</li>
+<li>ImageWithMask_1            StencilValue = 0<ul>
+<li>Image_2                     StencilValue = 1 </li>
+<li>ImageWithMask_2     StencilValue = 1<ul>
+<li>Image_3              StencilValue = 2</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<pre><code>Mask maskComponent = GetComponent&lt;Mask&gt;();
+if (m_StencilValue &gt; 0 &amp;&amp; (maskComponent == null || !maskComponent.IsActive()))
+{
+    var maskMat = StencilMaterial.Add(toUse, (1 &lt;&lt; m_StencilValue) - 1, StencilOp.Keep, CompareFunction.Equal, ColorWriteMask.All, (1 &lt;&lt; m_StencilValue) - 1, 0);
+    StencilMaterial.Remove(m_MaskMaterial);
+    m_MaskMaterial = maskMat;
+    toUse = m_MaskMaterial;
+}
+</code></pre><p>只有StencilValue &gt; 0 即需要应用Mask效果，以及非Mask的MaskableGraphic才能获得材质。也就是只有Image_2以及Image_3才行。</p>
+<p>从StencilMaterial中获得对应StencilValue的材质并应用。至于如何应用就是Shader的事了。因为源码没有放出，所以只能做不了更多分析。不过感觉应该是和裁减的效果差不多的。在渲染Image_3的时候，渲染结果乘上一个比例，就像PS那样，StencilValue越大的物体，就需要乘上越多的比例。也就是应用更多的Mask。</p>
+<p>一些文章提到过使用Mask会破坏UI合批的效果，所以Mask层次过深的话对效率应该也会造成比较大的影响。慎用。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/08/2020-02-08-UGUI源码12-Graphic/" rel="next" title="UGUI源码12-Graphic">
+                <i class="fa fa-chevron-left"></i> UGUI源码12-Graphic
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码15-Image/" rel="prev" title="UGUI源码15-Image">
+                UGUI源码15-Image <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MaskableGraphic"><span class="nav-number">2.</span> <span class="nav-text">MaskableGraphic</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#裁减"><span class="nav-number">3.</span> <span class="nav-text">裁减</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#裁减接口"><span class="nav-number">3.1.</span> <span class="nav-text">裁减接口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#裁减的思路"><span class="nav-number">3.2.</span> <span class="nav-text">裁减的思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#更新RectMask2D的ClipTarget裁剪目标"><span class="nav-number">3.3.</span> <span class="nav-text">更新RectMask2D的ClipTarget裁剪目标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#主函数更新中执行裁减"><span class="nav-number">3.4.</span> <span class="nav-text">主函数更新中执行裁减</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RectMask2D计算裁减范围"><span class="nav-number">3.5.</span> <span class="nav-text">RectMask2D计算裁减范围</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#计算clipRect与rootCanvas的重合区域"><span class="nav-number">3.6.</span> <span class="nav-text">计算clipRect与rootCanvas的重合区域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用裁剪矩形"><span class="nav-number">3.7.</span> <span class="nav-text">应用裁剪矩形</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#遮罩"><span class="nav-number">4.</span> <span class="nav-text">遮罩</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

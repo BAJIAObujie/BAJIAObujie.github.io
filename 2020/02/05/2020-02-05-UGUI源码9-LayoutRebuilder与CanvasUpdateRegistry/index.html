@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言在LayoutGroup或者ContentSizeFitter中，都有一个SetDirty的方法。这个方法都会调用 LayoutRebuilder.MarkLayoutForRebuild(rectTransform); 那么这个方法是如何实现布局的重建呢？本篇文章就会来解决UGUI是如何处理布局的重建，要解决这个疑问就必须了解UGUI的整个重建流程，所以本篇文章除了LayoutRebuild">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry">
+<meta property="og:url" content="http://yoursite.com/2020/02/05/2020-02-05-UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言在LayoutGroup或者ContentSizeFitter中，都有一个SetDirty的方法。这个方法都会调用 LayoutRebuilder.MarkLayoutForRebuild(rectTransform); 那么这个方法是如何实现布局的重建呢？本篇文章就会来解决UGUI是如何处理布局的重建，要解决这个疑问就必须了解UGUI的整个重建流程，所以本篇文章除了LayoutRebuild">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-02-19T09:16:41.352Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry">
+<meta name="twitter:description" content="前言在LayoutGroup或者ContentSizeFitter中，都有一个SetDirty的方法。这个方法都会调用 LayoutRebuilder.MarkLayoutForRebuild(rectTransform); 那么这个方法是如何实现布局的重建呢？本篇文章就会来解决UGUI是如何处理布局的重建，要解决这个疑问就必须了解UGUI的整个重建流程，所以本篇文章除了LayoutRebuild">
+  <link rel="canonical" href="http://yoursite.com/2020/02/05/2020-02-05-UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/05/2020-02-05-UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-05 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-05T00:00:00+08:00">2020-02-05</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 17:16:41" itemprop="dateModified" datetime="2020-02-19T17:16:41+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在LayoutGroup或者ContentSizeFitter中，都有一个SetDirty的方法。这个方法都会调用</p>
+<pre><code>LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+</code></pre><p>那么这个方法是如何实现布局的重建呢？本篇文章就会来解决UGUI是如何处理布局的重建，要解决这个疑问就必须了解UGUI的整个重建流程，所以本篇文章除了LayoutRebuilder这个类外，还会来探讨CanvasUpdateRegistry。它相当于是UGUI整个重建过程的Manager类。</p>
+<h2 id="LayoutRebuilder"><a href="#LayoutRebuilder" class="headerlink" title="LayoutRebuilder"></a>LayoutRebuilder</h2><p>在CanvasUpdateRegistry.cs中有一个接口ICanvasElement，在Canvas画布上的UI元素都应该继承这个接口，这个接口有一个Rebuild表示重建，这样当元素需要被重建的时候就会被调用Rebuild方法。那么为什么LayoutGroup，ContentSizeFitter没有实现这个接口呢？正是因为LayoutRebuilder，LayoutRebuilder实现了ICanvasElement接口，它是一个布局元素的包装类，当一个布局元素比如LayoutGroup需要被重建的时候，LayoutGroup的rectTransform就会作为参数传入LayoutRebuilder对象中，随后LayoutRebuilder就会被作为重建物体注册到CanvasUpdateRegistry，并等待重建。</p>
+<pre><code>/// &lt;summary&gt;
+/// Wrapper class for managing layout rebuilding of CanvasElement.
+/// &lt;/summary&gt;
+public class LayoutRebuilder : ICanvasElement
+{
+    private RectTransform m_ToRebuild;
+    //There are a few of reasons we need to cache the Hash fromt he transform:
+    //  - This is a ValueType (struct) and .Net calculates Hash from the Value Type fields.
+    //  - The key of a Dictionary should have a constant Hash value.
+    //  - It&#39;s possible for the Transform to get nulled from the Native side.
+    // We use this struct with the IndexedSet container, which uses a dictionary as part of it&#39;s implementation
+    // So this struct gets used as a key to a dictionary, so we need to guarantee a constant Hash value.
+    private int m_CachedHashFromTransform;
+
+    static ObjectPool&lt;LayoutRebuilder&gt; s_Rebuilders = new ObjectPool&lt;LayoutRebuilder&gt;(null, x =&gt; x.Clear());
+
+    private void Initialize(RectTransform controller)
+    {
+        m_ToRebuild = controller;
+        m_CachedHashFromTransform = controller.GetHashCode();
+    }
+
+    private void Clear()
+    {
+        m_ToRebuild = null;
+        m_CachedHashFromTransform = 0;
+    }
+
+    ...
+}
+</code></pre><p>s_Rebuilders表示持有LayoutRebuilder的ObjectPool。它是一个静态对象，也就是所有的布局元素对应的包装类对象都存储在s_Rebuilders中。</p>
+<p>m_ToRebuild表示当前包装类对象持有的布局元素的rectTransform。</p>
+<h2 id="MarkLayoutForRebuild"><a href="#MarkLayoutForRebuild" class="headerlink" title="MarkLayoutForRebuild"></a>MarkLayoutForRebuild</h2><p>MarkLayoutForRebuild。当布局元素LayoutGroup等调用这个方法的时候，从布局元素开始就会找Hierarchy中对应的元素，并把元素给包装成LayoutRebuilder，然后注册到CanvasUpdateRegistry里。对应的元素是什么呢？</p>
+<pre><code>/// &lt;summary&gt;
+/// Mark the given RectTransform as needing it&#39;s layout to be recalculated during the next layout pass.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;rect&quot;&gt;Rect to rebuild.&lt;/param&gt;
+public static void MarkLayoutForRebuild(RectTransform rect)
+        {
+    if (rect == null || rect.gameObject == null)
+        return;
+
+    var comps = ListPool&lt;Component&gt;.Get();
+    bool validLayoutGroup = true;
+    RectTransform layoutRoot = rect;
+    var parent = layoutRoot.parent as RectTransform;
+    while (validLayoutGroup &amp;&amp; !(parent == null || parent.gameObject == null))
+    {
+        validLayoutGroup = false;
+        parent.GetComponents(typeof(ILayoutGroup), comps);
+
+        for (int i = 0; i &lt; comps.Count; ++i)
+        {
+           var cur = comps[i];
+           if (cur != null &amp;&amp; cur is Behaviour &amp;&amp; ((Behaviour)cur).isActiveAndEnabled)
+           {
+                validLayoutGroup = true;
+                layoutRoot = parent;
+                break;
+           }
+        }
+        parent = parent.parent as RectTransform;
+    }
+
+    // We know the layout root is valid if it&#39;s not the same as the rect,
+    // since we checked that above. But if they&#39;re the same we still need to check.
+    if (layoutRoot == rect &amp;&amp; !ValidController(layoutRoot, comps))
+    {
+        ListPool&lt;Component&gt;.Release(comps);
+        return;
+    }
+
+    MarkLayoutRootForRebuild(layoutRoot);
+    ListPool&lt;Component&gt;.Release(comps);
+}
+</code></pre><p>标记为重建的元素主要是实现了ILayoutController接口的元素，ILayoutController有两个子类接口，ILayoutGroup和ILayoutSelfController。也就是布局重建元素主要是LayoutGroup和ContentSizeFitter两类。</p>
+<ol>
+<li>如果是ContentSizeFitter，那么会在ValidController中检测为是有效ILayoutController，接着调用MarkLayoutRootForRebuild，标记ContentSizeFitter的rectTransform重建。</li>
+<li>如果是LayoutGroup，那么让我们来假设两种情况，第一种父-子，同时父子都具有LayoutGroup，那么只会标记父LayoutGroup进行重建，父LayoutGroup的时候也会顺带进行子LayoutGroup的重建。</li>
+</ol>
+<p>第二种情形，如果存在父-子-孙的关系，父孙都有LayoutGroup，而子没有LayoutGroup组件，那么重建的时候，父孙会作为两个布局元素进行重建。也就是LayoutGroup总是倾向于让rootLayoutGroup去发起重建！当子这一层没有LayoutGroup，也就是Hierarchy中的层级关系中断的时候，父和孙会作为两个rootLayoutGroup去重建。</p>
+<p>那么我们就知道了对于LayoutGroup和ContentSizeFitter两类布局元素，ContentSizeFitter是传入自身rectTransform，而LayoutGroup是传入rootLayoutGroup。接下来MarkLayoutRootForRebuild则是将rectTransform包装成LayoutRebuilder，并在CanvasUpdateRegistry中注册并等待布局重建。</p>
+<pre><code>private static void MarkLayoutRootForRebuild(RectTransform controller)
+{
+    if (controller == null)
+        return;
+
+    var rebuilder = s_Rebuilders.Get();
+    rebuilder.Initialize(controller);
+    if (!CanvasUpdateRegistry.TryRegisterCanvasElementForLayoutRebuild(rebuilder))
+        s_Rebuilders.Release(rebuilder);
+}
+</code></pre><h2 id="Pre-CanvasUpdateRegistry"><a href="#Pre-CanvasUpdateRegistry" class="headerlink" title="Pre-CanvasUpdateRegistry"></a>Pre-CanvasUpdateRegistry</h2><h3 id="ICanvasElement"><a href="#ICanvasElement" class="headerlink" title="ICanvasElement"></a>ICanvasElement</h3><p>ICanvasElement注释说明This is an element that can live on a Canvas. 也就是说能够在Live on a Canvas上的元素都应该实现这个接口。ICanvasElement里有一个主要的方法Rebuild，表示元素的重建。CanvasUpdate是一个表示重建流程的枚举。Rebuild传入CanvasUpdate，也就是通知CanvasElement应该执行重建的哪一个流程。</p>
+<pre><code>/// &lt;summary&gt;
+/// This is an element that can live on a Canvas.
+/// &lt;/summary&gt;
+public interface ICanvasElement
+{
+    /// &lt;summary&gt;
+    /// Rebuild the element for the given stage.
+    /// &lt;/summary&gt;
+    /// &lt;param name=&quot;executing&quot;&gt;The current CanvasUpdate stage being rebuild.&lt;/param&gt;
+    void Rebuild(CanvasUpdate executing);
+
+    /// &lt;summary&gt;
+    /// Get the transform associated with the ICanvasElement.
+    /// &lt;/summary&gt;
+    Transform transform { get; }
+
+    ...
+}
+</code></pre><h3 id="重建的流程枚举CanvasUpdate"><a href="#重建的流程枚举CanvasUpdate" class="headerlink" title="重建的流程枚举CanvasUpdate"></a>重建的流程枚举CanvasUpdate</h3><p>从小到大表示重建的流程。</p>
+<pre><code>/// &lt;summary&gt;
+/// Values of &#39;update&#39; called on a Canvas update.
+/// &lt;/summary&gt;
+public enum CanvasUpdate
+{
+    /// Called before layout.
+    Prelayout = 0,
+
+    /// Called for layout.
+    Layout = 1,
+
+    /// Called after layout.
+    PostLayout = 2,
+
+    /// Called before rendering.
+    PreRender = 3,
+
+    /// Called late, before render.
+    LatePreRender = 4,
+
+    /// Max enum value. Always last.
+    MaxUpdateValue = 5
+}
+</code></pre><h2 id="CanvasUpdateRegistry"><a href="#CanvasUpdateRegistry" class="headerlink" title="CanvasUpdateRegistry"></a>CanvasUpdateRegistry</h2><p>CanvasUpdateRegistry是UGUI重建系统的管理类。根据注释，每个画布元素CanvasElements在需要重建的时候可以注册自己到CanvasUpdateRegistry中。那么如何来定义CanvasElement呢？就是实现了ICanvasElement 接口的组件。重建包括布局的重建与graphic的重建，也就是一旦布局有变化，或者graphic有变化，那么只需要把对应的元素注册到CanvasUpdateRegistry，CanvasUpdateRegistry会在随后的更新中负责处理重建。因此CanvasElement也就主要分为两类，一类是布局元素，一类是graphic元素。</p>
+<h3 id="缓存重建元素的队列"><a href="#缓存重建元素的队列" class="headerlink" title="缓存重建元素的队列"></a>缓存重建元素的队列</h3><ol>
+<li>m_LayoutRebuildQueue 表示这是一个缓存需要布局重建的元素的队列</li>
+<li>m_GraphicRebuildQueue 表示这是一个缓存需要Graphic重建的队列</li>
+</ol>
+<p>它们都是用了IndexedSet的数据结构，这个数据结构内部是List和Dictionary，当我们把元素注册到这个数据结构中的时候，会同时添加到List和Dictionary，Dictionary，可以保证元素唯一。List可以保证元素有序存储。</p>
+<p>也就是说当我们需要重建布局的时候，布局元素将会被注册到m_LayoutRebuildQueue。当graphic需要重建的时候，就会被注册到m_GraphicRebuildQueue。布局元素包括ILayoutGroup与ILayoutSelfController。graphic元素包括Image/RawImage/Text等。</p>
+<pre><code>/// &lt;summary&gt;
+/// A place where CanvasElements can register themselves for rebuilding.
+/// &lt;/summary&gt;
+public class CanvasUpdateRegistry
+{
+    private readonly IndexedSet&lt;ICanvasElement&gt; m_LayoutRebuildQueue = new IndexedSet&lt;ICanvasElement&gt;();
+    private readonly IndexedSet&lt;ICanvasElement&gt; m_GraphicRebuildQueue = new IndexedSet&lt;ICanvasElement&gt;();
+
+    ...
+}
+</code></pre><h3 id="重建布局与graphic"><a href="#重建布局与graphic" class="headerlink" title="重建布局与graphic"></a>重建布局与graphic</h3><p>那么CanvasUpdateRegistry如何执行整个布局与graphic的重建呢？</p>
+<p>在CanvasUpdateRegistry的构造函数中，会给Canvas注册一个函数PerformUpdate，这个函数相当于是UGUI的update主函数，用于执行每帧更新的。这个函数也是CanvasUpdateRegistry最主要的函数。</p>
+<p>函数首先剔除无用的布局元素，然后对m_LayoutRebuildQueue进行重新排序。接着依次更新布局流程Prelayout、Layout、PostLayout，每个布局流程都需要遍历布局元素。随后再更新Graphic渲染流程，执行PreRender和LatePreRender两个过程。每个过程遍历Graphic元素。这样就完成了布局与graphic的重建。每个LayourRebuilder和Graphic都实现了ICanvasElement接口。在每个重建阶段应该做什么，就是各个元素重写Rebuild方法的事情了。</p>
+<pre><code>private void PerformUpdate()
+{
+    UISystemProfilerApi.BeginSample(UISystemProfilerApi.SampleType.Layout);
+    CleanInvalidItems();
+
+    m_PerformingLayoutUpdate = true;
+
+    m_LayoutRebuildQueue.Sort(s_SortLayoutFunction);
+    for (int i = 0; i &lt;= (int)CanvasUpdate.PostLayout; i++)
+    {
+        for (int j = 0; j &lt; m_LayoutRebuildQueue.Count; j++)
+        {
+            var rebuild = instance.m_LayoutRebuildQueue[j];
+            try
+            {
+                if (ObjectValidForUpdate(rebuild))
+                    rebuild.Rebuild((CanvasUpdate)i);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e, rebuild.transform);
+            }
+        }
+    }
+
+    for (int i = 0; i &lt; m_LayoutRebuildQueue.Count; ++i)
+        m_LayoutRebuildQueue[i].LayoutComplete();
+
+    instance.m_LayoutRebuildQueue.Clear();
+    m_PerformingLayoutUpdate = false;
+
+    // now layout is complete do culling...
+    ClipperRegistry.instance.Cull();
+
+    m_PerformingGraphicUpdate = true;
+    for (var i = (int)CanvasUpdate.PreRender; i &lt; (int)CanvasUpdate.MaxUpdateValue; i++)
+    {
+        for (var k = 0; k &lt; instance.m_GraphicRebuildQueue.Count; k++)
+        {
+            try
+            {
+                var element = instance.m_GraphicRebuildQueue[k];
+                if (ObjectValidForUpdate(element))
+                    element.Rebuild((CanvasUpdate)i);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e, instance.m_GraphicRebuildQueue[k].transform);
+            }
+        }
+    }
+
+    for (int i = 0; i &lt; m_GraphicRebuildQueue.Count; ++i)
+        m_GraphicRebuildQueue[i].GraphicUpdateComplete();
+
+    instance.m_GraphicRebuildQueue.Clear();
+    m_PerformingGraphicUpdate = false;
+    UISystemProfilerApi.EndSample(UISystemProfilerApi.SampleType.Layout);
+}
+</code></pre><h3 id="布局重建队列的排序"><a href="#布局重建队列的排序" class="headerlink" title="布局重建队列的排序"></a>布局重建队列的排序</h3><p>在开始布局重建之前，每个布局元素的队列m_LayoutRebuildQueue进行了排序，排序算法如下。基本算就属于谁的继承层次深，谁就优先进行重建。</p>
+<pre><code>private static readonly Comparison&lt;ICanvasElement&gt; s_SortLayoutFunction = SortLayoutList;
+
+private static int ParentCount(Transform child)
+{
+    if (child == null)
+        return 0; 
+
+    var parent = child.parent;
+    int count = 0;
+    while (parent != null)
+    {
+        count++;
+        parent = parent.parent;
+    }
+    return count;
+}
+
+private static int SortLayoutList(ICanvasElement x, ICanvasElement y)
+{
+    Transform t1 = x.transform;
+    Transform t2 = y.transform;
+
+    return ParentCount(t1) - ParentCount(t2);
+}
+</code></pre><h2 id="重回LayoutRebuilder"><a href="#重回LayoutRebuilder" class="headerlink" title="重回LayoutRebuilder"></a>重回LayoutRebuilder</h2><p>来看看LayoutRebuilder的Rebuild方法</p>
+<pre><code>public void Rebuild(CanvasUpdate executing)
+{
+  switch (executing)
+  {
+    case CanvasUpdate.Layout:
+// It&#39;s unfortunate that we&#39;ll perform the same GetComponents querys for the tree 2 times,
+// but each tree have to be fully iterated before going to the next action,
+// so reusing the results would entail storing results in a Dictionary or similar,
+// which is probably a bigger overhead than performing GetComponents multiple times.
+    PerformLayoutCalculation(m_ToRebuild, e =&gt; (e as ILayoutElement).CalculateLayoutInputHorizontal());
+    PerformLayoutControl(m_ToRebuild, e =&gt; (e as ILayoutController).SetLayoutHorizontal());
+    PerformLayoutCalculation(m_ToRebuild, e =&gt; (e as ILayoutElement).CalculateLayoutInputVertical());
+    PerformLayoutControl(m_ToRebuild, e =&gt; (e as ILayoutController).SetLayoutVertical());
+    break;
+    }
+}
+</code></pre><p>Rebuild仅实现了Layout阶段的重建，在重建阶段，先计算水平方向，首先将布局元素转化为ILayoutElement并计算该LayoutElement的最小宽度/完美宽度/灵活宽度。计算出数据后随后再转化为ILayoutControl，将所计算得到的宽度应用到rectTransform上。随后再计算竖直方向。</p>
+<h3 id="PerformLayoutCalculation（ILayoutElement）"><a href="#PerformLayoutCalculation（ILayoutElement）" class="headerlink" title="PerformLayoutCalculation（ILayoutElement）"></a>PerformLayoutCalculation（ILayoutElement）</h3><p><strong>从下至上，先计算子物体的数据随后再计算自身的数据。</strong>这一点并不难理解，比如一个VerticalLayoutGroup，底下的布局元素是text，当其中一个text文本发生变化的时候，那么显然text的完美宽高应该发生变化。VerticalLayoutGroup的数据依赖于子物体的数据，所以必须等待子物体计算完成后，才能计算自身数据。</p>
+<pre><code>private void PerformLayoutCalculation(RectTransform rect, UnityAction&lt;Component&gt; action)
+{
+    if (rect == null)
+        return;
+
+    var components = ListPool&lt;Component&gt;.Get();
+    rect.GetComponents(typeof(ILayoutElement), components);
+    StripDisabledBehavioursFromList(components);
+
+    // If there are no controllers on this rect we can skip this entire sub-tree
+    // We don&#39;t need to consider controllers on children deeper in the sub-tree either,
+    // since they will be their own roots.
+    if (components.Count &gt; 0  || rect.GetComponent(typeof(ILayoutGroup)))
+    {
+        // Layout calculations needs to executed bottom up with children being done before their parents,
+        // because the parent calculated sizes rely on the sizes of the children.
+
+        for (int i = 0; i &lt; rect.childCount; i++)
+            PerformLayoutCalculation(rect.GetChild(i) as RectTransform, action);
+
+        for (int i = 0; i &lt; components.Count; i++)
+            action(components[i]);
+    }
+
+    ListPool&lt;Component&gt;.Release(components);
+}
+</code></pre><h3 id="PerformLayoutControl（ILayoutController）"><a href="#PerformLayoutControl（ILayoutController）" class="headerlink" title="PerformLayoutControl（ILayoutController）"></a>PerformLayoutControl（ILayoutController）</h3><p>执行自己的component，先自身的ILayoutSelfController，随后是非自身的Control也就是ILayoutGroup。也就是<strong>优先应用自身的布局，之后再执行子物体的布局。</strong></p>
+<p>仍然以上面的例子做说明，当一个text文本内容变化后，计算出子物体的宽高，随后计算VerticalLayoutGroup的宽高。这个时候必须先应用VerticalLayoutGroup的宽高，才能应用子物体的宽高、位置。因为子物体的宽高位置跟VerticalLayoutGroup的布局范围相关，只有VerticalLayoutGroup的布局范围先确定才能确定子物体的位置。</p>
+<pre><code>private void PerformLayoutControl(RectTransform rect, UnityAction&lt;Component&gt; action)
+{
+    if (rect == null)
+        return;
+
+    var components = ListPool&lt;Component&gt;.Get();
+    rect.GetComponents(typeof(ILayoutController), components);
+    StripDisabledBehavioursFromList(components);
+
+    // If there are no controllers on this rect we can skip this entire sub-tree
+    // We don&#39;t need to consider controllers on children deeper in the sub-tree either,
+    // since they will be their own roots.
+    if (components.Count &gt; 0)
+    {
+        // Layout control needs to executed top down with parents being done before their children,
+        // because the children rely on the sizes of the parents.
+
+        // First call layout controllers that may change their own RectTransform
+        for (int i = 0; i &lt; components.Count; i++)
+            if (components[i] is ILayoutSelfController)
+                action(components[i]);
+
+        // Then call the remaining, such as layout groups that change their children, taking their own RectTransform size into account.
+        for (int i = 0; i &lt; components.Count; i++)
+            if (!(components[i] is ILayoutSelfController))
+                action(components[i]);
+
+        for (int i = 0; i &lt; rect.childCount; i++)
+            PerformLayoutControl(rect.GetChild(i) as RectTransform, action);
+    }
+
+    ListPool&lt;Component&gt;.Release(components);
+}
+</code></pre><h3 id="聊天对话框"><a href="#聊天对话框" class="headerlink" title="聊天对话框"></a>聊天对话框</h3><p>以之前聊天对话框再举一例。</p>
+<ul>
+<li>UIList （with VerticalLayoutGroup and ContentSizeFitter）<ul>
+<li>Text</li>
+<li>Text</li>
+<li>… … </li>
+</ul>
+</li>
+</ul>
+<p>聊天对话框是 UIList存在ContentSizeFitter组件与VerticalLayoutGroup。考虑竖直方向，首先计算最小高度/完美高度/灵活宽度即PerformLayoutCalculation，这个方法首先计算所有子物体的数据随后再计算自身的数据。VerticalLayoutGroup实现了ILayoutElement接口，首先VerticalLayoutGroup找到所有子物体，并且根据子物体的高度，计算出自身高度。随后应用数据PerformLayoutControl，这个先执行自身的大小控制，也就是ContentSizeFitter应用完美高度到当前rectTransform。随后VerticalLayoutGroup再次控制子物体的高度。子物体的完美高度等于VerticalLayoutGroup的完美高度。所以子物体能够完整显示自身的全部内容。</p>
+<p>这就是聊天框执行布局的全部流程了。</p>
+<h3 id="LayoutGroup嵌套"><a href="#LayoutGroup嵌套" class="headerlink" title="LayoutGroup嵌套"></a>LayoutGroup嵌套</h3><ul>
+<li>LayoutGroup （VerticalLayoutGroup with ContentSizeFitter）<ul>
+<li>Text</li>
+<li>子LayoutGroup （VerticalLayoutGroup）<ul>
+<li>Text2</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>LayoutGroup在Hierarchy上是连续的，所以会从rootLayoutGroup发起重建。首先计算所有子物体的宽高数据。子LayoutGroup从Text2中计算宽高数据，rootLayoutGroup根据Text和子LayoutGroup得到rootLayoutGroup的宽高数据。随后应用布局，首先rootLayoutGroup使用ContentSizeFitter确定自身布局范围。随后再确定子元素的布局。</p>
+<p>这也就是之前提到的LayoutGroup在Hierarchy上层级连续的情况。那么层级中断的情况呢？</p>
+<h3 id="LayoutGroup嵌套中断"><a href="#LayoutGroup嵌套中断" class="headerlink" title="LayoutGroup嵌套中断"></a>LayoutGroup嵌套中断</h3><p>父-子-孙，父孙都有LayoutGroup，而子没有LayoutGroup组件，那么重建的时候，父和孙会当作两个布局重建元素。这个时候根据排序，孙会优先进行布局重建。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/03/2020-02-03-UGUI源码8-ContentSizeFitter/" rel="next" title="UGUI源码8-ContentSizeFitter">
+                <i class="fa fa-chevron-left"></i> UGUI源码8-ContentSizeFitter
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/06/2020-02-06-UGUI源码10-LayoutRebuilder的一点补充/" rel="prev" title="UGUI源码10-LayoutRebuilder的一点补充">
+                UGUI源码10-LayoutRebuilder的一点补充 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LayoutRebuilder"><span class="nav-number">2.</span> <span class="nav-text">LayoutRebuilder</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MarkLayoutForRebuild"><span class="nav-number">3.</span> <span class="nav-text">MarkLayoutForRebuild</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pre-CanvasUpdateRegistry"><span class="nav-number">4.</span> <span class="nav-text">Pre-CanvasUpdateRegistry</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ICanvasElement"><span class="nav-number">4.1.</span> <span class="nav-text">ICanvasElement</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#重建的流程枚举CanvasUpdate"><span class="nav-number">4.2.</span> <span class="nav-text">重建的流程枚举CanvasUpdate</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CanvasUpdateRegistry"><span class="nav-number">5.</span> <span class="nav-text">CanvasUpdateRegistry</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#缓存重建元素的队列"><span class="nav-number">5.1.</span> <span class="nav-text">缓存重建元素的队列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#重建布局与graphic"><span class="nav-number">5.2.</span> <span class="nav-text">重建布局与graphic</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#布局重建队列的排序"><span class="nav-number">5.3.</span> <span class="nav-text">布局重建队列的排序</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#重回LayoutRebuilder"><span class="nav-number">6.</span> <span class="nav-text">重回LayoutRebuilder</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#PerformLayoutCalculation（ILayoutElement）"><span class="nav-number">6.1.</span> <span class="nav-text">PerformLayoutCalculation（ILayoutElement）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PerformLayoutControl（ILayoutController）"><span class="nav-number">6.2.</span> <span class="nav-text">PerformLayoutControl（ILayoutController）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#聊天对话框"><span class="nav-number">6.3.</span> <span class="nav-text">聊天对话框</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LayoutGroup嵌套"><span class="nav-number">6.4.</span> <span class="nav-text">LayoutGroup嵌套</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LayoutGroup嵌套中断"><span class="nav-number">6.5.</span> <span class="nav-text">LayoutGroup嵌套中断</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

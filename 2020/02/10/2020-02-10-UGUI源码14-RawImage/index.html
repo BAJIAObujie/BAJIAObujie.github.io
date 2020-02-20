@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言继Graphic，MaskableGraphic之后，终于到了实际可用的图形组件了。 RawImage/// &amp;lt;summary&amp;gt; /// Displays a Texture2D for the UI System. /// &amp;lt;/summary&amp;gt; /// &amp;lt;remarks&amp;gt; /// If you don&amp;#39;t have or don&amp;#39;t wis">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码14-RawImage">
+<meta property="og:url" content="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码14-RawImage/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言继Graphic，MaskableGraphic之后，终于到了实际可用的图形组件了。 RawImage/// &amp;lt;summary&amp;gt; /// Displays a Texture2D for the UI System. /// &amp;lt;/summary&amp;gt; /// &amp;lt;remarks&amp;gt; /// If you don&amp;#39;t have or don&amp;#39;t wis">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-02-19T06:32:37.820Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码14-RawImage">
+<meta name="twitter:description" content="前言继Graphic，MaskableGraphic之后，终于到了实际可用的图形组件了。 RawImage/// &amp;lt;summary&amp;gt; /// Displays a Texture2D for the UI System. /// &amp;lt;/summary&amp;gt; /// &amp;lt;remarks&amp;gt; /// If you don&amp;#39;t have or don&amp;#39;t wis">
+  <link rel="canonical" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码14-RawImage/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码14-RawImage | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/2020-02-10-UGUI源码14-RawImage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码14-RawImage
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-10 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-10T00:00:00+08:00">2020-02-10</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 14:32:37" itemprop="dateModified" datetime="2020-02-19T14:32:37+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>继Graphic，MaskableGraphic之后，终于到了实际可用的图形组件了。</p>
+<h2 id="RawImage"><a href="#RawImage" class="headerlink" title="RawImage"></a>RawImage</h2><pre><code>/// &lt;summary&gt;
+/// Displays a Texture2D for the UI System.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// If you don&#39;t have or don&#39;t wish to create an atlas, you can simply use this script to draw a texture.
+/// Keep in mind though that this will create an extra draw call with each RawImage present, so it&#39;s
+/// best to use it only for backgrounds or temporary visible graphics.
+/// &lt;/remarks&gt;
+
+[AddComponentMenu(&quot;UI/Raw Image&quot;, 12)]
+public class RawImage : MaskableGraphic
+{
+    ...
+}
+</code></pre><p>RawImage和Image是比较类似的。在Unity中，一张贴图叫做Texture2D，RawImage使用整张贴图。Image则是可以渲染Texture2D分割后的Sprite。比如游戏的主界面或者某一个界面，会尽量使用同一张贴图分割后的Sprite。这样在渲染的时候，动态合批会检测到使用同样材质，会尝试在一次DrawCall就能够提交所有的数据。而RawImage虽然不需要去分割Texture2D，创建Atlas，但是相对的，每个RawImage就需要一次DrawCall，性能消耗比较大。因此RawImage常用于背景或者临时可见的Graphic元素。</p>
+<h2 id="Texture"><a href="#Texture" class="headerlink" title="Texture"></a>Texture</h2><pre><code>[SerializeField] Texture m_Texture;
+
+/// &lt;summary&gt;
+/// Returns the texture used to draw this Graphic.
+/// &lt;/summary&gt;
+public override Texture mainTexture
+{
+    get
+    {
+        if (m_Texture == null)
+        {
+            if (material != null &amp;&amp; material.mainTexture != null)
+            {
+                return material.mainTexture;
+            }
+            return s_WhiteTexture;
+        }
+
+        return m_Texture;
+    }
+}
+
+public Texture texture
+{
+    get
+    {
+        return m_Texture;
+    }
+    set
+    {
+        if (m_Texture == value)
+            return;
+
+        m_Texture = value;
+        SetVerticesDirty();
+        SetMaterialDirty();
+    }
+}
+</code></pre><p>mainTexture用于渲染取之，因此必须要有一个默认值。修改RawImage的贴图，则通常是修改texture值。</p>
+<h2 id="UVRect"><a href="#UVRect" class="headerlink" title="UVRect"></a>UVRect</h2><pre><code>[SerializeField] Rect m_UVRect = new Rect(0f, 0f, 1f, 1f);
+
+/// &lt;summary&gt;
+/// UV rectangle used by the texture.
+/// &lt;/summary&gt;
+public Rect uvRect
+{
+    get
+    {
+        return m_UVRect;
+    }
+    set
+    {
+        if (m_UVRect == value)
+            return;
+        m_UVRect = value;
+        SetVerticesDirty();
+    }
+}
+</code></pre><p>UVRect常用于设置RawImage显示的范围。仅显示Rect内的内容</p>
+<h2 id="SetNativeSize"><a href="#SetNativeSize" class="headerlink" title="SetNativeSize"></a>SetNativeSize</h2><pre><code>/// &lt;summary&gt;
+/// Adjust the scale of the Graphic to make it pixel-perfect.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// This means setting the RawImage&#39;s RectTransform.sizeDelta  to be equal to the Texture dimensions.
+/// &lt;/remarks&gt;
+public override void SetNativeSize()
+{
+    Texture tex = mainTexture;
+    if (tex != null)
+    {
+       int w = Mathf.RoundToInt(tex.width * uvRect.width);
+       int h = Mathf.RoundToInt(tex.height * uvRect.height);
+       rectTransform.anchorMax = rectTransform.anchorMin;
+       rectTransform.sizeDelta = new Vector2(w, h);
+    }
+}
+</code></pre><p>首先根据贴图的宽高，以及UVRect显示范围，确定RawImage需要的宽高。随后让rectTransform的锚点相等，在集中型锚点下，设置sizeDelta就是设置rectTransform的宽高。</p>
+<h2 id="OnPopulateMesh"><a href="#OnPopulateMesh" class="headerlink" title="OnPopulateMesh"></a>OnPopulateMesh</h2><pre><code>protected override void OnPopulateMesh(VertexHelper vh)
+{
+    Texture tex = mainTexture;
+    vh.Clear();
+    if (tex != null)
+    {
+        var r = GetPixelAdjustedRect();
+        var v = new Vector4(r.x, r.y, r.x + r.width, r.y + r.height);
+        var scaleX = tex.width * tex.texelSize.x;
+        var scaleY = tex.height * tex.texelSize.y;
+        {
+            var color32 = color;
+            vh.AddVert(new Vector3(v.x, v.y), color32, new Vector2(m_UVRect.xMin * scaleX, m_UVRect.yMin * scaleY));
+            vh.AddVert(new Vector3(v.x, v.w), color32, new Vector2(m_UVRect.xMin * scaleX, m_UVRect.yMax * scaleY));
+            vh.AddVert(new Vector3(v.z, v.w), color32, new Vector2(m_UVRect.xMax * scaleX, m_UVRect.yMax * scaleY));
+            vh.AddVert(new Vector3(v.z, v.y), color32, new Vector2(m_UVRect.xMax * scaleX, m_UVRect.yMin * scaleY));
+
+            vh.AddTriangle(0, 1, 2);
+            vh.AddTriangle(2, 3, 0);
+        }
+    }
+}
+</code></pre><p>这个方法是用来计算网格的方法，计算后的网格会应用到CanvasRenderer中，与基类Graphic不同的地方在于</p>
+<pre><code>var scaleX = tex.width * tex.texelSize.x;
+var scaleY = tex.height * tex.texelSize.y;
+</code></pre><p>texelSize纹素，在网上查的定义是 宽高的倒数，那这里再次乘上宽高后，scaleX、scaleY也应该都是1。现在不太确定为什么这么做。暂且留个疑问吧。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/10/2020-02-02-UGUI源码7-LayoutGroup/" rel="next" title="UGUI源码7-LayoutGroup">
+                <i class="fa fa-chevron-left"></i> UGUI源码7-LayoutGroup
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/11/2020-02-11-UGUI源码16-射线投射/" rel="prev" title="UGUI源码16-射线投射">
+                UGUI源码16-射线投射 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RawImage"><span class="nav-number">2.</span> <span class="nav-text">RawImage</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Texture"><span class="nav-number">3.</span> <span class="nav-text">Texture</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UVRect"><span class="nav-number">4.</span> <span class="nav-text">UVRect</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SetNativeSize"><span class="nav-number">5.</span> <span class="nav-text">SetNativeSize</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#OnPopulateMesh"><span class="nav-number">6.</span> <span class="nav-text">OnPopulateMesh</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

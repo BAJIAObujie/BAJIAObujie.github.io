@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言在讲解完Graphic之后，终于可以来谈一谈射线投射了，总结一下前面文章中涉及射线投射的部分。一是在EventSystem中，有一个RaycastAll函数。Graphic中也有一个检测射线投射的函数。 RaycasterManager顾名思义，这是一个Raycaster的管理器类。相关代码非常少，基本上只是缓存所有的BaseRaycaster射线发射器而已。 namespace UnityE">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码16-射线投射">
+<meta property="og:url" content="http://yoursite.com/2020/02/11/2020-02-11-UGUI源码16-射线投射/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言在讲解完Graphic之后，终于可以来谈一谈射线投射了，总结一下前面文章中涉及射线投射的部分。一是在EventSystem中，有一个RaycastAll函数。Graphic中也有一个检测射线投射的函数。 RaycasterManager顾名思义，这是一个Raycaster的管理器类。相关代码非常少，基本上只是缓存所有的BaseRaycaster射线发射器而已。 namespace UnityE">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-16-Raycast/1.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-16-Raycast/2.png">
+<meta property="og:updated_time" content="2020-02-19T09:18:10.685Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码16-射线投射">
+<meta name="twitter:description" content="前言在讲解完Graphic之后，终于可以来谈一谈射线投射了，总结一下前面文章中涉及射线投射的部分。一是在EventSystem中，有一个RaycastAll函数。Graphic中也有一个检测射线投射的函数。 RaycasterManager顾名思义，这是一个Raycaster的管理器类。相关代码非常少，基本上只是缓存所有的BaseRaycaster射线发射器而已。 namespace UnityE">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-16-Raycast/1.png">
+  <link rel="canonical" href="http://yoursite.com/2020/02/11/2020-02-11-UGUI源码16-射线投射/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码16-射线投射 | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/11/2020-02-11-UGUI源码16-射线投射/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码16-射线投射
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-11 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-11T00:00:00+08:00">2020-02-11</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 17:18:10" itemprop="dateModified" datetime="2020-02-19T17:18:10+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在讲解完Graphic之后，终于可以来谈一谈射线投射了，总结一下前面文章中涉及射线投射的部分。一是在EventSystem中，有一个RaycastAll函数。Graphic中也有一个检测射线投射的函数。</p>
+<h2 id="RaycasterManager"><a href="#RaycasterManager" class="headerlink" title="RaycasterManager"></a>RaycasterManager</h2><p>顾名思义，这是一个Raycaster的管理器类。相关代码非常少，基本上只是缓存所有的BaseRaycaster射线发射器而已。</p>
+<pre><code>namespace UnityEngine.EventSystems
+{
+    internal static class RaycasterManager
+    {
+        private static readonly List&lt;BaseRaycaster&gt; s_Raycasters = new List&lt;BaseRaycaster&gt;();
+
+        public static void AddRaycaster(BaseRaycaster baseRaycaster)
+        {
+            if (s_Raycasters.Contains(baseRaycaster))
+                return;
+
+            s_Raycasters.Add(baseRaycaster);
+        }
+
+        public static List&lt;BaseRaycaster&gt; GetRaycasters()
+        {
+            return s_Raycasters;
+        }
+
+        public static void RemoveRaycasters(BaseRaycaster baseRaycaster)
+        {
+            if (!s_Raycasters.Contains(baseRaycaster))
+                return;
+            s_Raycasters.Remove(baseRaycaster);
+        }
+    }
+}
+</code></pre><h2 id="BaseRaycaster"><a href="#BaseRaycaster" class="headerlink" title="BaseRaycaster"></a>BaseRaycaster</h2><pre><code>/// &lt;summary&gt;
+/// Base class for any RayCaster.
+/// &lt;/summary&gt;
+/// &lt;remarks&gt;
+/// A Raycaster is responsible for raycasting against scene elements to determine if the cursor is over them. Default Raycasters include PhysicsRaycaster, Physics2DRaycaster, GraphicRaycaster.
+/// Custom raycasters can be added by extending this class.
+/// &lt;/remarks&gt;
+public abstract class BaseRaycaster : UIBehaviour
+{
+  ... ...
+}
+</code></pre><p>射线发射器的基类，负责朝着场景中的元素发射射线来决定是否游标在元素之上。UGUI提供了三种Raycaster，分别是PhysicsRaycaster, Physics2DRaycaster, GraphicRaycaster。</p>
+<pre><code>/// &lt;summary&gt;
+/// Raycast against the scene.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;eventData&quot;&gt;Current event data.&lt;/param&gt;
+/// &lt;param name=&quot;resultAppendList&quot;&gt;List of hit Objects.&lt;/param&gt;
+public abstract void Raycast(PointerEventData eventData, List&lt;RaycastResult&gt; resultAppendList);
+
+/// &lt;summary&gt;
+/// The camera that will generate rays for this raycaster.
+/// &lt;/summary&gt;
+public abstract Camera eventCamera { get; }
+</code></pre><p>Raycast 是BaseRaycaster基础方法，传入一个PointerEventData，Raycast将会把接收到射线检测的物体添加到resultAppendList上。</p>
+<p>eventCamera 是用来生成射线的摄像机。</p>
+<pre><code>private BaseRaycaster m_RootRaycaster;
+
+/// &lt;summary&gt;
+/// Raycaster on root canvas
+/// &lt;/summary&gt;
+public BaseRaycaster rootRaycaster
+{
+    get
+    {
+        if (m_RootRaycaster == null)
+        {
+            var baseRaycasters = GetComponentsInParent&lt;BaseRaycaster&gt;();
+            if (baseRaycasters.Length != 0)
+                m_RootRaycaster = baseRaycasters[baseRaycasters.Length - 1];
+        }
+
+        return m_RootRaycaster;
+    }
+}
+</code></pre><p>rootRaycaster 即在Hierarchy中最上层的Raycaster，GetComponentsInParent在官方文档中的注释是Returns all components of Type type in the GameObject or any of its parents. 也就是获得所有父物体的对应的组件。猜测这个方法应该是从当前层级不断往父物体查找，每找到一个BaseRaycaster就添加到List中，所以最上层的Raycaster的位置必定是在List的最后一个。</p>
+<pre><code>protected override void OnEnable()
+{
+    base.OnEnable();
+    RaycasterManager.AddRaycaster(this);
+}
+
+protected override void OnDisable()
+{
+    RaycasterManager.RemoveRaycasters(this);
+    base.OnDisable();
+}
+</code></pre><p>每个Raycaster启用或者禁用，都会在RaycasterManager中注册或者移除。这样RaycasterManager能保证每个缓存的元素都是出于Active状态。</p>
+<p>除了以上属性之外，还有一些其他属性，用于List<raycastresult>的排序，暂不提。</raycastresult></p>
+<h2 id="GraphicRaycaster"><a href="#GraphicRaycaster" class="headerlink" title="GraphicRaycaster"></a>GraphicRaycaster</h2><p>GraphicRaycaster主要用于UI的射线发射。除了基类的字段外，GraphicRaycaster还有一些跟UI相关的字段。</p>
+<h3 id="ignoreReversedGraphics"><a href="#ignoreReversedGraphics" class="headerlink" title="ignoreReversedGraphics"></a>ignoreReversedGraphics</h3><pre><code>[FormerlySerializedAs(&quot;ignoreReversedGraphics&quot;)]
+[SerializeField]
+private bool m_IgnoreReversedGraphics = true;
+
+public bool ignoreReversedGraphics { get {return m_IgnoreReversedGraphics; } set { m_IgnoreReversedGraphics = value; } }
+</code></pre><p>ignoreReversedGraphics 表示当一个Graphic是Reversed状态，也就是正反面颠倒，这个时候是否Graphic还需要接收点击事件。</p>
+<h3 id="eventCamera"><a href="#eventCamera" class="headerlink" title="eventCamera"></a>eventCamera</h3><pre><code>/// &lt;summary&gt;
+/// The camera that will generate rays for this raycaster.
+/// &lt;/summary&gt;
+/// &lt;returns&gt;
+/// - Null if Camera mode is ScreenSpaceOverlay or ScreenSpaceCamera and has no camera.
+/// - canvas.worldCanvas if not null
+/// - Camera.main.
+/// &lt;/returns&gt;
+public override Camera eventCamera
+{
+    get
+    {
+        if (canvas.renderMode == RenderMode.ScreenSpaceOverlay || (canvas.renderMode == RenderMode.ScreenSpaceCamera &amp;&amp; canvas.worldCamera == null))
+            return null;
+
+        return canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
+    }
+}
+</code></pre><p>ScreenSpaceOverlay：返回Null</p>
+<p>ScreenSpaceCamera：Canvas没有指定就返回Null，指定了就返回。</p>
+<p>WorldSpace：</p>
+<p>没啥好提的，基本就是返回UICamera</p>
+<h3 id="Raycaster函数"><a href="#Raycaster函数" class="headerlink" title="Raycaster函数"></a>Raycaster函数</h3><p>Raycaster是这个射线发射器的主要函数，GraphicRaycaster重写了基类的Raycaster方法。这一部分内容在后面的模块说。</p>
+<h2 id="射线投射的入口"><a href="#射线投射的入口" class="headerlink" title="射线投射的入口"></a>射线投射的入口</h2><p>上面的RaycasterManager等，都是边角料，为了让讲射线投射的时候能清楚一些。现在终于可以进入正文了。</p>
+<p>在输入模块中提到过，无论是触屏还是鼠标都可以转化为点的操作。StandaloneInputModule首先会获得PointerEventData数据，随后根据PointerEventData处理三个阶段四个事件，分别是点的pressed按下阶段，move &amp; drag 中间阶段，released释放阶段。在获得PointerEventData数据的时候，就会通过EventSystem.RaycastAll方法获得PointerEventData射线投射的结果。这也是射线投射模块的入口。</p>
+<p>GetTouchPointerEventData方法如下，在获得了PointerData的基本数据，例如位置position、偏移delta之后，会调用RaycastAll方法取得射线结果的缓存。并从中取出第一个有效的缓存结果，赋值给PointData。</p>
+<pre><code>/// &lt;summary&gt;
+/// Given a touch populate the PointerEventData and return if we are pressed or released.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;input&quot;&gt;Touch being processed&lt;/param&gt;
+/// &lt;param name=&quot;pressed&quot;&gt;Are we pressed this frame&lt;/param&gt;
+/// &lt;param name=&quot;released&quot;&gt;Are we released this frame&lt;/param&gt;
+/// &lt;returns&gt;&lt;/returns&gt;
+protected PointerEventData GetTouchPointerEventData(Touch input, out bool pressed, out bool released)
+{
+    PointerEventData pointerData;
+    var created = GetPointerData(input.fingerId, out pointerData, true);
+
+    ... 获得pointerData的位置、偏移等数据 ...
+
+    if (input.phase == TouchPhase.Canceled)
+    {
+        pointerData.pointerCurrentRaycast = new RaycastResult();
+    }
+    else
+    {
+        eventSystem.RaycastAll(pointerData, m_RaycastResultCache);
+
+        var raycast = FindFirstRaycast(m_RaycastResultCache);
+        pointerData.pointerCurrentRaycast = raycast;
+        m_RaycastResultCache.Clear();
+    }
+    return pointerData;
+}
+</code></pre><p>RaycastAll会让所有BaseRaycaster全部进行射线发射，并缓存到raycastResults，最后进行排序</p>
+<pre><code>/// &lt;summary&gt;
+/// Raycast into the scene using all configured BaseRaycasters.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;eventData&quot;&gt;Current pointer data.&lt;/param&gt;
+/// &lt;param name=&quot;raycastResults&quot;&gt;List of &#39;hits&#39; to populate.&lt;/param&gt;
+public void RaycastAll(PointerEventData eventData, List&lt;RaycastResult&gt; raycastResults)
+{
+    raycastResults.Clear();
+    var modules = RaycasterManager.GetRaycasters();
+    for (int i = 0; i &lt; modules.Count; ++i)
+    {
+        var module = modules[i];
+        if (module == null || !module.IsActive())
+            continue;
+
+        module.Raycast(eventData, raycastResults);
+    }
+
+    raycastResults.Sort(s_RaycastComparer);
+}
+</code></pre><p>那么就可以回到GraphicRaycaster的Raycast实现了。</p>
+<h3 id="GraphicRaycaster-Raycaster"><a href="#GraphicRaycaster-Raycaster" class="headerlink" title="GraphicRaycaster.Raycaster"></a>GraphicRaycaster.Raycaster</h3><p>基本一个GraphicRaycaster与一个canvas绑定，当射线检测的时候，GraphicRaycaster发射出射线，会对当前Canvas下的所有Graphic元素进行检测。取得m_RaycastResults后会再一次进行筛选，勾选了ignoreReversedGraphics的Graphic会被剔除掉。最后取得的结果返回给PointerEventData。</p>
+<pre><code>m_RaycastResults.Clear();
+
+Raycast(canvas, currentEventCamera, eventPosition, canvasGraphics, m_RaycastResults);
+
+int totalCount = m_RaycastResults.Count;
+for (var index = 0; index &lt; totalCount; index++)
+{
+    var go = m_RaycastResults[index].gameObject;
+    bool appendGraphic = true;
+
+    if (ignoreReversedGraphics)
+    {
+        ... ...
+
+        // If we have a camera compare the direction against the cameras forward.
+        var cameraFoward = currentEventCamera.transform.rotation * Vector3.forward;
+        var dir = go.transform.rotation * Vector3.forward;
+        appendGraphic = Vector3.Dot(cameraFoward, dir) &gt; 0;
+    }
+
+    if (appendGraphic)
+    {
+        ...
+
+        var castResult = new RaycastResult
+        {
+            gameObject = go,
+            module = this,
+            distance = distance,
+            screenPosition = eventPosition,
+            index = resultAppendList.Count,
+            depth = m_RaycastResults[index].depth,
+            sortingLayer = canvas.sortingLayerID,
+            sortingOrder = canvas.sortingOrder,
+            worldPosition = ray.origin + ray.direction * distance,
+            worldNormal = -transForward
+        };
+        resultAppendList.Add(castResult);
+    }
+}
+</code></pre><p>内部Raycaster函数</p>
+<pre><code>/// &lt;summary&gt;
+/// Perform a raycast into the screen and collect all graphics underneath it.
+/// &lt;/summary&gt;
+[NonSerialized] static readonly List&lt;Graphic&gt; s_SortedGraphics = new List&lt;Graphic&gt;();
+private static void Raycast(Canvas canvas, Camera eventCamera, Vector2 pointerPosition, IList&lt;Graphic&gt; foundGraphics, List&lt;Graphic&gt; results)
+{
+    // Necessary for the event system
+    int totalCount = foundGraphics.Count;
+    for (int i = 0; i &lt; totalCount; ++i)
+    {
+        Graphic graphic = foundGraphics[i];
+
+        // -1 means it hasn&#39;t been processed by the canvas, which means it isn&#39;t actually drawn
+        if (graphic.depth == -1 || !graphic.raycastTarget || graphic.canvasRenderer.cull)
+            continue;
+
+        if (!RectTransformUtility.RectangleContainsScreenPoint(graphic.rectTransform, pointerPosition, eventCamera))
+            continue;
+
+        if (eventCamera != null &amp;&amp; eventCamera.WorldToScreenPoint(graphic.rectTransform.position).z &gt; eventCamera.farClipPlane)
+            continue;
+
+        if (graphic.Raycast(pointerPosition, eventCamera))
+        {
+            s_SortedGraphics.Add(graphic);
+        }
+    }
+
+    s_SortedGraphics.Sort((g1, g2) =&gt; g2.depth.CompareTo(g1.depth));
+    totalCount = s_SortedGraphics.Count;
+    for (int i = 0; i &lt; totalCount; ++i)
+        results.Add(s_SortedGraphics[i]);
+
+    s_SortedGraphics.Clear();
+}
+</code></pre><p>从这个Canvas的所有Graphic中进行遍历，查找能够接收到事件点击的Graphic</p>
+<ol>
+<li>排序一些不显示的Graphic，例如depth = 1的，不接收事件点击的Graphic，或者canvasRender.cull 不显示的。</li>
+<li>排除点击位置不在Graphic Rect范围的物体。</li>
+<li>排除超过摄像机远平面的物体</li>
+<li>进行Graphic检测</li>
+</ol>
+<p>Graphic是可视化元素的基类，Raycast是Graphic里检测射线投射的方法。一般走到这一步已经大部分Graphic都能经过射线检测了，但是一些组件会对Graphic是否能接收射线投射做出修改，这一类组件就会实现ICanvasRaycastFilter接口。所以Raycast方法，主要就是检测当前Graphic是否会受到ICanvasRaycastFilter组件的影响。</p>
+<pre><code>/// &lt;summary&gt;
+/// When a GraphicRaycaster is raycasting into the scene it does two things. First it filters the elements using their RectTransform rect. Then it uses this Raycast function to determine the elements hit by the raycast.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;sp&quot;&gt;Screen point being tested&lt;/param&gt;
+/// &lt;param name=&quot;eventCamera&quot;&gt;Camera that is being used for the testing.&lt;/param&gt;
+/// &lt;returns&gt;True if the provided point is a valid location for GraphicRaycaster raycasts.&lt;/returns&gt;
+public virtual bool Raycast(Vector2 sp, Camera eventCamera)
+{
+    if (!isActiveAndEnabled)
+        return false;
+
+    var t = transform;
+    var components = ListPool&lt;Component&gt;.Get();
+
+    bool ignoreParentGroups = false;
+    bool continueTraversal = true;
+
+    while (t != null)
+    {
+        t.GetComponents(components);
+        for (var i = 0; i &lt; components.Count; i++)
+        {
+            var canvas = components[i] as Canvas;
+            if (canvas != null &amp;&amp; canvas.overrideSorting)
+                continueTraversal = false;
+
+            var filter = components[i] as ICanvasRaycastFilter;
+
+            if (filter == null)
+                continue;
+
+            var raycastValid = true;
+
+            var group = components[i] as CanvasGroup;
+            if (group != null)
+            {
+                if (ignoreParentGroups == false &amp;&amp; group.ignoreParentGroups)
+                {
+                    ignoreParentGroups = true;
+                    raycastValid = filter.IsRaycastLocationValid(sp, eventCamera);
+                }
+                else if (!ignoreParentGroups)
+                    raycastValid = filter.IsRaycastLocationValid(sp, eventCamera);
+            }
+            else
+            {
+                raycastValid = filter.IsRaycastLocationValid(sp, eventCamera);
+            }
+
+            if (!raycastValid)
+            {
+                ListPool&lt;Component&gt;.Release(components);
+                return false;
+            }
+        }
+        t = continueTraversal ? t.parent : null;
+    }
+    ListPool&lt;Component&gt;.Release(components);
+    return true;
+}
+</code></pre><p>有哪些组件额外实现了ICanvasRaycastFilter接口呢？包括Image、Mask、RectMask2D等。（其实Image因为是继承自Graphic所以可以考虑重写这个方法的，不过效果差不多。）</p>
+<p>举个例子吧，比如Image组件的ICanvasRaycastFilter接口是如何实现的呢？一些Image组件是存在透明区域的，比如人物的立绘等等。ICanvasRaycastFilter接口可以对这些透明区域做出修改，让像素点的alpha值与设置的阈值进行比较，小与阈值的像素点被点击的话，那么射线检测失败。Image会在最后继续补充。</p>
+<h3 id="raycastResults进行排序"><a href="#raycastResults进行排序" class="headerlink" title="raycastResults进行排序"></a>raycastResults进行排序</h3><p>取得所有检测的Graphic之后，之后对Graphic进行排序。</p>
+<pre><code>private static int RaycastComparer(RaycastResult lhs, RaycastResult rhs)
+{
+    if (lhs.module != rhs.module)
+    {
+        var lhsEventCamera = lhs.module.eventCamera;
+        var rhsEventCamera = rhs.module.eventCamera;
+        if (lhsEventCamera != null &amp;&amp; rhsEventCamera != null &amp;&amp; lhsEventCamera.depth != rhsEventCamera.depth)
+        {
+            // need to reverse the standard compareTo
+            if (lhsEventCamera.depth &lt; rhsEventCamera.depth)
+                return 1;
+            if (lhsEventCamera.depth == rhsEventCamera.depth)
+                return 0;
+
+            return -1;
+        }
+
+        if (lhs.module.sortOrderPriority != rhs.module.sortOrderPriority)
+            return rhs.module.sortOrderPriority.CompareTo(lhs.module.sortOrderPriority);
+
+        if (lhs.module.renderOrderPriority != rhs.module.renderOrderPriority)
+            return rhs.module.renderOrderPriority.CompareTo(lhs.module.renderOrderPriority);
+    }
+
+    if (lhs.sortingLayer != rhs.sortingLayer)
+    {
+        // Uses the layer value to properly compare the relative order of the layers.
+        var rid = SortingLayer.GetLayerValueFromID(rhs.sortingLayer);
+        var lid = SortingLayer.GetLayerValueFromID(lhs.sortingLayer);
+        return rid.CompareTo(lid);
+    }
+
+    if (lhs.sortingOrder != rhs.sortingOrder)
+        return rhs.sortingOrder.CompareTo(lhs.sortingOrder);
+
+    // comparing depth only makes sense if the two raycast results have the same root canvas (case 912396)
+    if (lhs.depth != rhs.depth &amp;&amp; lhs.module.rootRaycaster == rhs.module.rootRaycaster)
+        return rhs.depth.CompareTo(lhs.depth);
+
+    if (lhs.distance != rhs.distance)
+        return lhs.distance.CompareTo(rhs.distance);
+
+    return lhs.index.CompareTo(rhs.index);
+}
+</code></pre><h2 id="补充-Image-IsRaycastLocationValid"><a href="#补充-Image-IsRaycastLocationValid" class="headerlink" title="补充-Image.IsRaycastLocationValid"></a>补充-Image.IsRaycastLocationValid</h2><p>Image.IsRaycastLocationValid</p>
+<p>alphaHitTestMinimumThreshold就是设置的阈值，如果阈值小于等于0，那么必定检测成功，如果阈值大于1，那么必定失败。如果alpha在0-1之间，那么根据输入的位置，取得Texture对应像素点的alpha值，与阈值比较。</p>
+<pre><code>/// &lt;summary&gt;
+/// Calculate if the ray location for this image is a valid hit location. Takes into account a Alpha test threshold.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;screenPoint&quot;&gt;The screen point to check against&lt;/param&gt;
+/// &lt;param name=&quot;eventCamera&quot;&gt;The camera in which to use to calculate the coordinating position&lt;/param&gt;
+/// &lt;returns&gt;If the location is a valid hit or not.&lt;/returns&gt;
+/// &lt;remarks&gt; Also see See:ICanvasRaycastFilter.&lt;/remarks&gt;
+public virtual bool IsRaycastLocationValid(Vector2 screenPoint, Camera eventCamera)
+{
+    if (alphaHitTestMinimumThreshold &lt;= 0)
+        return true;
+
+    if (alphaHitTestMinimumThreshold &gt; 1)
+        return false;
+
+    if (activeSprite == null)
+        return true;
+
+    Vector2 local;
+    if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(rectTransform, screenPoint, eventCamera, out local))
+        return false;
+
+    Rect rect = GetPixelAdjustedRect();
+
+    // Convert to have lower left corner as reference point.
+    local.x += rectTransform.pivot.x * rect.width;
+    local.y += rectTransform.pivot.y * rect.height;
+
+    local = MapCoordinate(local, rect);
+
+    // Normalize local coordinates.
+    Rect spriteRect = activeSprite.textureRect;
+    Vector2 normalized = new Vector2(local.x / spriteRect.width, local.y / spriteRect.height);
+
+    // Convert to texture space.
+    float x = Mathf.Lerp(spriteRect.x, spriteRect.xMax, normalized.x) / activeSprite.texture.width;
+    float y = Mathf.Lerp(spriteRect.y, spriteRect.yMax, normalized.y) / activeSprite.texture.height;
+
+    try
+    {
+        return activeSprite.texture.GetPixelBilinear(x, y).a &gt;= alphaHitTestMinimumThreshold;
+    }
+    catch (UnityException e)
+    {
+        Debug.LogError(&quot;Using alphaHitTestMinimumThreshold greater than 0 on Image whose sprite texture cannot be read. &quot; + e.Message + &quot; Also make sure to disable sprite packing for this sprite.&quot;, this);
+        return true;
+    }
+}
+</code></pre><p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-16-Raycast/1.png"></p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-16-Raycast/2.png"></p>
+<pre><code>Image image = GetComponent&lt;Image&gt;();
+image.alphaHitTestMinimumThreshold = 0.2f;
+</code></pre><p>修饰器作用</p>
+<p>就是对已经射线检测ok的物体 还需要进行一层filter过滤掉，</p>
+<p>比如RectMask2D Mask都是</p>
+<p>RectTransformUtility.RectangleContainsScreenPoint(rectTransform, sp, eventCamera);</p>
+<p>似乎重复了</p>
+<p>Image 穿透过alpha = 1的</p>
+<p>CanvasGroup 统一控制底下的所有物体的是否接受射线投射</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/10/2020-02-10-UGUI源码14-RawImage/" rel="next" title="UGUI源码14-RawImage">
+                <i class="fa fa-chevron-left"></i> UGUI源码14-RawImage
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/12/2020-02-12-UGUI源码17-CanvasScaler/" rel="prev" title="UGUI源码17-CanvasScaler">
+                UGUI源码17-CanvasScaler <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RaycasterManager"><span class="nav-number">2.</span> <span class="nav-text">RaycasterManager</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BaseRaycaster"><span class="nav-number">3.</span> <span class="nav-text">BaseRaycaster</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GraphicRaycaster"><span class="nav-number">4.</span> <span class="nav-text">GraphicRaycaster</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ignoreReversedGraphics"><span class="nav-number">4.1.</span> <span class="nav-text">ignoreReversedGraphics</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#eventCamera"><span class="nav-number">4.2.</span> <span class="nav-text">eventCamera</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Raycaster函数"><span class="nav-number">4.3.</span> <span class="nav-text">Raycaster函数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#射线投射的入口"><span class="nav-number">5.</span> <span class="nav-text">射线投射的入口</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#GraphicRaycaster-Raycaster"><span class="nav-number">5.1.</span> <span class="nav-text">GraphicRaycaster.Raycaster</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#raycastResults进行排序"><span class="nav-number">5.2.</span> <span class="nav-text">raycastResults进行排序</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#补充-Image-IsRaycastLocationValid"><span class="nav-number">6.</span> <span class="nav-text">补充-Image.IsRaycastLocationValid</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

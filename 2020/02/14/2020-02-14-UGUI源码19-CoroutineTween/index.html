@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言UGUI中点击Toggle或者按钮，经常有颜色的渐变。UGUI抽象成了CoroutineTween这个文件。本篇文章来谈一下CoroutineTween如何实现插值。 CoroutineTween的结构CoroutineTween是UGUI中用来处理插值的一个文件，比如颜色或者float类型的值，在一段时间内从初始值Lerp到目标值。CoroutineTween分为TweenRunner与IT">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码19-CoroutineTween">
+<meta property="og:url" content="http://yoursite.com/2020/02/14/2020-02-14-UGUI源码19-CoroutineTween/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言UGUI中点击Toggle或者按钮，经常有颜色的渐变。UGUI抽象成了CoroutineTween这个文件。本篇文章来谈一下CoroutineTween如何实现插值。 CoroutineTween的结构CoroutineTween是UGUI中用来处理插值的一个文件，比如颜色或者float类型的值，在一段时间内从初始值Lerp到目标值。CoroutineTween分为TweenRunner与IT">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-02-19T09:18:03.155Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码19-CoroutineTween">
+<meta name="twitter:description" content="前言UGUI中点击Toggle或者按钮，经常有颜色的渐变。UGUI抽象成了CoroutineTween这个文件。本篇文章来谈一下CoroutineTween如何实现插值。 CoroutineTween的结构CoroutineTween是UGUI中用来处理插值的一个文件，比如颜色或者float类型的值，在一段时间内从初始值Lerp到目标值。CoroutineTween分为TweenRunner与IT">
+  <link rel="canonical" href="http://yoursite.com/2020/02/14/2020-02-14-UGUI源码19-CoroutineTween/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码19-CoroutineTween | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/14/2020-02-14-UGUI源码19-CoroutineTween/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码19-CoroutineTween
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-14 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-14T00:00:00+08:00">2020-02-14</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 17:18:03" itemprop="dateModified" datetime="2020-02-19T17:18:03+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>UGUI中点击Toggle或者按钮，经常有颜色的渐变。UGUI抽象成了CoroutineTween这个文件。本篇文章来谈一下CoroutineTween如何实现插值。</p>
+<h2 id="CoroutineTween的结构"><a href="#CoroutineTween的结构" class="headerlink" title="CoroutineTween的结构"></a>CoroutineTween的结构</h2><p>CoroutineTween是UGUI中用来处理插值的一个文件，比如颜色或者float类型的值，在一段时间内从初始值Lerp到目标值。CoroutineTween分为TweenRunner与ITweenValue，TweenRunner表示运行插值的对象。根据插值类型的不同分为FloatTween和ColorTween，两者都实现了ITweenValue接口。</p>
+<h3 id="ITweenValue"><a href="#ITweenValue" class="headerlink" title="ITweenValue"></a>ITweenValue</h3><pre><code>// Base interface for tweeners,
+// using an interface instead of
+// an abstract class as we want the
+// tweens to be structs.
+internal interface ITweenValue
+{
+    void TweenValue(float floatPercentage);
+    bool ignoreTimeScale { get; }
+    float duration { get; }
+    bool ValidTarget();
+}
+</code></pre><p>实现了ITweenValue接口的，比如要实现对应的方法，分别是做Tween的时候，插值的函数。是否忽略时间的缩放。所需要的duration。是否有效。</p>
+<h3 id="ColorTween"><a href="#ColorTween" class="headerlink" title="ColorTween"></a>ColorTween</h3><pre><code>// Color tween class, receives the
+// TweenValue callback and then sets
+// the value on the target.
+internal struct ColorTween : ITweenValue
+{
+    public enum ColorTweenMode
+    {
+        All,
+        RGB,
+        Alpha
+    }
+
+    public class ColorTweenCallback : UnityEvent&lt;Color&gt; {}
+
+    private ColorTweenCallback m_Target;
+    private Color m_StartColor;
+    private Color m_TargetColor;
+    private ColorTweenMode m_TweenMode;
+
+    ...
+
+    public void TweenValue(float floatPercentage)
+    {
+        if (!ValidTarget())
+            return;
+
+        var newColor = Color.Lerp(m_StartColor, m_TargetColor, floatPercentage);
+
+        if (m_TweenMode == ColorTweenMode.Alpha)
+        {
+            newColor.r = m_StartColor.r;
+            newColor.g = m_StartColor.g;
+            newColor.b = m_StartColor.b;
+        }
+        else if (m_TweenMode == ColorTweenMode.RGB)
+        {
+            newColor.a = m_StartColor.a;
+        }
+        m_Target.Invoke(newColor);
+    }
+
+    public void AddOnChangedCallback(UnityAction&lt;Color&gt; callback)
+    {
+        if (m_Target == null)
+            m_Target = new ColorTweenCallback();
+
+        m_Target.AddListener(callback);
+    }
+}
+</code></pre><ul>
+<li>m_StartColor 初始值</li>
+<li>m_TargetColor 目标值</li>
+<li>m_TweenMode Tween模式，可以做ALL、RGB、Alpha三种模式的切换</li>
+</ul>
+<p>m_Target 是一个UnityEvent<color>的对象。可以通过AddOnChangedCallback，把回调注册进去。在每帧插值后都会Invoke一次事件，把新值发布出去。</color></p>
+<p>TweenValue是具体插值的函数。根据TweenMode的不同，做不同的插值。</p>
+<h3 id="TweenRunner"><a href="#TweenRunner" class="headerlink" title="TweenRunner"></a>TweenRunner</h3><p>TweenRunner是一个泛型类，每个需要做Tween插值的，例如Graphic等，都会持有一个TweenRunner的实例对象。TweenRunner用协程实现了每帧插值。</p>
+<pre><code>// Tween runner, executes the given tween.
+// The coroutine will live within the given
+// behaviour container.
+internal class TweenRunner&lt;T&gt; where T : struct, ITweenValue
+{
+    // utility function for starting the tween
+    private static IEnumerator Start(T tweenInfo)
+    {
+        if (!tweenInfo.ValidTarget())
+            yield break;
+
+        var elapsedTime = 0.0f;
+        while (elapsedTime &lt; tweenInfo.duration)
+        {
+            elapsedTime += tweenInfo.ignoreTimeScale ? Time.unscaledDeltaTime : Time.deltaTime;
+            var percentage = Mathf.Clamp01(elapsedTime / tweenInfo.duration);
+            tweenInfo.TweenValue(percentage);
+            yield return null;
+        }
+        tweenInfo.TweenValue(1.0f);
+    }
+
+    ... ...
+
+    public void StartTween(T info)
+    {
+        if (m_CoroutineContainer == null)
+        {
+            Debug.LogWarning(&quot;Coroutine container not configured... did you forget to call Init?&quot;);
+            return;
+        }
+
+        StopTween();
+
+        if (!m_CoroutineContainer.gameObject.activeInHierarchy)
+        {
+            info.TweenValue(1.0f);
+            return;
+        }
+
+        m_Tween = Start(info);
+        m_CoroutineContainer.StartCoroutine(m_Tween);
+    }
+}
+</code></pre><h3 id="实际调用"><a href="#实际调用" class="headerlink" title="实际调用"></a>实际调用</h3><p>Graphic中调用颜色插值代码如下</p>
+<pre><code>var colorTween = new ColorTween {duration = duration, startColor = canvasRenderer.GetColor(), targetColor = targetColor};
+colorTween.AddOnChangedCallback(canvasRenderer.SetColor);
+colorTween.ignoreTimeScale = ignoreTimeScale;
+colorTween.tweenMode = mode;
+m_ColorTweenRunner.StartTween(colorTween);
+</code></pre><p>ColorTweenRunner启动插值，colorTween里已经设置好了初始颜色，目标颜色以及时间，还有回调。ColorTweenRunner用协程，根据时间进度，每帧计算出百分比，并调用ColorTween的插值函数，插值函数算出最终颜色后，调用回调，Graphic的回调是canvasRenderer.SetColor，也就是插值后的颜色赋值给canvasRenderer的color属性。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/13/2020-02-13-UGUI源码18-IMeshModifier/" rel="next" title="UGUI源码18-IMeshModifier">
+                <i class="fa fa-chevron-left"></i> UGUI源码18-IMeshModifier
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/15/2020-02-15-UGUI源码20-CanvasGroup/" rel="prev" title="UGUI源码20-CanvasGroup">
+                UGUI源码20-CanvasGroup <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CoroutineTween的结构"><span class="nav-number">2.</span> <span class="nav-text">CoroutineTween的结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ITweenValue"><span class="nav-number">2.1.</span> <span class="nav-text">ITweenValue</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ColorTween"><span class="nav-number">2.2.</span> <span class="nav-text">ColorTween</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TweenRunner"><span class="nav-number">2.3.</span> <span class="nav-text">TweenRunner</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实际调用"><span class="nav-number">2.4.</span> <span class="nav-text">实际调用</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言补充一些布局相关的内容 MarkLayoutForRebuild/// &amp;lt;summary&amp;gt; /// Mark the given RectTransform as needing it&amp;#39;s layout to be recalculated during the next layout pass. /// &amp;lt;/summary&amp;gt; /// &amp;lt;param nam">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI源码10-LayoutRebuilder的一点补充">
+<meta property="og:url" content="http://yoursite.com/2020/02/06/2020-02-06-UGUI源码10-LayoutRebuilder的一点补充/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言补充一些布局相关的内容 MarkLayoutForRebuild/// &amp;lt;summary&amp;gt; /// Mark the given RectTransform as needing it&amp;#39;s layout to be recalculated during the next layout pass. /// &amp;lt;/summary&amp;gt; /// &amp;lt;param nam">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-02-19T09:16:33.049Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI源码10-LayoutRebuilder的一点补充">
+<meta name="twitter:description" content="前言补充一些布局相关的内容 MarkLayoutForRebuild/// &amp;lt;summary&amp;gt; /// Mark the given RectTransform as needing it&amp;#39;s layout to be recalculated during the next layout pass. /// &amp;lt;/summary&amp;gt; /// &amp;lt;param nam">
+  <link rel="canonical" href="http://yoursite.com/2020/02/06/2020-02-06-UGUI源码10-LayoutRebuilder的一点补充/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI源码10-LayoutRebuilder的一点补充 | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/06/2020-02-06-UGUI源码10-LayoutRebuilder的一点补充/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI源码10-LayoutRebuilder的一点补充
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-06 00:00:00" itemprop="dateCreated datePublished" datetime="2020-02-06T00:00:00+08:00">2020-02-06</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-02-19 17:16:33" itemprop="dateModified" datetime="2020-02-19T17:16:33+08:00">2020-02-19</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>补充一些布局相关的内容</p>
+<h2 id="MarkLayoutForRebuild"><a href="#MarkLayoutForRebuild" class="headerlink" title="MarkLayoutForRebuild"></a>MarkLayoutForRebuild</h2><pre><code>/// &lt;summary&gt;
+/// Mark the given RectTransform as needing it&#39;s layout to be recalculated during the next layout pass.
+/// &lt;/summary&gt;
+/// &lt;param name=&quot;rect&quot;&gt;Rect to rebuild.&lt;/param&gt;
+public static void MarkLayoutForRebuild(RectTransform rect)
+{
+    if (rect == null || rect.gameObject == null)
+        return;
+
+    var comps = ListPool&lt;Component&gt;.Get();
+    bool validLayoutGroup = true;
+    RectTransform layoutRoot = rect;
+    var parent = layoutRoot.parent as RectTransform;
+    while (validLayoutGroup &amp;&amp; !(parent == null || parent.gameObject == null))
+    {
+        validLayoutGroup = false;
+        parent.GetComponents(typeof(ILayoutGroup), comps);
+
+        for (int i = 0; i &lt; comps.Count; ++i)
+        {
+            var cur = comps[i];
+            if (cur != null &amp;&amp; cur is Behaviour &amp;&amp; ((Behaviour)cur).isActiveAndEnabled)
+            {
+                validLayoutGroup = true;
+                layoutRoot = parent;
+                break;
+            }
+        }
+
+        parent = parent.parent as RectTransform;
+    }
+
+    // We know the layout root is valid if it&#39;s not the same as the rect,
+    // since we checked that above. But if they&#39;re the same we still need to check.
+    if (layoutRoot == rect &amp;&amp; !ValidController(layoutRoot, comps))
+    {
+        ListPool&lt;Component&gt;.Release(comps);
+        return;
+    }
+
+    MarkLayoutRootForRebuild(layoutRoot);
+    ListPool&lt;Component&gt;.Release(comps);
+}
+</code></pre><p>关于MarkLayoutForRebuild方法，之前的说法是能够筛选出需要注册的元素。也就是ILayoutGroup和ILayoutSelfController。ILayoutGroup会选择rootLayoutGroup，ContentSizeFitter也就是ILayoutSelfController会传入自身，随后选择的这个rectTransform会被包装为LayoutRebuilder并注册到CanvasUpdateRegistry的布局重建列表中。</p>
+<p>这里想提一下公司里一个使用UIList的场景</p>
+<ul>
+<li>UIList （VerticalLayoutGroup and ContentSizeFitter）<ul>
+<li>UIListItem（UIListItem）<ul>
+<li>UIText_Name（Text）</li>
+<li>UIImage_Icon（Image）</li>
+<li>…</li>
+</ul>
+</li>
+<li>UIListItem（UIListItem）<ul>
+<li>UIText_Name（Text）</li>
+<li>UIImage_Icon（Image）</li>
+<li>…</li>
+</ul>
+</li>
+<li>…</li>
+</ul>
+</li>
+</ul>
+<p>当一个元素标记重建的时候，也就是一个GameObject使用MarkLayoutForRebuild的时候。这个GameObject可能就是含有LayoutGroup的UIList，也可能是ListItem元素，也有可能是ListItem元素再下一层的元素，例如UIImage_Icon，UIText_Name。</p>
+<ol>
+<li><p>UIList -&gt; 去找父物体，是否有LayoutGroup。</p>
+<p>如果有LayoutGroup，继续往父物体的父物体去找LayoutGroup，直到找到最顶层的LayoutGroup。然后MarkLayoutRootForRebuild，标记这个顶层的LayoutGroup去重建。</p>
+<p>如果没有LayoutGroup，那么标记失败。</p>
+<p>在这个例子中，显然父物体是没有LayoutGroup的，那么直接返回。在之后的代码中因为自身就是ILayoutController所以传递自身的rectTransform作为layoutRoot。</p>
+</li>
+<li><p>UIListItem标记重建 -&gt; 仍然是去找父物体的LayoutGroup。在这个例子中，UIList是有的LayoutGroup的，那么标记UI List去重建，标记成功！</p>
+</li>
+<li><p>如果是UIListItem再下一层的物体，例如UIImage_Icon，那么往父物体找LayoutGroup的时候，没有发现UIListItem存在LayoutGroup，自身也不是ILayoutController，标记失败。</p>
+</li>
+</ol>
+<p>这就是之前的总结，只通知rootLayoutGroup，或者实现了ILayoutSelfController的物体去重建布局。虽然所有元素都可以调用 MarkLayoutForRebuild 这个方法，但是只有经过筛选的元素，才可以使用MarkLayoutRootForRebuild，并真正执行重建操作。</p>
+<p>那么回到这个例子中，它其实是存在一个隐患的，如果UIListItem底下的元素是不变的，比如这是一个技能的列表，那么可能做prefab的时候子物体就能调整到完美的间距，包括UIList的布局范围。但是如果之后继续修改UIText_Name，导致元素的宽高变化，那么整个布局是无法重建的。</p>
+<p>在很多情况下，UIListItem元素往往是不变的，所以也就不需要考虑这个问题。但是如果内容发生变化导致宽高变化，那么需要考虑到如何才能通知布局重建。</p>
+<h2 id="操作符"><a href="#操作符" class="headerlink" title="操作符"></a>操作符</h2><p>HorizontalOrVerticalLayoutGroup计算水平或者竖直轴向宽高的时候，使用CalcAlongAxis，里面有这么一个操作符</p>
+<pre><code>bool alongOtherAxis = (isVertical ^ (axis == 1));
+</code></pre><p>所以这里也简单总结一下几个位运算的符号 <a href="https://blog.csdn.net/jack_wang128801/article/details/83317043" target="_blank" rel="noopener">https://blog.csdn.net/jack_wang128801/article/details/83317043</a></p>
+<ol>
+<li>&amp; 相同为1，不同为0</li>
+<li>|  一真为真。</li>
+<li>^ 相同为0，不同为1。</li>
+<li>~ 取反。比如~0001 = 1110</li>
+<li>&lt;&lt;左移 例如1 &lt;&lt; 3 表示1左移三位。1的二进制表示 0000 0001，左移三位后 0000 1000，表示8，即原值乘上2的3次方</li>
+<li>double&gt; 右移，和左移类似，表示原值除以2的xx位次方。</li>
+</ol>
+<p>Ps: <a href="https://www.cnblogs.com/shy1766IT/p/6184874.html" target="_blank" rel="noopener">https://www.cnblogs.com/shy1766IT/p/6184874.html</a></p>
+<h2 id="Rect设置大小的函数"><a href="#Rect设置大小的函数" class="headerlink" title="Rect设置大小的函数"></a>Rect设置大小的函数</h2><p><a href="https://blog.csdn.net/BeiFuDeNvWang/article/details/50838266" target="_blank" rel="noopener">https://blog.csdn.net/BeiFuDeNvWang/article/details/50838266</a></p>
+<ol>
+<li>直接设置sizeDelta，锚点必须是集中型锚点才有意义</li>
+<li>SetSizeWithCurrentAnchors 受锚点、中心点影响 （不太明白）</li>
+<li>SetInsetAndSizeFromParentEdge 不受锚点、中心点影响</li>
+</ol>
+<h2 id="Strip"><a href="#Strip" class="headerlink" title="Strip!"></a>Strip!</h2><p>StripDisabledBehavioursFromList  这个方法会把无效的重建元素删除掉。Strip这个英文，它有好几层意思。</p>
+<p>1、StripDisabledBehavioursFromList  去掉、去除。除了StripDisabledBehavioursFromList 外，在UnityEngine也有个打包选项，在导出安装包的时候，把没有使用到的库文件，dll之类的删除。File - BuildSetting - Player Setting，如果Configuration底下的Scripting Backend 是Mono，那么在Optimization 下会有一个Managed Stripping Level，管理删除无用代码的程度。如果Scripting Backend是IL2CPP的模式，那么Optimization下会额外出现一个Strip Engine Code的勾选框。当IL2CPP且勾选Strip Engine Code的时候，有时候会把一些必要的也删除掉，之前项目打包的时候，就发现Timeline、Cinemachine没有被打包进去，导致CG无法播放，这个问题网上有解决办法。</p>
+<p>2、脱衣舞娘，记得老友记为了庆祝rose即将结婚，joey为rose举办了一个婚前的单身party，请了个脱衣舞娘，u1s1，nice。</p>
+<p>3、条，比如昨天晚上我才看到的，辣条的英文单词竟然是Hot Strip。</p>
+<h2 id="SetDirty"><a href="#SetDirty" class="headerlink" title="SetDirty"></a>SetDirty</h2><p>之前做过一个拍照大赛的功能，UI大概就是GridLayoutGroup的样子，玩家可以在游戏中拍照美景，然后上传，比谁的点赞数多。当我们打开UI面板的时候，向服务器请求多张图片数据。一开始的做法是客户端每接收到一张图片，都会通知UI刷新整个界面，但是存在这种情况，如果一帧的时间内接收到多张图片，那么页面就会刷新多次。想要修改最好的办法就是SetDirty。也就是标记这个UI需要刷新，那么当下一帧执行的时候，就会刷新整个页面，避免多次刷新。除此之外还有一个好处，每次update更新的时候，保证所有UI的执行顺序，更有助于统一管理。</p>
+<p>其实这种做法，不就是UGUI布局的做法吗。当一个LayoutGroup需要重建的时候，只是标记自身重建，等待下一帧的更新操作。如果是立即执行重建操作，那么当连续重建的时候，就会导致计算的浪费。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/05/2020-02-05-UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry/" rel="next" title="UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry">
+                <i class="fa fa-chevron-left"></i> UGUI源码9-LayoutRebuilder与CanvasUpdateRegistry
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+              <a href="/2020/02/06/2020-02-06-UGUI源码11-ObjectPool/" rel="prev" title="UGUI源码11-ObjectPool">
+                UGUI源码11-ObjectPool <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MarkLayoutForRebuild"><span class="nav-number">2.</span> <span class="nav-text">MarkLayoutForRebuild</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#操作符"><span class="nav-number">3.</span> <span class="nav-text">操作符</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Rect设置大小的函数"><span class="nav-number">4.</span> <span class="nav-text">Rect设置大小的函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Strip"><span class="nav-number">5.</span> <span class="nav-text">Strip!</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SetDirty"><span class="nav-number">6.</span> <span class="nav-text">SetDirty</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

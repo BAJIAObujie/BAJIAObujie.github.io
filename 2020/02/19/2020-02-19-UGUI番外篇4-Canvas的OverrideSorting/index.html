@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.9.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    search: {
+      root: '/',
+      path: ''
+    },
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="前言最近两次在项目中遇到了Canvas的OverrideSorting的问题，稍微记录一下。 Canvas大致说一下项目的UI结构。首先是UIRoot，带有Canvas组件，是UI的根画布。功能界面的UI主要放在UI_Root下。例如tabequip装备，dlgrank排行榜等。功能界面也会带有一个Canvas组件，不过这些Canvas在RootCanvas下，所以被称为NestedCanvas。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI番外篇4-Canvas的OverrideSorting">
+<meta property="og:url" content="http://yoursite.com/2020/02/19/2020-02-19-UGUI番外篇4-Canvas的OverrideSorting/index.html">
+<meta property="og:site_name" content="芭蕉不解的博客">
+<meta property="og:description" content="前言最近两次在项目中遇到了Canvas的OverrideSorting的问题，稍微记录一下。 Canvas大致说一下项目的UI结构。首先是UIRoot，带有Canvas组件，是UI的根画布。功能界面的UI主要放在UI_Root下。例如tabequip装备，dlgrank排行榜等。功能界面也会带有一个Canvas组件，不过这些Canvas在RootCanvas下，所以被称为NestedCanvas。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/1.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/2.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/3.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/4.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/5.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/6.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/7.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/8.png">
+<meta property="og:updated_time" content="2020-02-19T09:17:24.959Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UGUI番外篇4-Canvas的OverrideSorting">
+<meta name="twitter:description" content="前言最近两次在项目中遇到了Canvas的OverrideSorting的问题，稍微记录一下。 Canvas大致说一下项目的UI结构。首先是UIRoot，带有Canvas组件，是UI的根画布。功能界面的UI主要放在UI_Root下。例如tabequip装备，dlgrank排行榜等。功能界面也会带有一个Canvas组件，不过这些Canvas在RootCanvas下，所以被称为NestedCanvas。">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/1.png">
+  <link rel="canonical" href="http://yoursite.com/2020/02/19/2020-02-19-UGUI番外篇4-Canvas的OverrideSorting/">
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>UGUI番外篇4-Canvas的OverrideSorting | 芭蕉不解的博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">芭蕉不解的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+    <ul id="menu" class="menu">
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br/>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br/>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br/>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br/>归档</a>
+
+  </li>
+    </ul>
+    
+
+</nav>
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/19/2020-02-19-UGUI番外篇4-Canvas的OverrideSorting/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="BAJIAObujie">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="芭蕉不解的博客">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">UGUI番外篇4-Canvas的OverrideSorting
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-02-19 00:00:00 / 修改时间：17:17:24" itemprop="dateCreated datePublished" datetime="2020-02-19T00:00:00+08:00">2020-02-19</time>
+            </span>
+          
+            
+
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/UGUI/" itemprop="url" rel="index"><span itemprop="name">UGUI</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          <br/>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>最近两次在项目中遇到了Canvas的OverrideSorting的问题，稍微记录一下。</p>
+<h2 id="Canvas"><a href="#Canvas" class="headerlink" title="Canvas"></a>Canvas</h2><p>大致说一下项目的UI结构。首先是UIRoot，带有Canvas组件，是UI的根画布。功能界面的UI主要放在UI_Root下。例如tabequip装备，dlgrank排行榜等。功能界面也会带有一个Canvas组件，不过这些Canvas在RootCanvas下，所以被称为NestedCanvas。每个NestedCanvas都勾选了OverrideSorting。如下</p>
+<ul>
+<li>UIRoot （RootCanvas 根画布）<ul>
+<li>UICamera （ScreenSpace-Camera渲染模式下使用的摄像机）</li>
+<li>EventSystem</li>
+<li>UI_Root （所有功能界面添加到UI_Root下）<ul>
+<li>tabequip （NestedCanvas   OverrideSorting = true）<ul>
+<li>… </li>
+</ul>
+</li>
+<li>dlgrank （NestedCanvas   OverrideSorting = true）<ul>
+<li>…</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>RootCanvas 和 NestedCanvas 虽然同为Canvas组件，但在Inspector面板下显示并不一样。</p>
+<ul>
+<li>左侧为RootCanvas：定义了UI的渲染模式、摄像机、渲染的Layer等。</li>
+<li>右侧为NestedCanvas：主要不同是OverrideSorting。</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/1.png"></p>
+<p>首先看看官方文档Canvas组件的OverrideSorting描述：</p>
+<p>Override the sorting of canvas.  Allows for nested canvas’s to ignore the parent draw order and draw ontop or below.</p>
+<p>在RootCanvas下，每个UI元素的渲染顺序是按照Hierarchy层级从上至下渲染的。例如在UGUI源码的Graphic部分有这样的注释。</p>
+<pre><code>/// Canvas
+///  Graphic - 1
+///  Graphic - 2
+///  Nested Canvas
+///     Graphic - 3
+///     Graphic - 4
+///  Graphic - 5
+</code></pre><p>当勾选了OverrideSorting的情况下，NestedCanvas会打破这种渲染顺序。UI的OrderInLayer越小，越容易被覆盖。例如在游戏中经常有一些弹出框。通常弹出框也是一个单独的UI资源，会带有Canvas组件，它的OrderInLayer就会被设置得很高。因为需要保证弹出框总是在功能界面之上。</p>
+<h2 id="问题1"><a href="#问题1" class="headerlink" title="问题1"></a>问题1</h2><p>在UI的人物模型带有一个半透明材质，弹出框与半透明材质渲染顺序出现问题。</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/2.png"></p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/3.png"></p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/4.png"></p>
+<p>如图，弹出框虽然在深度上更靠近摄像机，但是并没有遮挡住半透明材质的部分。处理方法：</p>
+<p>弹出框挂上一个Canvas组件，同时设置layer层级320，比人物模型的UI层级高即可。</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/5.png"></p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/6.png"></p>
+<p>据同事说，原理大概是这样的。</p>
+<p>Canvas是一个画布，每次渲染的时候，提交整个画布的元素作为一捆。这一捆元素在渲染过程中，尝试动态合批。把画布元素打包成一捆很像批处理的操作，这里为了不让两者混淆，所以使用了捆。动态批处理需要保证元素使用同一个材质，而Canvas组件打包一捆，仅仅是把元素分类。多个Canvas就有多个捆。</p>
+<p>这个时候就会遇到刚才说的半透明材质总是在不透明材质之后渲染的问题。渲染Canvas这一捆元素的时候，按照Hierarchy的顺序渲染。虽然UI元素和半透明材质一样，都是在Transparent队列中。但是在FrameDebugger中，半透明材质是在UI元素之后渲染的。猜测Unity内部可能做了处理，让半透明材质在UI元素之后。这个时候总是会出现穿透现象。当把弹出框也加上一个Canvas，勾选OverrideSorting的时候。Unity就会先渲染层级低的Canvas。也就是人物模型的层级，然后再渲染弹出框。这个时候就能保证弹出框在半透明材质之后渲染。</p>
+<p>也就是在同一Canvas下，先渲染UI元素，再渲染半透明材质。不同Canvas则按照OverrideSorting的Layer顺序，值越大，渲染顺序越靠后。<strong>以上仅为猜测！！！毕竟没源代码。</strong></p>
+<h2 id="问题2"><a href="#问题2" class="headerlink" title="问题2"></a>问题2</h2><p>如下UI，这是一个ScrollRect-Vierport-UIList的结构，不同的地方是UIList应用了曲线滑动的布局组件。每个List的元素分别带了UI特效。</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/7.png"></p>
+<p>项目中是如何做UI遮罩的呢？在Vierport一层中通过Mask组件 + 替换Shader的方式，这样带有特效的List元素在滑动出Vierport的时候，就会被遮挡住。外层红框部分就是Vierport的范围。如果是竖直布局的UIList，那么这种做法是没问题的。但是这个曲线布局的UI中，上下各带有一个Image组件，显示箭头。点击箭头的时候也可以滑动UI。这样的结果就是，在特效在经过Image组件的时候会穿透Image组件。</p>
+<p>修改方式和问题1一样，在上下两个Image物体上再挂上一个Canvas，勾选OverrideSorting，设置SortingLayer为default，设置OrderInLayer为350。找到特效Prefab在Particle组件的Renderer部分，设置SortingLayer为default，设置OrderInLayer为301。</p>
+<p>在FrameDebugger中查看渲染顺序如下：</p>
+<p><img src="https://raw.githubusercontent.com/BAJIAObujie/BAJIAObujie.github.io/master/img/UGUI-EX4-Canvas-OverrideSorting/8.png"></p>
+<p>UI是在Transparent队列中进行渲染。如图最后两个DrawMesh就对应上下两个Image的绘制。最后的渲染结果就能覆盖掉特效的部分。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+              <a href="/2020/02/19/2020-02-19-UGUI番外篇3-TogglePlus/" rel="next" title="UGUI番外篇3-TogglePlus">
+                <i class="fa fa-chevron-left"></i> UGUI番外篇3-TogglePlus
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+          </div>
+        </div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">BAJIAObujie</p>
+  <div class="site-description motion-element" itemprop="description"></div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Canvas"><span class="nav-number">2.</span> <span class="nav-text">Canvas</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#问题1"><span class="nav-number">3.</span> <span class="nav-text">问题1</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#问题2"><span class="nav-number">4.</span> <span class="nav-text">问题2</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">BAJIAObujie</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v7.2.0</div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+  
+  <script src="/js/schemes/muse.js?v=7.2.0"></script>
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config("");
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+  
+
+  
+
+  
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
